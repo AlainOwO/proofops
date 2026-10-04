@@ -1,0 +1,69 @@
+name: proofops
+services:
+  db:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: proofops
+      POSTGRES_USER: proofops
+      POSTGRES_PASSWORD: proofops_local
+    ports: ["127.0.0.1:55432:5432"]
+    volumes: ["proofops-db:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U proofops -d proofops"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  migrate:
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://proofops:proofops_local@db:5432/proofops
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    build: .
+    command: ["uvicorn", "proofops.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgresql+psycopg://proofops:proofops_local@db:5432/proofops
+      ARTIFACT_DIR: /app/artifacts
+    ports: ["127.0.0.1:8000:8000"]
+    volumes: ["proofops-artifacts:/app/artifacts"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  worker:
+    build: .
+    command: ["proofops-worker"]
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgresql+psycopg://proofops:proofops_local@db:5432/proofops
+      ARTIFACT_DIR: /app/artifacts
+    volumes: ["proofops-artifacts:/app/artifacts"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  web:
+    build: {context: ./frontend}
+    ports: ["127.0.0.1:5173:80"]
+    depends_on: [api]
+  workload:
+    build: .
+    command: ["python", "demo/reporting_api/server.py"]
+    environment:
+      WORKLOAD_HOST: 0.0.0.0
+    ports: ["127.0.0.1:8080:8080"]
+    mem_limit: 256m
+    cpus: 1.0
+    profiles: ["workload"]
+  k6:
+    image: grafana/k6:1.2.3
+    profiles: ["tools"]
+    volumes: ["./testing:/scripts:ro", "./artifacts/workload:/results"]
+    working_dir: /results
+    environment:
+      TARGET_URL: http://workload:8080
+      PROFILE: ${PROFILE:-smoke}
+      RUN_ID: ${RUN_ID:-baseline-smoke-01}
+    command: ["run", "/scripts/virtual_users.js"]
+volumes:
+  proofops-db:
+  proofops-artifacts:

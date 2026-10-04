@@ -1,0 +1,12 @@
+.git
+.env
+.venv
+.bootstrap
+.cache
+.tools
+artifacts
+tests
+evaluation
+frontend
+docs
+**/__pycache__
