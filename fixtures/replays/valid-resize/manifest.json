@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "origin": "synthetic_fixture",
+  "reference_time": "2026-10-05T12:00:00+00:00",
+  "files": {
+    "plan.json": "a91aa134ef6dabd5fec3a6f4af511362221540376febe4daed868b80390928eb",
+    "service-map.json": "4a249db100835ca07d652c9bfc5e75ebc01cf90a772dc7d60333347a5d876373",
+    "contract.json": "cea3a57234928af7350cc65fe6f7fed78030b12cd555abc2c44ce7f7a4839123",
+    "rates.json": "eb5a5b6797dfbae059902759cadd59e3f3d647419e8d3ed2da7a3bbeb3880fa7",
+    "usage.json": "8415096cac9c1e4f2ae3b9bf384752bc88d0e61772f3d14cd0e452fc487cf487",
+    "evidence.json": "4ab3619048704c2856d141007b63fd8f6d2b1129cee7f32d6f99e8fb0557b672",
+    "workloads.json": "265a08ccedd204ad58a4c0462c3677c6d25f9347c315f47278325348d90229c7"
+  }
+}

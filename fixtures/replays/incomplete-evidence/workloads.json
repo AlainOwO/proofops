@@ -1,0 +1,155 @@
+[
+  {
+    "schema_version": 1,
+    "run_id": "synthetic-baseline-1",
+    "role": "baseline",
+    "scope": {
+      "schema_version": 1,
+      "account_id": "111122223333",
+      "region": "ap-south-1",
+      "cluster": "proofops-demo",
+      "service": "reports-api",
+      "terraform_address": "aws_ecs_task_definition.reports",
+      "environment": "isolated-demo"
+    },
+    "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+    "config_hash": "3a9c379f9cbe8e2a14d25c0d6074afe10c32262350541f346cce93b78ebde686",
+    "non_resize_config_hash": "860a8d031ebd9e5335c8eef9137b520eaddcf40b987a0fa57ce1b5062b484a4d",
+    "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+    "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+    "environment": "isolated-demo",
+    "platform": "synthetic-linux-x86_64",
+    "started_at": "2026-10-05T10:00:00+00:00",
+    "ended_at": "2026-10-05T10:08:00+00:00",
+    "warmup_policy": "included-consistently-v1",
+    "offered": 20100,
+    "completed": 20100,
+    "correct": 20100,
+    "http_failures": 0,
+    "incorrect_successful_responses": 0,
+    "dropped_iterations": 0,
+    "restarts": 0,
+    "p95_latency_ms": "92",
+    "request_classes": {
+      "small": {
+        "completed": 16080,
+        "correct": 16080,
+        "p95_latency_ms": "50"
+      },
+      "medium": {
+        "completed": 3015,
+        "correct": 3015,
+        "p95_latency_ms": "110"
+      },
+      "large": {
+        "completed": 1005,
+        "correct": 1005,
+        "p95_latency_ms": "180"
+      }
+    },
+    "terminal_status": "completed",
+    "origin": "synthetic_fixture"
+  },
+  {
+    "schema_version": 1,
+    "run_id": "synthetic-baseline-2",
+    "role": "baseline",
+    "scope": {
+      "schema_version": 1,
+      "account_id": "111122223333",
+      "region": "ap-south-1",
+      "cluster": "proofops-demo",
+      "service": "reports-api",
+      "terraform_address": "aws_ecs_task_definition.reports",
+      "environment": "isolated-demo"
+    },
+    "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+    "config_hash": "3a9c379f9cbe8e2a14d25c0d6074afe10c32262350541f346cce93b78ebde686",
+    "non_resize_config_hash": "860a8d031ebd9e5335c8eef9137b520eaddcf40b987a0fa57ce1b5062b484a4d",
+    "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+    "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+    "environment": "isolated-demo",
+    "platform": "synthetic-linux-x86_64",
+    "started_at": "2026-10-05T10:20:00+00:00",
+    "ended_at": "2026-10-05T10:28:00+00:00",
+    "warmup_policy": "included-consistently-v1",
+    "offered": 20100,
+    "completed": 20100,
+    "correct": 20100,
+    "http_failures": 0,
+    "incorrect_successful_responses": 0,
+    "dropped_iterations": 0,
+    "restarts": 0,
+    "p95_latency_ms": "92",
+    "request_classes": {
+      "small": {
+        "completed": 16080,
+        "correct": 16080,
+        "p95_latency_ms": "50"
+      },
+      "medium": {
+        "completed": 3015,
+        "correct": 3015,
+        "p95_latency_ms": "110"
+      },
+      "large": {
+        "completed": 1005,
+        "correct": 1005,
+        "p95_latency_ms": "180"
+      }
+    },
+    "terminal_status": "completed",
+    "origin": "synthetic_fixture"
+  },
+  {
+    "schema_version": 1,
+    "run_id": "synthetic-baseline-3",
+    "role": "baseline",
+    "scope": {
+      "schema_version": 1,
+      "account_id": "111122223333",
+      "region": "ap-south-1",
+      "cluster": "proofops-demo",
+      "service": "reports-api",
+      "terraform_address": "aws_ecs_task_definition.reports",
+      "environment": "isolated-demo"
+    },
+    "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+    "config_hash": "3a9c379f9cbe8e2a14d25c0d6074afe10c32262350541f346cce93b78ebde686",
+    "non_resize_config_hash": "860a8d031ebd9e5335c8eef9137b520eaddcf40b987a0fa57ce1b5062b484a4d",
+    "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+    "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+    "environment": "isolated-demo",
+    "platform": "synthetic-linux-x86_64",
+    "started_at": "2026-10-05T10:40:00+00:00",
+    "ended_at": "2026-10-05T10:48:00+00:00",
+    "warmup_policy": "included-consistently-v1",
+    "offered": 20100,
+    "completed": 20100,
+    "correct": 20100,
+    "http_failures": 0,
+    "incorrect_successful_responses": 0,
+    "dropped_iterations": 0,
+    "restarts": 0,
+    "p95_latency_ms": "92",
+    "request_classes": {
+      "small": {
+        "completed": 16080,
+        "correct": 16080,
+        "p95_latency_ms": "50"
+      },
+      "medium": {
+        "completed": 3015,
+        "correct": 3015,
+        "p95_latency_ms": "110"
+      },
+      "large": {
+        "completed": 1005,
+        "correct": 1005,
+        "p95_latency_ms": "180"
+      }
+    },
+    "terminal_status": "completed",
+    "origin": "synthetic_fixture"
+  }
+]

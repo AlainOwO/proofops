@@ -1,0 +1,54 @@
+{
+  "retrieved_date": "2026-10-05",
+  "cards": [
+    {
+      "id": "fargate-billing",
+      "topic": "pricing",
+      "text": "Fargate compute pricing is based on the task's requested CPU and memory, plus other applicable dimensions. Reducing a container limit without reducing task allocation does not by itself reduce that task's compute charge. Region, architecture, purchase option and task runtime matter.",
+      "source": "https://aws.amazon.com/fargate/pricing/"
+    },
+    {
+      "id": "telemetry-meaning",
+      "topic": "metrics",
+      "text": "Match metric namespace, resource dimensions, units, aggregation and time window. Service memory utilization, a process heap and a container hard limit are different measurements. Basic ECS metrics do not supply application request latency or request success by themselves.",
+      "source": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/available-metrics.html"
+    },
+    {
+      "id": "low-cpu",
+      "topic": "downsizing",
+      "text": "Low CPU alone does not establish spare capacity. Slack's January 2021 incident describes network waits lowering CPU and initially triggering downscaling. Check request latency, errors, demand and dependency waits before recommending a smaller allocation.",
+      "source": "https://slack.engineering/slacks-outage-on-january-4th-2021/"
+    },
+    {
+      "id": "canary-comparison",
+      "topic": "performance",
+      "text": "Compare candidate and control using population-specific metrics and compatible time windows. Overall service metrics can hide a bad canary. A short or unrepresentative workload test does not establish safety under every production load.",
+      "source": "https://sre.google/workbook/canarying-releases/"
+    },
+    {
+      "id": "billing-freshness",
+      "topic": "billing",
+      "text": "Cost Explorer refreshes at least every 24 hours, with some source data arriving later. Billing data is useful for cost accounting, not a live signal for an active incident.",
+      "source": "https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html"
+    },
+    {
+      "id": "terraform-unknown",
+      "topic": "configuration",
+      "text": "Terraform plan JSON distinguishes unknown values and sensitive values. Preserve that metadata. An unresolved required field needs review; it is not a missing value that can be assumed zero or safe.",
+      "source": "https://developer.hashicorp.com/terraform/internals/json-format"
+    },
+    {
+      "id": "bounded-retries",
+      "topic": "automation",
+      "text": "Retries at multiple layers can amplify load. Retry only transient failures with a bounded policy and backoff. Use idempotency where side effects are possible. A permanently exhausted billing quota is not repaired by repeated identical requests.",
+      "source": "https://d1.awsstatic.com/builderslibrary/pdfs/timeouts-retries-and-backoff-with-jitter.pdf"
+    },
+    {
+      "id": "template-boundaries",
+      "topic": "policy",
+      "text": "For this project's ECS prototype, a generated memory rule must cite a confirmed incident and an engineer-approved service-specific bound. Compile only supported rule templates, test bad/healthy/unknown cases, and review the rule separately before enforcement.",
+      "source": "original project design; not an AWS guarantee"
+    }
+  ],
+  "notes": "Original summaries of cited sources. Retrieve relevant cards only; do not load this entire catalog automatically."
+}

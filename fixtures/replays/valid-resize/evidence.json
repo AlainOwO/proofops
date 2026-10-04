@@ -1,0 +1,89 @@
+[
+  {
+    "schema_version": 1,
+    "evidence_id": "fixture-task_configuration",
+    "kind": "task_configuration",
+    "source": "original-labelled-replay",
+    "scope": {
+      "schema_version": 1,
+      "account_id": "111122223333",
+      "region": "ap-south-1",
+      "cluster": "proofops-demo",
+      "service": "reports-api",
+      "terraform_address": "aws_ecs_task_definition.reports",
+      "environment": "isolated-demo"
+    },
+    "resource_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "observed_start": "2026-10-05T09:00:00Z",
+    "observed_end": "2026-10-05T11:30:00Z",
+    "collected_at": "2026-10-05T11:31:00Z",
+    "collection_status": "complete",
+    "units": "records",
+    "population": "mapped_service",
+    "sample_count": 3,
+    "content_hash": "7adf5d6451f59962c709209903613c6da5f4e1fed2c60432737f968b081488e4",
+    "redaction_state": "allowlisted",
+    "origin": "synthetic_fixture",
+    "metadata": {
+      "reason": "Synthetic fixture; no AWS query or workload run produced this record."
+    }
+  },
+  {
+    "schema_version": 1,
+    "evidence_id": "fixture-workload_baseline",
+    "kind": "workload_baseline",
+    "source": "original-labelled-replay",
+    "scope": {
+      "schema_version": 1,
+      "account_id": "111122223333",
+      "region": "ap-south-1",
+      "cluster": "proofops-demo",
+      "service": "reports-api",
+      "terraform_address": "aws_ecs_task_definition.reports",
+      "environment": "isolated-demo"
+    },
+    "resource_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "observed_start": "2026-10-05T09:00:00Z",
+    "observed_end": "2026-10-05T11:30:00Z",
+    "collected_at": "2026-10-05T11:31:00Z",
+    "collection_status": "complete",
+    "units": "records",
+    "population": "mapped_service",
+    "sample_count": 3,
+    "content_hash": "72ba49f59891140b4abbaa1cb83679181c22968abc0e8a94f57455537d488383",
+    "redaction_state": "allowlisted",
+    "origin": "synthetic_fixture",
+    "metadata": {
+      "reason": "Synthetic fixture; no AWS query or workload run produced this record."
+    }
+  },
+  {
+    "schema_version": 1,
+    "evidence_id": "fixture-workload_candidate",
+    "kind": "workload_candidate",
+    "source": "original-labelled-replay",
+    "scope": {
+      "schema_version": 1,
+      "account_id": "111122223333",
+      "region": "ap-south-1",
+      "cluster": "proofops-demo",
+      "service": "reports-api",
+      "terraform_address": "aws_ecs_task_definition.reports",
+      "environment": "isolated-demo"
+    },
+    "resource_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "observed_start": "2026-10-05T09:00:00Z",
+    "observed_end": "2026-10-05T11:30:00Z",
+    "collected_at": "2026-10-05T11:31:00Z",
+    "collection_status": "complete",
+    "units": "records",
+    "population": "mapped_service",
+    "sample_count": 3,
+    "content_hash": "70d3c991106c4d04a2f209c5bb3c0f6711f6bd19690e2bb7527eefa828a08e6a",
+    "redaction_state": "allowlisted",
+    "origin": "synthetic_fixture",
+    "metadata": {
+      "reason": "Synthetic fixture; no AWS query or workload run produced this record."
+    }
+  }
+]

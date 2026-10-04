@@ -1,0 +1,52 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.10.5",
+  "resource_changes": [
+    {
+      "address": "aws_ecs_task_definition.reports",
+      "mode": "managed",
+      "type": "aws_ecs_task_definition",
+      "name": "reports",
+      "change": {
+        "actions": [
+          "update"
+        ],
+        "before": {
+          "cpu": "2048",
+          "memory": "4096",
+          "family": "reports-demo",
+          "requires_compatibilities": [
+            "FARGATE"
+          ],
+          "network_mode": "awsvpc",
+          "runtime_platform": [
+            {
+              "operating_system_family": "LINUX",
+              "cpu_architecture": "X86_64"
+            }
+          ],
+          "container_definitions": "[{\"essential\": true, \"image\": \"example.invalid/reports@sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c\", \"name\": \"reports-api\", \"portMappings\": [{\"containerPort\": 8080}]}]"
+        },
+        "after": {
+          "cpu": "512",
+          "memory": "1024",
+          "family": "reports-demo",
+          "requires_compatibilities": [
+            "FARGATE"
+          ],
+          "network_mode": "awsvpc",
+          "runtime_platform": [
+            {
+              "operating_system_family": "LINUX",
+              "cpu_architecture": "X86_64"
+            }
+          ],
+          "container_definitions": "[{\"essential\": true, \"image\": \"example.invalid/reports@sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c\", \"name\": \"reports-api\", \"portMappings\": [{\"containerPort\": 8080}]}]"
+        },
+        "after_unknown": {},
+        "before_sensitive": {},
+        "after_sensitive": {}
+      }
+    }
+  ]
+}

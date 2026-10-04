@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "scope": {
+    "schema_version": 1,
+    "account_id": "111122223333",
+    "region": "ap-south-1",
+    "cluster": "proofops-demo",
+    "service": "reports-api",
+    "terraform_address": "aws_ecs_task_definition.reports",
+    "environment": "isolated-demo"
+  },
+  "repository": "local/proofops-demo",
+  "base_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}

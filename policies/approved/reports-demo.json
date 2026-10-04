@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "contract": {
+    "schema_version": 1,
+    "contract_id": "reports-demo-v1",
+    "owner": "local-demo-operator",
+    "revision": 1,
+    "scope": {
+      "schema_version": 1,
+      "account_id": "111122223333",
+      "region": "ap-south-1",
+      "cluster": "proofops-demo",
+      "service": "reports-api",
+      "terraform_address": "aws_ecs_task_definition.reports",
+      "environment": "isolated-demo"
+    },
+    "applicability": {
+      "schema_version": 1,
+      "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+      "workload_profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+      "dependency_state_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+      "non_resize_config_hash": "860a8d031ebd9e5335c8eef9137b520eaddcf40b987a0fa57ce1b5062b484a4d"
+    },
+    "minimum_task_memory_mib": 2048,
+    "approval_reference": "SYNTHETIC-APPROVAL-001",
+    "origin": "synthetic_fixture",
+    "requirements": {
+      "schema_version": 1,
+      "min_correct_requests_per_run": 10000,
+      "max_p95_latency_ms": "250",
+      "max_http_failure_rate_exclusive": "0.01",
+      "max_incorrect_successful_responses": 0,
+      "max_dropped_iterations": 0,
+      "max_restarts": 0,
+      "required_repetitions": 3,
+      "max_evidence_age_seconds": 86400,
+      "required_sources": [
+        "terraform",
+        "task_configuration",
+        "workload_baseline",
+        "workload_candidate"
+      ]
+    }
+  },
+  "guard": {
+    "schema_version": 1,
+    "guard_id": "reports-memory-floor",
+    "revision": 1,
+    "kind": "ecs_task_memory_floor",
+    "service_contract_id": "reports-demo-v1",
+    "minimum_task_memory_mib": 2048,
+    "incident_id": "INC-DEMO-017",
+    "repair_reference": "SYNTHETIC-REPAIR-001",
+    "approved_bound_fact_id": "approved.minimum_task_memory_mib",
+    "rationale_fact_ids": [
+      "incident.repair_verified"
+    ],
+    "owner": "local-demo-operator",
+    "reviewer": "synthetic-example-reviewer",
+    "state": "approved_in_trusted_revision",
+    "approval_reference": "SYNTHETIC-APPROVAL-001",
+    "contract_hash": "672fb81588166935f9c44ccd2d0b53be05877485af6d32ade6bf67bfceb982d0"
+  },
+  "exceptions": []
+}

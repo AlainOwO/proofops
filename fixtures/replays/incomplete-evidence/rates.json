@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "rate_id": "synthetic-linux-x86-2026-10",
+  "currency": "USD",
+  "price_date": "2026-10-01T00:00:00Z",
+  "retrieved_at": "2026-10-01T00:00:00Z",
+  "source_url": "https://aws.amazon.com/fargate/pricing/",
+  "region": "ap-south-1",
+  "architecture": "X86_64",
+  "os": "LINUX",
+  "purchase_option": "on_demand",
+  "price_per_vcpu_hour": "0.04",
+  "price_per_gib_hour": "0.004",
+  "origin": "synthetic_fixture",
+  "billing_minimum_seconds": 60,
+  "billing_granularity_seconds": 1
+}

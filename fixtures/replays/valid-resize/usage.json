@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "baseline_task_hours": "2920",
+  "candidate_task_hours": "2920",
+  "basis": "explicit_projection",
+  "window_start": "2026-10-01T00:00:00Z",
+  "window_end": "2026-10-31T10:00:00Z",
+  "assumptions": [
+    "Synthetic rates, not a current AWS quote.",
+    "Illustrative four tasks for 730 billable hours each."
+  ]
+}
