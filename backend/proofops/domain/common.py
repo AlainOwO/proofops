@@ -52,7 +52,10 @@ def strict_json(raw: bytes | str) -> Any:
     def constant(value: str) -> None:
         raise ValueError(f"Non-finite JSON number: {value}")
 
-    result = json.loads(raw, object_pairs_hook=pairs, parse_constant=constant)
+    try:
+        result = json.loads(raw, object_pairs_hook=pairs, parse_constant=constant)
+    except RecursionError as exc:
+        raise ValueError("JSON nesting exceeds supported depth") from exc
 
     def bound(value: Any, depth: int = 0) -> None:
         if depth > 32:

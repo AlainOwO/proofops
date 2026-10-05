@@ -283,6 +283,9 @@ def main():
             "contract": contract.model_dump(mode="json"),
             "guard": guard,
             "exceptions": [],
+            "template_hash": bytes_digest(
+                (ROOT / "policies/templates/ecs_task_memory_floor.rego").read_bytes()
+            ),
         },
     )
     write(

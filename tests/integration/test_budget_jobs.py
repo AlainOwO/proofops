@@ -179,3 +179,80 @@ def test_nonretryable_and_uncertain_attempts(db, valid_bundle, trusted, error):
         assert session.scalar(select(func.count(AttemptRow.id))) == 1
         if error == "timeout_uncertain":
             assert session.get(BudgetRow, "configured-local-USD").reserved > 0
+
+
+def test_transient_retry_consumes_the_second_attempt(db, valid_bundle, trusted):
+    report = review(valid_bundle, trusted)
+    usage = {"input_uncached": 100, "cache_read": 0, "cache_write": 0, "output": 50}
+    router, cheap, strong = setup_router(
+        db,
+        [
+            ModelResult(
+                "error", None, None, error_class="transient_throttle", definitely_unbilled=True
+            ),
+            ModelResult("completed", template_explanation(report)["output"], usage),
+        ],
+    )
+    result = router.explain(report, ai_preference="auto", task_id="transient")
+    assert result["status"] == "accepted" and cheap.calls == 2 and strong.calls == 0
+    assert len(result["attempts"]) == 2
+
+
+def test_both_provider_results_unusable_preserves_deterministic_guard(db, trusted):
+    from proofops.storage.bundles import load_replay
+
+    report = review(load_replay("unsafe-resize"), trusted)
+    usage = {"input_uncached": 100, "cache_read": 0, "cache_write": 0, "output": 50}
+    router, cheap, strong = setup_router(
+        db,
+        [ModelResult("incomplete", None, usage)],
+        [ModelResult("error", None, None, error_class="permanent_quota", definitely_unbilled=True)],
+    )
+    result = router.explain(report, ai_preference="auto", task_id="both-unusable")
+    assert cheap.calls == strong.calls == 1
+    assert result["status"] == "explanation_unavailable"
+    assert (
+        report.outcome == "revise_change"
+        and result["fallback"]["output"]["next_step"] == "revise_change"
+    )
+
+
+def test_worker_crash_after_dispatch_keeps_charge_pending_and_does_not_retry(
+    db, valid_bundle, trusted
+):
+    from proofops.storage.database import ReportRow
+    from proofops.workers.runner import run_once
+
+    class ProcessLost(BaseException):
+        pass
+
+    class CrashAdapter:
+        calls = 0
+
+        def generate_structured(self, **kwargs):
+            self.calls += 1
+            raise ProcessLost()
+
+    with db.begin() as session:
+        bundle, _ = store_bundle(session, valid_bundle)
+        job, _ = create_job(
+            session, bundle, trusted, key="crash", mode="replay", ai_preference="auto"
+        )
+        job_id = job.id
+    router, _, _ = setup_router(db, [])
+    adapter = CrashAdapter()
+    router.adapters["openai"] = adapter
+    with pytest.raises(ProcessLost):
+        run_once(factory=db, settings=router.settings, router=router)
+    with db.begin() as session:
+        session.get(JobRow, job_id).lease_until = utcnow() - timedelta(seconds=1)
+    assert run_once(factory=db, settings=router.settings, router=router) == job_id
+    with db() as session:
+        attempt = session.execute(select(AttemptRow)).scalar_one()
+        assert attempt.state == "uncertain" and attempt.actual_cost is None
+        assert session.get(BudgetRow, "configured-local-USD").reserved > 0
+        report = session.get(ReportRow, job_id)
+        assert report.outcome == "request_review"
+        assert report.explanation["status"] == "explanation_unavailable"
+        assert Decimal(report.explanation["pending_reserved_usd"]) > 0
+    assert adapter.calls == 1

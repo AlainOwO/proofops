@@ -61,5 +61,6 @@
     "approval_reference": "SYNTHETIC-APPROVAL-001",
     "contract_hash": "5bb273f569dfcaeed24c545af78fa019dee9f244f88b43b4292be00e0097df23"
   },
-  "exceptions": []
+  "exceptions": [],
+  "template_hash": "9c16ac8649222252bc7e8f4d9f7a32583d818ebb80d5a72dd2b16f83daef7d48"
 }

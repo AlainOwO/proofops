@@ -1,7 +1,7 @@
 import argparse
 import logging
 import threading
-from time import sleep
+from time import monotonic, sleep
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -39,9 +39,17 @@ def run_once(
         return None
     stop = threading.Event()
     stage = ["normalize_and_review"]
+    deadline = monotonic() + settings.job_timeout_seconds
+
+    def check_deadline():
+        if monotonic() >= deadline:
+            raise TimeoutError("job stage deadline exceeded")
 
     def maintain_lease():
         while not stop.wait(settings.job_lease_seconds / 3):
+            if monotonic() >= deadline:
+                logger.error("Worker deadline exceeded; lease will expire for recovery")
+                return
             try:
                 if not heartbeat(factory, job_id, owner, stage[0], settings.job_lease_seconds):
                     return
@@ -66,6 +74,7 @@ def run_once(
         if mode not in {"replay", "live"}:
             raise ValueError("invalid persisted execution mode")
         report = review(bundle, trusted, review_id=job_id, mode=mode)
+        check_deadline()
         stage[0] = "explain"
         if not heartbeat(factory, job_id, owner, stage[0], settings.job_lease_seconds):
             return job_id
@@ -73,6 +82,7 @@ def run_once(
         explanation = router.explain(
             report, ai_preference=preference, task_id=job_id, review_id=job_id
         )
+        check_deadline()
         stage[0] = "persist_report"
         if not heartbeat(factory, job_id, owner, stage[0], settings.job_lease_seconds):
             return job_id
@@ -143,7 +153,13 @@ def main():
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     while True:
-        handled = run_once()
+        try:
+            handled = run_once()
+        except Exception as exc:
+            logger.error(
+                "Worker unavailable (%s); retrying bounded local queue polling", type(exc).__name__
+            )
+            handled = None
         if args.once:
             return
         if handled is None:

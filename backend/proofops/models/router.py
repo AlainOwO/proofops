@@ -185,6 +185,8 @@ class ModelRouter:
                     },
                 )
                 if not reservation.created or not self.ledger.dispatch(reservation.attempt_id):
+                    if reservation.state in {"reserved", "dispatched", "uncertain"}:
+                        output["pending_reserved_usd"] = str(pending + reservation.amount)
                     output["reason"] = (
                         "A prior attempt exists; reconcile it before any repeated dispatch."
                     )
@@ -211,6 +213,7 @@ class ModelRouter:
                     "error_class": result.error_class,
                     "latency_seconds": latency,
                     "route_reason": last_reason,
+                    "price_version": price.as_of.isoformat(),
                 }
                 self.ledger.reconcile(
                     reservation.attempt_id, cost, metadata, result.terminal_status
@@ -337,9 +340,10 @@ class ModelRouter:
         task_id: str,
         review_id: str | None = None,
         ai_preference: str = "off",
+        policy: str = "routed",
     ) -> dict:
         draft = draft_from_approved(trusted)
-        if ai_preference == "off" or self.settings.ai_mode == "off":
+        if ai_preference == "off" or self.settings.ai_mode == "off" or policy == "template":
             return {
                 "status": "template",
                 "output": draft.model_dump(mode="json"),
@@ -356,6 +360,7 @@ class ModelRouter:
             task_id=task_id,
             review_id=review_id,
             scope=digest(trusted.contract.scope),
+            policy=policy,
         )
         if result["output"] is None:
             result["fallback"] = {"status": "template", "output": draft.model_dump(mode="json")}

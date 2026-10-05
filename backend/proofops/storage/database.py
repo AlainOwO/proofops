@@ -232,7 +232,17 @@ def make_engine(url: str | None = None):
     url = url or get_settings().database_url
     if not url.startswith("postgresql"):
         raise ValueError("ProofOps requires PostgreSQL for transaction and lease guarantees")
-    return create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=5)
+    return create_engine(
+        url,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=5,
+        pool_timeout=5,
+        connect_args={
+            "connect_timeout": 5,
+            "options": "-c statement_timeout=15000 -c lock_timeout=5000",
+        },
+    )
 
 
 @lru_cache

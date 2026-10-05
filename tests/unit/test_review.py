@@ -133,3 +133,29 @@ def test_model_cannot_change_facts_or_action(valid_bundle, trusted):
 )
 def test_legacy_migration(old, new):
     assert legacy_outcome(old) == new
+
+
+def test_container_only_change_has_no_task_compute_saving(valid_bundle, trusted):
+    import json
+    from proofops.config import APP_ROOT
+    from proofops.domain.common import digest
+    from proofops.normalization.terraform import normalize
+
+    plan = json.loads((APP_ROOT / "fixtures/replays/valid-resize/plan.json").read_text())
+    change = plan["resource_changes"][0]["change"]
+    change["after"].update(cpu=change["before"]["cpu"], memory=change["before"]["memory"])
+    containers = json.loads(change["after"]["container_definitions"])
+    containers[0]["memory"] = 512
+    change["after"]["container_definitions"] = json.dumps(containers)
+    valid_bundle.change = normalize(plan, valid_bundle.change.service_map, digest(plan))
+    result = review(valid_bundle, trusted)
+    assert result.cost.projected_difference == 0
+    assert "TASK_ALLOCATION_UNCHANGED" in {item.code for item in result.findings}
+
+
+def test_low_cpu_without_demand_evidence_does_not_justify_resize(valid_bundle, trusted):
+    valid_bundle.evidence[0].metadata = {"reason": "CPU 5 percent while requests wait on a dependency."}
+    valid_bundle.workload_runs = []
+    result = review(valid_bundle, trusted)
+    assert result.outcome == "collect_evidence"
+    assert not result.performance["passed"]

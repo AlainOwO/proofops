@@ -41,6 +41,7 @@ EXPORT_FILES = {
     "explanation.json",
     "trusted-revision.json",
     "schemas.json",
+    "versions.json",
 }
 REPLAYS = {"valid-resize", "unsafe-resize", "incomplete-evidence"}
 
@@ -93,7 +94,7 @@ def bounded_zip(
                 if len(value) > settings.max_artifact_bytes or len(value) != entry.file_size:
                     raise OverflowError("artifact expanded beyond its declared size")
                 result[name] = value
-    except zipfile.BadZipFile as exc:
+    except (zipfile.BadZipFile, NotImplementedError, RuntimeError) as exc:
         raise ValueError("invalid ZIP bundle") from exc
     return result
 
@@ -116,8 +117,14 @@ def import_files(files: dict[str, bytes]) -> ReviewInput:
     change = normalize(documents["plan.json"], service_map, manifest.files["plan.json"])
     # Metadata is an allowlist, never a channel for raw logs, secrets or arbitrary
     # attachments. Original bytes are hashed above and then discarded.
+    if not isinstance(documents["evidence.json"], list) or not isinstance(
+        documents["workloads.json"], list
+    ):
+        raise ValueError("evidence and workload artifacts must be JSON arrays")
     evidence = []
     for raw in documents["evidence.json"]:
+        if not isinstance(raw, dict) or not isinstance(raw.get("metadata", {}), dict):
+            raise ValueError("each evidence record and its metadata must be an object")
         clean = dict(raw)
         clean["metadata"] = {
             key: redact_text(value) if isinstance(value, str) else value
@@ -191,6 +198,10 @@ def import_zip(raw: bytes) -> ReviewInput:
 def export_report(
     bundle: ReviewInput, report: ReviewReport, explanation: dict, trusted: TrustedRevision
 ) -> bytes:
+    from importlib.metadata import version
+
+    from proofops.normalization.terraform import CPU_MEMORY_SOURCE
+
     values = {
         "sanitized-input.json": bundle,
         "report.json": report,
@@ -199,6 +210,17 @@ def export_report(
         "schemas.json": {
             "ReviewInput": ReviewInput.model_json_schema(),
             "ReviewReport": ReviewReport.model_json_schema(),
+        },
+        "versions.json": {
+            "application": "0.1.0",
+            "engine_contract": "review-v1",
+            "shape": "ecs-fargate-linux-v1",
+            "fargate_mapping_source": CPU_MEMORY_SOURCE,
+            "policy_template_hash": trusted.template_hash,
+            "packages": {
+                name: version(name)
+                for name in ("fastapi", "pydantic", "sqlalchemy", "boto3", "openai", "anthropic")
+            },
         },
     }
     files = {name: canonical(value) for name, value in values.items()}
@@ -221,7 +243,9 @@ def export_report(
 def replay_export(raw: bytes) -> tuple[ReviewReport, bool]:
     from proofops.domain.engine import review
 
-    _, documents = verify_manifest(bounded_zip(raw, EXPORT_FILES | {"manifest.json"}), EXPORT_FILES)
+    files = bounded_zip(raw, EXPORT_FILES | {"manifest.json"})
+    expected = EXPORT_FILES if "versions.json" in files else EXPORT_FILES - {"versions.json"}
+    _, documents = verify_manifest(files, expected)
     bundle = ReviewInput.model_validate(documents["sanitized-input.json"])
     saved = ReviewReport.model_validate(documents["report.json"])
     trusted = TrustedRevision.model_validate(documents["trusted-revision.json"])

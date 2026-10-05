@@ -7,6 +7,7 @@ from proofops.domain.common import digest, utcnow
 from proofops.domain.schemas import ReviewInput
 from proofops.policies.guards import TrustedRevision
 from proofops.storage.database import (
+    AttemptRow,
     AuditRow,
     BundleRow,
     ChangeRow,
@@ -14,6 +15,7 @@ from proofops.storage.database import (
     EvidenceRow,
     GuardRevisionRow,
     JobRow,
+    LedgerRow,
     WorkloadRow,
     identifier,
 )
@@ -171,6 +173,31 @@ def claim_job(factory, owner: str, lease_seconds: int = 120) -> str | None:
         ).scalar_one_or_none()
         if not job:
             return None
+        if job.state == "running":
+            # A process can die after dispatch and before recording usage. A
+            # reclaimed lease never refunds or re-dispatches that reservation.
+            pending = (
+                session.execute(
+                    select(AttemptRow)
+                    .where(AttemptRow.review_id == job.id, AttemptRow.state == "dispatched")
+                    .with_for_update()
+                )
+                .scalars()
+                .all()
+            )
+            for attempt in pending:
+                attempt.state = "uncertain"
+                attempt.metadata_json = {
+                    **attempt.metadata_json,
+                    "recovery_reason": "worker_lease_expired",
+                }
+                session.add(
+                    LedgerRow(
+                        attempt_id=attempt.id,
+                        event="worker_recovery_pending",
+                        amount=attempt.reserved_cost,
+                    )
+                )
         if job.claimed_count >= 3:
             job.state, job.error_code = "failed", "JOB_RECOVERY_LIMIT"
             job.lease_until = None

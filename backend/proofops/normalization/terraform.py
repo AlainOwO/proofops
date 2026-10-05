@@ -33,7 +33,11 @@ def metadata_paths(value: Any, prefix: str = "") -> list[str]:
             for index, child in enumerate(value)
             for path in metadata_paths(child, f"{prefix}[{index}]")
         ]
-    return []
+    if value is False or value is None:
+        return []
+    raise ValueError(
+        "Terraform unknown/sensitive metadata must contain booleans, arrays or objects"
+    )
 
 
 def blocked(paths: list[str], key: str) -> bool:
@@ -135,7 +139,8 @@ def normalize(plan: dict[str, Any], service_map: ServiceMap, source_hash: str) -
         raise ValueError("mapped resource change/actions are required")
     actions = change["actions"]
     if not actions or not all(
-        action in {"create", "update", "delete", "no-op", "read"} for action in actions
+        isinstance(action, str) and action in {"create", "update", "delete", "no-op", "read"}
+        for action in actions
     ):
         raise ValueError("unrecognized Terraform change action")
     unknown = metadata_paths(change.get("after_unknown", {}))
@@ -151,7 +156,12 @@ def normalize(plan: dict[str, Any], service_map: ServiceMap, source_hash: str) -
         if not config:
             supported = False
             continue
-        if not isinstance(raw, dict) or "FARGATE" not in raw.get("requires_compatibilities", []):
+        if (
+            not isinstance(raw, dict)
+            or not isinstance(raw.get("requires_compatibilities"), list)
+            or "FARGATE" not in raw["requires_compatibilities"]
+            or raw.get("network_mode") != "awsvpc"
+        ):
             supported = False
         if config.os != "LINUX" or config.architecture != "X86_64":
             supported = False

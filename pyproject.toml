@@ -27,6 +27,7 @@ docs = ["reportlab>=4.2,<5", "pymupdf>=1.25,<2", "pillow>=11,<13"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-ra --strict-markers"
 markers = ["integration: requires migrated real PostgreSQL", "policy: requires pinned Conftest", "load: measured workload experiment"]
 
@@ -49,4 +50,3 @@ files = ["backend/proofops"]
 check_untyped_defs = true
 ignore_missing_imports = true
 warn_unused_ignores = true
-

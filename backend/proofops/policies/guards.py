@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import Field
 
 from proofops.config import APP_ROOT
-from proofops.domain.common import digest, strict_json
+from proofops.domain.common import bytes_digest, digest, strict_json
 from proofops.domain.schemas import (
     Hash,
     Label,
@@ -50,15 +50,37 @@ class TrustedRevision(Record):
     contract: ServiceContract
     guard: GuardSpec
     exceptions: list[ExceptionSpec] = Field(default_factory=list, max_length=20)
+    template_hash: Hash | None = None
 
     @property
     def revision_hash(self) -> str:
-        return digest(self)
+        # Preserve the identity of old exported snapshots. Fresh enforcing
+        # revisions loaded below must include an explicit template hash.
+        return digest(
+            self
+            if self.template_hash is not None
+            else self.model_dump(mode="json", exclude={"template_hash"})
+        )
 
 
 def load_trusted(path: Path | None = None) -> TrustedRevision:
     source = path or APP_ROOT / "policies/approved/reports-demo.json"
+    source = source.resolve()
+    if not source.is_relative_to(APP_ROOT) or any(
+        part in {"evaluation", "evaluator_only", ".git"}
+        for part in source.relative_to(APP_ROOT).parts
+    ):
+        raise ValueError(
+            "trusted policy must be inside this application checkout and outside evaluator storage"
+        )
+    if source.stat().st_size > 1_048_576:
+        raise ValueError("trusted policy exceeds its size bound")
     revision = TrustedRevision.model_validate(strict_json(source.read_bytes()))
+    expected_template = bytes_digest(
+        (APP_ROOT / "policies/templates/ecs_task_memory_floor.rego").read_bytes()
+    )
+    if revision.template_hash != expected_template:
+        raise ValueError("trusted revision must bind the exact reviewed policy template hash")
     if revision.guard.contract_hash != digest(revision.contract):
         raise ValueError("trusted guard's contract hash does not match its contract")
     if revision.guard.minimum_task_memory_mib != revision.contract.minimum_task_memory_mib:

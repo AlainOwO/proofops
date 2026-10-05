@@ -234,3 +234,23 @@ def test_sensitive_plan_bytes_never_survive_import(valid_bundle):
     bundle = import_files(raw)
     assert "SUPER-SECRET-TEST-VALUE" not in bundle.model_dump_json()
     assert bundle.change.after.image_digest is None
+
+
+def test_incomplete_log_query_is_stopped_at_the_call_bound(aws_clients):
+    from datetime import timedelta
+    from time import monotonic
+    from proofops.domain.common import utcnow
+
+    clients, stubs = aws_clients
+    stubs["logs"].add_response("start_query", {"queryId": "bounded-query"}, {
+        "logGroupName": "/proofops/demo", "startTime": ANY, "endTime": ANY,
+        "queryString": ANY, "limit": 20,
+    })
+    stubs["logs"].add_response("get_query_results", {"status": "Running", "results": []}, {"queryId": "bounded-query"})
+    stubs["logs"].add_response("stop_query", {"success": True}, {"queryId": "bounded-query"})
+    collector = AWSCollector(clients, max_calls=3, log_group="/proofops/demo", sleeper=lambda _: None)
+    collector.deadline = monotonic() + 20
+    end = utcnow()
+    result = collector.log_source(end - timedelta(hours=1), end)
+    assert result.status == "pending" and collector.calls == 3
+    assert result.data["query_status"] == "deadline_or_call_limit"

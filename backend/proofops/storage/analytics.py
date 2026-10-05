@@ -33,6 +33,8 @@ def parse_amount(value: str | None) -> Decimal | None:
 
 
 def ingest_costs(session, raw: bytes, dataset: str = "focus-sample") -> dict:
+    if not 1 <= len(dataset) <= 120:
+        raise ValueError("billing dataset label must contain 1 to 120 characters")
     if len(raw) > 5_242_880:
         raise OverflowError("billing file exceeds 5 MiB")
     reader = csv.DictReader(io.StringIO(raw.decode("utf-8-sig")))

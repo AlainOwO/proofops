@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     aws_lookback_seconds: int = Field(default=3600, ge=60, le=86400)
     aws_max_calls: int = Field(default=12, ge=1, le=30)
     job_lease_seconds: int = Field(default=120, ge=30, le=600)
+    job_timeout_seconds: int = Field(default=180, ge=30, le=600)
     cors_origins: str = "http://127.0.0.1:5173,http://localhost:5173"
     max_bundle_bytes: int = Field(default=5_242_880, ge=1024, le=20_971_520)
     max_artifact_bytes: int = Field(default=1_048_576, ge=1024, le=5_242_880)
