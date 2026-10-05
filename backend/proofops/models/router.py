@@ -310,7 +310,18 @@ class ModelRouter:
                 **fallback,
                 "route_reason": "Resolve coverage or missing evidence before a model call",
             }
-        system, user, context = explanation_context(report, compact=compact)
+        try:
+            system, user, context = explanation_context(report, compact=compact)
+        except ValueError:
+            return {
+                "status": "explanation_unavailable",
+                "source": "model",
+                "output": None,
+                "reason": "Prepared context exceeds the supported bound; no model call was made.",
+                "attempts": [],
+                "incremental_cost_usd": "0",
+                "fallback": fallback,
+            }
         result = self.generate(
             task="explain_review",
             system=system,

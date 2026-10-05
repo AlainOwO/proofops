@@ -137,6 +137,7 @@ def test_legacy_migration(old, new):
 
 def test_container_only_change_has_no_task_compute_saving(valid_bundle, trusted):
     import json
+
     from proofops.config import APP_ROOT
     from proofops.domain.common import digest
     from proofops.normalization.terraform import normalize
@@ -154,7 +155,9 @@ def test_container_only_change_has_no_task_compute_saving(valid_bundle, trusted)
 
 
 def test_low_cpu_without_demand_evidence_does_not_justify_resize(valid_bundle, trusted):
-    valid_bundle.evidence[0].metadata = {"reason": "CPU 5 percent while requests wait on a dependency."}
+    valid_bundle.evidence[0].metadata = {
+        "reason": "CPU 5 percent while requests wait on a dependency."
+    }
     valid_bundle.workload_runs = []
     result = review(valid_bundle, trusted)
     assert result.outcome == "collect_evidence"
