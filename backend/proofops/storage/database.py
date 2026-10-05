@@ -137,6 +137,7 @@ class JobRow(Base):
     stage: Mapped[str] = mapped_column(String(40), default="queued")
     mode: Mapped[str] = mapped_column(String(12), default="replay")
     ai_preference: Mapped[str] = mapped_column(String(16), default="off")
+    requested_by: Mapped[str] = mapped_column(String(80), default="host-operator")
     owner: Mapped[str | None] = mapped_column(String(64), nullable=True)
     lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

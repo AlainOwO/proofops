@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import insert
 from proofops.domain.common import digest, utcnow
 from proofops.domain.schemas import ReviewInput
 from proofops.policies.guards import TrustedRevision
+from proofops.storage.audit import HOST_OPERATOR
 from proofops.storage.database import (
     AttemptRow,
     AuditRow,
@@ -45,7 +46,9 @@ def store_trusted(session, trusted: TrustedRevision) -> None:
     )
 
 
-def store_bundle(session, bundle: ReviewInput) -> tuple[BundleRow, bool]:
+def store_bundle(
+    session, bundle: ReviewInput, *, actor: str = HOST_OPERATOR
+) -> tuple[BundleRow, bool]:
     scope = digest(bundle.change.service_map.scope)
     contract_id, change_id = digest(bundle.contract), digest(bundle.change)
     session.execute(
@@ -75,9 +78,18 @@ def store_bundle(session, bundle: ReviewInput) -> tuple[BundleRow, bool]:
         .returning(BundleRow.id)
     ).scalar_one_or_none()
     if not added:
-        return session.execute(
+        row = session.execute(
             select(BundleRow).where(BundleRow.content_hash == content_hash)
-        ).scalar_one(), False
+        ).scalar_one()
+        session.add(
+            AuditRow(
+                scope=scope,
+                kind="bundle_imported",
+                actor=actor,
+                data={"bundle_id": row.id, "status": "existing"},
+            )
+        )
+        return row, False
     for evidence in bundle.evidence:
         session.add(
             EvidenceRow(
@@ -100,10 +112,12 @@ def store_bundle(session, bundle: ReviewInput) -> tuple[BundleRow, bool]:
         AuditRow(
             scope=scope,
             kind="bundle_imported",
+            actor=actor,
             data={
                 "bundle_id": bundle_id,
                 "content_hash": content_hash,
                 "origin": bundle.origin.value,
+                "status": "created",
             },
         )
     )
@@ -113,7 +127,14 @@ def store_bundle(session, bundle: ReviewInput) -> tuple[BundleRow, bool]:
 
 
 def create_job(
-    session, bundle: BundleRow, trusted: TrustedRevision, *, key: str, mode: str, ai_preference: str
+    session,
+    bundle: BundleRow,
+    trusted: TrustedRevision,
+    *,
+    key: str,
+    mode: str,
+    ai_preference: str,
+    actor: str = HOST_OPERATOR,
 ) -> tuple[JobRow, bool]:
     store_trusted(session, trusted)
     request_hash = digest(
@@ -136,6 +157,7 @@ def create_job(
             request_hash=request_hash,
             mode=mode,
             ai_preference=ai_preference,
+            requested_by=actor,
         )
         .on_conflict_do_nothing(constraint="uq_review_idempotency")
         .returning(JobRow.id)
@@ -150,6 +172,7 @@ def create_job(
             AuditRow(
                 scope=bundle.scope,
                 kind="review_queued",
+                actor=actor,
                 data={"review_id": job_id, "trusted_revision_hash": trusted.revision_hash},
             )
         )

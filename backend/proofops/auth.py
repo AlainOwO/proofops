@@ -19,6 +19,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from proofops.config import Settings
 from proofops.domain.common import utcnow
+from proofops.storage.audit import HOST_OPERATOR, authentication_event
 from proofops.storage.database import AuthSessionRow, LoginThrottleRow, UserRow
 
 HASHER = PasswordHasher(time_cost=3, memory_cost=65_536, parallelism=2, type=Type.ID)
@@ -139,7 +140,9 @@ def security_configuration(settings: Settings) -> tuple[set[str], list[str]]:
     return origins, hosts
 
 
-def create_user(factory, username: str, password: str, role: str) -> UserRow:
+def create_user(
+    factory, username: str, password: str, role: str, *, actor: str = HOST_OPERATOR
+) -> UserRow:
     username = normalize_username(username)
     validate_password(password, username)
     if role not in {"admin", "viewer"}:
@@ -151,10 +154,20 @@ def create_user(factory, username: str, password: str, role: str) -> UserRow:
         user = UserRow(username=username, password_hash=encoded, role=role)
         session.add(user)
         session.flush()
+        authentication_event(
+            session, "account_created", actor=actor, user_id=user.id, status=f"active_{role}"
+        )
         return user
 
 
-def update_user(factory, username: str, *, password: str | None = None, disable=False) -> None:
+def update_user(
+    factory,
+    username: str,
+    *,
+    password: str | None = None,
+    disable=False,
+    actor: str = HOST_OPERATOR,
+) -> None:
     username = normalize_username(username)
     if password is not None:
         validate_password(password, username)
@@ -165,8 +178,14 @@ def update_user(factory, username: str, *, password: str | None = None, disable=
         if password is not None:
             user.password_hash = HASHER.hash(password)
             user.password_policy_version = 1
+            authentication_event(
+                session, "account_password_changed", actor=actor, user_id=user.id, status="changed"
+            )
         if disable:
             user.active = False
+            authentication_event(
+                session, "account_disabled", actor=actor, user_id=user.id, status="disabled"
+            )
         session.execute(delete(AuthSessionRow).where(AuthSessionRow.user_id == user.id))
 
 
@@ -212,11 +231,20 @@ class AuthService:
             username = normalize_username(username)
             validate_password(password, username)
             with self.factory.begin() as session:
-                session.execute(
+                created_id = session.execute(
                     insert(UserRow)
                     .values(username=username, password_hash=HASHER.hash(password), role="admin")
                     .on_conflict_do_nothing(index_elements=[UserRow.username])
-                )
+                    .returning(UserRow.id)
+                ).scalar_one_or_none()
+                if created_id:
+                    authentication_event(
+                        session,
+                        "account_created",
+                        actor="bootstrap",
+                        user_id=created_id,
+                        status="active_admin",
+                    )
                 admin = session.scalar(select(UserRow).where(UserRow.username == username))
                 if admin is None or not admin.active or admin.role != "admin":
                     raise ValueError(
@@ -321,6 +349,9 @@ class AuthService:
                 self.mac("login-peer", peer), self.settings.login_max_ip_attempts
             )
             if peer_counter is None:
+                authentication_event(
+                    session, "login_failed", actor="anonymous", status="peer_rate_limited"
+                )
                 return None, True
             if peer_counter.attempts == 0:
                 prune_expired_auth(session, now, window)
@@ -331,6 +362,9 @@ class AuthService:
                 self.mac("login-user", username), self.settings.login_max_failures
             )
             if account_counter is None:
+                authentication_event(
+                    session, "login_failed", actor="anonymous", status="account_rate_limited"
+                )
                 return None, True
             account_counter.attempts += 1
             user = session.scalar(
@@ -344,6 +378,13 @@ class AuthService:
             if not valid or user is None or not user.active:
                 if account_counter.attempts >= self.settings.login_max_failures:
                     account_counter.blocked_until = now + window
+                authentication_event(
+                    session,
+                    "login_failed",
+                    actor="anonymous",
+                    user_id=user.id if user else None,
+                    status="invalid_credentials",
+                )
                 return None, False
             account_counter.attempts, account_counter.blocked_until = 0, None
             if HASHER.check_needs_rehash(user.password_hash):
@@ -356,12 +397,19 @@ class AuthService:
                     expires_at=now + timedelta(seconds=self.settings.session_ttl_seconds),
                 )
             )
+            authentication_event(
+                session, "login_succeeded", actor=user.id, user_id=user.id, status="authenticated"
+            )
             return token, False
 
-    def logout(self, token: str) -> None:
+    def logout(self, token: str, *, actor: str | None = None, status="logged_out") -> None:
         with self.factory.begin() as session:
-            session.execute(
-                delete(AuthSessionRow).where(
-                    AuthSessionRow.token_hash == self.mac("session", token)
+            user_id = session.execute(
+                delete(AuthSessionRow)
+                .where(AuthSessionRow.token_hash == self.mac("session", token))
+                .returning(AuthSessionRow.user_id)
+            ).scalar_one_or_none()
+            if user_id:
+                authentication_event(
+                    session, "logout", actor=actor or user_id, user_id=user_id, status=status
                 )
-            )

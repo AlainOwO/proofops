@@ -13,6 +13,7 @@ from proofops.domain.engine import review
 from proofops.models.explanations import template_explanation
 from proofops.policies.guards import load_trusted
 from proofops.storage.artifacts import put_artifact
+from proofops.storage.audit import HOST_OPERATOR
 from proofops.storage.bundles import export_report, load_replay
 from proofops.storage.database import (
     ArtifactRow,
@@ -68,7 +69,10 @@ def _demo_paths(artifact_dir: Path) -> None:
 
 
 def reset_demo_data(
-    *, settings: Settings | None = None, factory: sessionmaker[Session] | None = None
+    *,
+    settings: Settings | None = None,
+    factory: sessionmaker[Session] | None = None,
+    actor: str = HOST_OPERATOR,
 ) -> dict:
     """Replace saved review data atomically; never clear files or accounting tables.
 
@@ -121,9 +125,15 @@ def reset_demo_data(
             ):
                 session.execute(delete(model))
             for name, bundle in bundles:
-                source, _ = store_bundle(session, bundle)
+                source, _ = store_bundle(session, bundle, actor=actor)
                 job, _ = create_job(
-                    session, source, trusted, key=f"demo:{name}", mode="replay", ai_preference="off"
+                    session,
+                    source,
+                    trusted,
+                    key=f"demo:{name}",
+                    mode="replay",
+                    ai_preference="off",
+                    actor=actor,
                 )
                 report = review(bundle, trusted, review_id=job.id, mode="replay")
                 explanation = template_explanation(report)
@@ -162,6 +172,7 @@ def reset_demo_data(
                     AuditRow(
                         scope=job.scope,
                         kind="review_completed",
+                        actor=actor,
                         data={
                             "review_id": job.id,
                             "outcome": report.outcome.value,
@@ -173,6 +184,17 @@ def reset_demo_data(
                 results.append(
                     {"scenario": name, "review_id": job.id, "outcome": report.outcome.value}
                 )
+            session.add(
+                AuditRow(
+                    scope="workspace",
+                    kind="demo_data_reset",
+                    actor=actor,
+                    data={
+                        "status": "completed",
+                        "review_ids": [item["review_id"] for item in results],
+                    },
+                )
+            )
     except SQLAlchemyError as exc:
         # SQLAlchemy errors can include connection details and bound input data.
         raise RuntimeError(

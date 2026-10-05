@@ -15,6 +15,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.routing import Route
 
 from proofops.api.auth import AuthenticationBoundary
 from proofops.api.boundaries import (
@@ -152,9 +153,9 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
             # A self-contained local reference: no CDN JavaScript, inline script
             # or relaxed CSP. Hosted mode registers none of these routes.
             endpoints = "".join(
-                f"<li><code>{escape(', '.join(sorted(route.methods)))} {escape(route.path)}</code></li>"
+                f"<li><code>{escape(', '.join(sorted(route.methods or [])))} {escape(route.path)}</code></li>"
                 for route in app.routes
-                if getattr(route, "include_in_schema", False)
+                if isinstance(route, Route) and getattr(route, "include_in_schema", False)
             )
             return HTMLResponse(
                 "<!doctype html><html lang='en'><meta charset='utf-8'>"
@@ -233,7 +234,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
             raise HTTPException(401, "Invalid username or password.")
         previous = request.cookies.get(auth.cookie_name)
         if previous:
-            auth.logout(previous)
+            auth.logout(previous, status="rotated")
         principal = auth.authenticate(token)
         assert principal is not None
         response = JSONResponse(principal.public())
@@ -262,7 +263,9 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
 
     @app.post("/api/v1/auth/logout")
     def logout(request: Request):
-        auth.logout(request.cookies.get(auth.cookie_name, ""))
+        auth.logout(
+            request.cookies.get(auth.cookie_name, ""), actor=request.state.principal.user_id
+        )
         response = JSONResponse({"logged_out": True})
         response.delete_cookie(
             auth.cookie_name,
@@ -280,7 +283,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
                 version = session.execute(
                     text("SELECT version_num FROM alembic_version")
                 ).scalar_one()
-                if version != "e7d91b4c2a60":
+                if version != "f6a91d2e83b4":
                     return JSONResponse(
                         {"status": "not_ready", "reason": "migrations required"}, status_code=503
                     )
@@ -309,9 +312,11 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
     async def import_bundle(request: Request):
         content_type = request.headers.get("content-type", "").split(";", 1)[0].strip()
         raw = await request.body()
-        return await run_in_threadpool(parse_and_store_bundle, content_type, raw)
+        return await run_in_threadpool(
+            parse_and_store_bundle, content_type, raw, request.state.principal.user_id
+        )
 
-    def parse_and_store_bundle(content_type: str, raw: bytes):
+    def parse_and_store_bundle(content_type: str, raw: bytes, actor: str):
         if content_type == "application/json":
             selection = strict_json(raw)
             if (
@@ -331,7 +336,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
                 "use application/json for a supplied replay or application/zip for an input bundle",
             )
         with factory.begin() as session:
-            row, created = store_bundle(session, bundle)
+            row, created = store_bundle(session, bundle, actor=actor)
             return {
                 "bundle_id": row.id,
                 "hashes": bundle.input_hashes,
@@ -348,6 +353,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
     @app.post("/api/v1/reviews", status_code=202)
     def queue_review(
         body: ReviewRequest,
+        request: Request,
         idempotency_key: Annotated[
             str,
             Header(
@@ -367,6 +373,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
                     key=idempotency_key,
                     mode=body.mode,
                     ai_preference=body.ai_preference,
+                    actor=request.state.principal.user_id,
                 )
             except IdempotencyConflict as exc:
                 raise HTTPException(409, str(exc)) from exc
@@ -686,14 +693,16 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
             return {**review_analytics(session), "billing": billing_analytics(session)}
 
     @app.post("/api/v1/billing/import-sample", status_code=201)
-    def import_billing_sample():
+    def import_billing_sample(request: Request):
         raw = (APP_ROOT / "fixtures/billing/focus_sample.csv").read_bytes()
         with factory.begin() as session:
-            return ingest_costs(session, raw)
+            return ingest_costs(session, raw, actor=request.state.principal.user_id)
 
     @app.post("/api/v1/admin/reset-demo-data")
-    def reset_demo(body: DemoResetRequest):
-        return reset_demo_data(settings=settings, factory=factory)
+    def reset_demo(body: DemoResetRequest, request: Request):
+        return reset_demo_data(
+            settings=settings, factory=factory, actor=request.state.principal.user_id
+        )
 
     return app
 

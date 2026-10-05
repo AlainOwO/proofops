@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 from proofops.domain.common import bytes_digest, digest
 from proofops.storage.database import (
     AttemptRow,
+    AuditRow,
     BillingImportRow,
     BillingRow,
     OutcomeRow,
@@ -32,7 +33,9 @@ def parse_amount(value: str | None) -> Decimal | None:
     return amount
 
 
-def ingest_costs(session, raw: bytes, dataset: str = "focus-sample") -> dict:
+def ingest_costs(
+    session, raw: bytes, dataset: str = "focus-sample", *, actor: str = "host-operator"
+) -> dict:
     if not 1 <= len(dataset) <= 120:
         raise ValueError("billing dataset label must contain 1 to 120 characters")
     if len(raw) > 5_242_880:
@@ -77,6 +80,14 @@ def ingest_costs(session, raw: bytes, dataset: str = "focus-sample") -> dict:
     ).scalar_one_or_none()
     if added and rows:
         session.execute(insert(BillingRow), rows)
+    session.add(
+        AuditRow(
+            scope="billing",
+            kind="billing_imported",
+            actor=actor,
+            data={"import_id": import_id, "status": "created" if added else "existing"},
+        )
+    )
     return {
         "import_id": import_id,
         "rows": len(rows),

@@ -117,6 +117,7 @@ def run_once(
                     AuditRow(
                         scope=scope,
                         kind="review_completed",
+                        actor=job.requested_by,
                         data={
                             "review_id": job_id,
                             "outcome": report.outcome.value,
@@ -141,6 +142,14 @@ def run_once(
             if job.owner == owner and job.state == "running":
                 job.state, job.stage, job.error_code = "failed", "failed", "REVIEW_EXECUTION_FAILED"
                 job.lease_until, job.updated_at = None, utcnow()
+                session.add(
+                    AuditRow(
+                        scope=job.scope,
+                        kind="review_failed",
+                        actor=job.requested_by,
+                        data={"review_id": job.id, "status": "REVIEW_EXECUTION_FAILED"},
+                    )
+                )
     finally:
         stop.set()
         thread.join(timeout=1)
