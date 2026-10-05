@@ -1,5 +1,10 @@
 # Changelog
 
+## UI polish — 2026-10-05
+
+- Split the frontend entry point into an app shell, reviews/report/outcomes components, a workspace hook, and shared presentation helpers. The extraction preserves markup, API requests, hash routes, polling, form state and displayed review results.
+- Assumptions: keep the existing local, single-service workflow and visual identity; use the supplied synthetic replays with recorded evaluation time and AI off. Review rules, outcomes, cost arithmetic, approved constraints and evidence requirements remain unchanged. Research files and evaluator data are outside this work; test outputs stay in ignored application artifacts.
+
 ## 0.1.0 — 2026-10-05
 
 - Built a local Python/PostgreSQL/React application, persisted worker, shared CLI/CI review engine and three labelled replay paths. Added dated Decimal task-cost estimates, comparable workload checks, scoped Rego guards, draft validation/export, operator outcomes and idempotent FOCUS analytics.
