@@ -67,7 +67,7 @@ CORS_ORIGINS=https://reviews.example.com
 PROOFOPS_PUBLIC_DEMO=false
 ```
 
-These are placeholders, not usable secrets. `SECRET_KEY` needs at least 16 distinct characters and rejects common placeholders. The local setup script generates a stronger random value suitable for reuse on a single deployment. Configure a strong database password as well; the supplied Compose URL interpolation expects URL-safe characters, as produced by the setup script. Do not commit the filled environment or print `docker compose config` into shared logs.
+These are placeholders, not usable secrets. `SECRET_KEY` needs at least 16 distinct characters and rejects common placeholders. The local setup script generates a stronger random value suitable for reuse on a single deployment. Hosted settings also require a PostgreSQL URL containing a privately generated password of at least 32 characters and 16 distinct characters; placeholders and credential query overrides are rejected before connecting. The supplied Compose URL interpolation expects URL-safe characters, as produced by the setup script. Do not commit the filled environment or print `docker compose config` into shared logs.
 
 Before starting the hosted API, create an admin with the CLI after migrations, or provide both strong bootstrap environment values. Startup rejects missing/weak secrets, absent strong active admins, non-HTTPS origins, wildcards and insecure cookies. This applies to hosted public demos too. Local mode rejects external hosts/origins, and still requires a strong session secret; it permits initial CLI account setup before the first admin exists.
 
@@ -92,7 +92,16 @@ Anonymous analytics cover only those seeded results. Private guard drafts, billi
 
 Back up the database and exports, run migrations, generate missing configuration, then create an admin. Existing reviews/results are not rewritten. The new tables hold identities, sessions, login limits and explicit public-demo membership. An old unmarked review does not become public automatically.
 
-`scripts/configure_local.py` preserves an existing database password from `.env` to avoid breaking a populated PostgreSQL volume. It does **not** rotate a previously used development password. Before hosting an upgraded database, rotate its role password with PostgreSQL's interactive `\password proofops` command and update private `POSTGRES_PASSWORD`/`DATABASE_URL` values together. Changing only `POSTGRES_PASSWORD` in Compose does not change a stored PostgreSQL role password.
+`scripts/configure_local.py` preserves an existing database password from `.env` to avoid breaking a populated PostgreSQL volume. It does **not** rotate a previously used development password. Rotate an upgraded local database before hosting it. With the existing database running and native Python dependencies installed:
+
+```sh
+.venv/bin/python scripts/rotate_local_database_password.py
+docker compose up -d --no-build --pull never --force-recreate db migrate api worker web
+```
+
+The rotation command reads only this repository's private `.env`, requires local mode and the loopback `proofops` database/role, and refuses ambiguous, mismatched or symlinked configuration. It generates a replacement without displaying either credential, prepares an owner-only `.env.database-rotation.pending` recovery file, sends a SCRAM verifier rather than a plaintext password in SQL, verifies new authentication and atomically replaces `.env`. Other settings and database contents are preserved. If interrupted, retain both private files and rerun the same command with `--resume`; concurrent edits require private reconciliation. Never paste either file into logs or an issue. Recreating the containers reloads their private environment while retaining database/artifact volumes; existing connections are not revoked by PostgreSQL password rotation alone. The command uses installed images without a download or rebuild, so deploy source changes separately.
+
+For other deployments, use the operator's database credential-rotation procedure or PostgreSQL's interactive `\password proofops` command and update the private application configuration together. Changing only `POSTGRES_PASSWORD` in Compose does not change a stored PostgreSQL role password. A committed credential must be rotated in every deployment that reused it; deleting it from the latest revision is insufficient.
 
 ```sh
 docker compose exec api proofops users set-password --username workspace-admin

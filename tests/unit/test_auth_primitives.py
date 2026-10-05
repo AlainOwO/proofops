@@ -14,6 +14,10 @@ from proofops.config import Settings
 
 
 def settings(**values):
+    values.setdefault(
+        "database_url",
+        f"postgresql+psycopg://proofops:{secrets.token_urlsafe(32)}@127.0.0.1/proofops",
+    )
     return Settings(_env_file=None, secret_key=secrets.token_urlsafe(48), **values)
 
 

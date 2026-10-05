@@ -93,6 +93,7 @@ def strong_password_hash(value: str) -> bool:
 
 
 def security_configuration(settings: Settings) -> tuple[set[str], list[str]]:
+    settings.validate_database_security()
     secret = settings.secret_key.get_secret_value()
     if (
         len(secret) < 32

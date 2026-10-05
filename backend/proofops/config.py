@@ -1,9 +1,11 @@
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
 
 APP_ROOT = Path(__file__).resolve().parents[2]
 
@@ -11,7 +13,9 @@ APP_ROOT = Path(__file__).resolve().parents[2]
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", hide_input_in_errors=True)
 
-    database_url: str = "postgresql+psycopg://proofops@127.0.0.1:55432/proofops"
+    database_url: str = Field(
+        default="postgresql+psycopg://proofops@127.0.0.1:55432/proofops", repr=False
+    )
     artifact_dir: Path = APP_ROOT / "artifacts"
     proofops_mode: Literal["local", "hosted"] = "local"
     proofops_public_demo: bool = False
@@ -52,6 +56,37 @@ class Settings(BaseSettings):
     max_bundle_bytes: int = Field(default=5_242_880, ge=1024, le=20_971_520)
     max_artifact_bytes: int = Field(default=1_048_576, ge=1024, le=5_242_880)
     max_bundle_files: int = Field(default=24, ge=1, le=50)
+
+    def validate_database_security(self) -> None:
+        if self.proofops_mode != "hosted":
+            return
+        try:
+            url = make_url(self.database_url)
+            password = url.password or ""
+            compact = "".join(character for character in password.lower() if character.isalnum())
+            valid = (
+                url.get_backend_name() == "postgresql"
+                and bool(url.username)
+                and len(password) >= 32
+                and len(set(password)) >= 16
+                and not any(
+                    word in compact for word in ("changeme", "replace", "example", "password")
+                )
+                and not {"password", "user", "service", "passfile"}.intersection(url.query)
+            )
+        except (ArgumentError, TypeError, ValueError):
+            valid = False
+        if not valid:
+            raise ValueError(
+                "Hosted database configuration requires a privately generated PostgreSQL "
+                "password of at least 32 characters and 16 distinct characters, with no "
+                "placeholder or credential query overrides."
+            ) from None
+
+    @model_validator(mode="after")
+    def hosted_database(self) -> Self:
+        self.validate_database_security()
+        return self
 
     @field_validator("artifact_dir")
     @classmethod
