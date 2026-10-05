@@ -53,7 +53,9 @@ def main(argv: list[str] | None = None) -> int:
         help="Require the imported identity mapping to match this trusted mapping",
     )
     review_parser.add_argument(
-        "--rate-card", type=Path, help="Explicit dated rate-card override; its hash is recorded"
+        "--rate-card",
+        type=Path,
+        help="Dated rate-card override; takes precedence over RATE_CARD_PATH; hash recorded",
     )
     replay_parser = commands.add_parser(
         "replay", help="Reproduce a saved report at its recorded time without model calls"
@@ -105,8 +107,10 @@ def main(argv: list[str] | None = None) -> int:
                     raise ValueError(
                         "imported service identity differs from the trusted service map"
                     )
-            if args.rate_card:
-                raw = owned_path(args.rate_card).read_bytes()
+            rate_card_path = args.rate_card or get_settings().rate_card_path
+            if rate_card_path:
+                with owned_path(rate_card_path).open("rb") as stream:
+                    raw = stream.read(1_048_577)
                 if len(raw) > 1_048_576:
                     raise ValueError("rate card exceeds size bound")
                 bundle.rates = RateCard.model_validate(strict_json(raw))

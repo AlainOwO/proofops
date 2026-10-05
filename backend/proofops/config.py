@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     strong_provider: Literal["openai", "anthropic"] = "anthropic"
     strong_model: str = ""
     model_prices_path: Path = APP_ROOT / "config/model_prices.json"
+    rate_card_path: Path | None = None
     ai_budget_usd: str = "0"
     ai_max_task_cost_usd: str = "0"
     model_timeout_seconds: float = Field(default=20, gt=0, le=60)
@@ -62,6 +63,21 @@ class Settings(BaseSettings):
         resolved = value.resolve()
         if not resolved.is_relative_to(APP_ROOT / "config"):
             raise ValueError("model_prices_path must be inside the application's config directory")
+        return resolved
+
+    @field_validator("rate_card_path", mode="before")
+    @classmethod
+    def owned_rate_card(cls, value):
+        if value is None or value == "":
+            return None
+        resolved = Path(value).resolve()
+        if not resolved.is_relative_to(APP_ROOT) or any(
+            part in {"evaluation", "evaluator_only", ".git"}
+            for part in resolved.relative_to(APP_ROOT).parts
+        ):
+            raise ValueError(
+                "rate_card_path must stay inside the application and outside evaluator storage"
+            )
         return resolved
 
     @property
