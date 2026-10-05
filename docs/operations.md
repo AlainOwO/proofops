@@ -1,6 +1,6 @@
 # Operations and troubleshooting
 
-Docker Compose runs PostgreSQL, migrations, API, worker and web, with published ports bound to loopback. Username/password sessions and server-side roles protect the workspace. Hosted mode requires explicit HTTPS/auth configuration and an operator-managed TLS proxy; see [security and setup](security.md). No AWS or model key is required for readiness or replay. `.env.example` contains placeholders only; local setup generates missing database/session secrets.
+Local Docker Compose runs PostgreSQL, migrations, API, worker and web, with published ports bound to loopback. The standalone `compose.hosted.yaml` runs a read-only public demo behind Caddy HTTPS, with a private database and restricted runtime credentials. See the hosted runbook below and [security](security.md). No AWS or model key is required for readiness or replay. Private setup files contain generated secrets and must never be printed or committed.
 
 ## Startup, ports and migrations
 
@@ -26,6 +26,59 @@ Create an admin once with `docker compose exec api proofops users create --usern
 
 For native development, the README bootstraps Python 3.12 and uv 0.12.23, then `uv sync --frozen --group dev --group docs`. Start only `docker compose up -d db`, run `.venv/bin/alembic upgrade head`, and launch `.venv/bin/uvicorn proofops.api.app:app --host 127.0.0.1 --port 8000 --no-proxy-headers`, `.venv/bin/proofops-worker` and frontend `npm run dev` in separate terminals. Use `.venv/bin/proofops users create` for native account setup. PowerShell uses `.venv\Scripts\` executables. Stop container API/worker/web before using the same native ports. [README](../README.md) contains exact fresh-setup, test, replay and cleanup commands.
 
+## Hosted public demo
+
+Use a dedicated demo host and workspace containing only the supplied synthetic fixtures. Point a real DNS hostname at that host and allow inbound TCP 80/443 for Caddy's HTTPS issuance, renewal and redirects. Docker, Compose v2.24 or newer, Git and Python 3 are required. The Vite development server is not used.
+
+`compose.hosted.yaml` is **standalone**: do not merge it with `compose.yaml`, which publishes development ports. Only Caddy publishes ports. Web/API share an internal application network; PostgreSQL and the one-shot maintenance services use a separate internal database network. API, worker, web and migration containers have CPU/memory limits; the runtime filesystems are read-only and unnecessary capabilities are dropped. API/worker have no external network and receive no cloud/model credentials. The hosted file explicitly fixes `PROOFOPS_MODE=hosted`, `PROOFOPS_PUBLIC_DEMO=true`, Secure cookies and `AI_MODE=off`.
+
+Run from the repository root, substituting your DNS hostname and ACME contact address:
+
+```sh
+python3 scripts/configure_hosted.py --domain reviews.example.com --email operator@example.com
+hosted() { docker compose --env-file .env.hosted -f compose.hosted.yaml "$@"; }
+hosted --profile worker --profile maintenance build --no-cache --pull
+hosted up -d db
+hosted run --rm migrate
+hosted run --rm --no-deps api proofops users create --username workspace-admin --role admin
+hosted run --rm --no-deps seed
+hosted up -d --wait
+hosted ps
+```
+
+The setup script creates `.env.hosted` with mode 0600 and independent random bootstrap, owner, runtime and session secrets. It preserves existing credentials; it is not a rotation command. Password prompts do not echo. The first admin is required by hosted startup even though public-demo HTTP login is disabled. `seed` creates exactly three completed AI-off reviews and explicit public membership; the API's artifact mount stays read-only. The worker is behind an opt-in profile and is not started by the final `up`; even if started, public-demo workers refuse to claim jobs.
+
+The `roles` service alone receives PostgreSQL bootstrap credentials. It provisions `proofops_owner` and `proofops_runtime` using salted SCRAM verifiers. `migrate` connects as the owner and grants runtime access after Alembic completes. API and worker use only `proofops_runtime`: application CRUD, no superuser/role creation/database creation/schema ownership/DDL, read-only migration metadata, and SELECT/INSERT-only audit access. Hosted API/worker startup rejects elevated runtime privileges. The local Compose operator connection remains separate and is unsuitable for hosted runtime use.
+
+The hosted database is digest-pinned PostgreSQL **18.6** in its own `hosted-db18` volume mounted at `/var/lib/postgresql`. Local Compose stays on patched **17.11** to preserve compatibility with existing 17.x volumes. Never attach a 17.x data directory to the hosted 18.x container; importing an existing workspace requires a separately backed-up dump/restore or reviewed PostgreSQL major-version migration. Both images retain the official initialization flow and use Alpine `su-exec` for the final UID/GID switch, replacing the stale bundled `gosu` binary. Fresh root-owned storage and non-root PostgreSQL operation have container regressions.
+
+Caddy obtains and renews public certificates automatically and persists certificate state in `caddy-data`/`caddy-config`; protect these volumes as private key material. It proxies `/api/*`, readiness, health and disabled API-doc paths directly to the API, and serves the built frontend through unprivileged nginx on internal port 8080. HTTPS responses include `Strict-Transport-Security: max-age=31536000`; HSTS is deliberately set at this TLS endpoint, without `includeSubDomains` or preload. Preserve the certificate volumes across routine restarts. Caddy allows five seconds for request headers and ten seconds for request bodies. Backend docs/OpenAPI routes are absent in hosted mode. CSP, `X-Frame-Options: DENY` and `nosniff` cover successful responses, rejections and errors at the API and proxies.
+
+Verify the deployed hostname:
+
+```sh
+curl --fail --show-error https://reviews.example.com/readyz
+curl --head https://reviews.example.com/
+curl --head http://reviews.example.com/
+curl --include --request POST https://reviews.example.com/api/v1/bundles --data '{}'
+```
+
+Expect ready/200, HTTPS security headers and HSTS, an HTTP-to-HTTPS redirect, and 403 for the POST. The UI must say `DEMO · READ-ONLY`, show only the three seeded reviews, and expose no login, billing or editing controls. `/docs`, `/redoc` and `/openapi.json` must return 403/404 without scripts or schemas. `hosted ps` must show published ports only on Caddy; a bare `5432/tcp` or `8080/tcp` is internal image metadata, not a host publication. Never print `hosted config` or private environment files; use `hosted config --quiet` for validation.
+
+To reseed this dedicated demo, stop the public services, run the maintenance container, and restart:
+
+```sh
+hosted stop caddy api worker
+hosted run --rm --no-deps seed
+hosted up -d --wait
+```
+
+Reset preserves users, sessions, audit history and the documented accounting data; older artifact files remain. Only explicit, unchanged seed memberships are public. Keep encrypted backups and operator-controlled retention for database, artifacts and certificate volumes. Runtime credentials cannot edit/delete audit history, but owners and host operators still can; an external append-only sink and retention scheduler remain future work. Ordinary `hosted down` preserves volumes. Retain image/config versions and backups for rollback; never downgrade a PostgreSQL data directory in place.
+
+Admission defaults apply to the **single API process** in this deployment: 16 concurrent requests, eight per connection peer, four per authenticated user, two concurrent logins, 600 requests per peer and 300 per principal per 60 seconds, 20 MiB of buffered payload bytes, and an absolute ten-second body deadline. Buffering follows authentication, role/demo checks and CSRF; ZIP/JSON parsing and import storage run in a thread pool. API/worker containers are limited to 1 CPU/512 MiB, database to 1 CPU/1 GiB, web to 0.5 CPU/128 MiB and Caddy to 0.5 CPU/256 MiB. Keep one API process; replicas require divided limits or shared admission. Do not trust arbitrary forwarded IP headers. Behind the proxy, clients share the peer bucket. Public-demo writes/login are disabled; these controls are not a distributed DoS defense or a writable-team recovery design.
+
+Rebuild and rescan before exposure and after dependency/image changes. [Security review](security_review.md#hosted-demo-image-scan) records both filtered and unfiltered HIGH/CRITICAL counts, including remaining Debian findings with no published distribution fix. A zero `--ignore-unfixed` result is not a clean scan. The local verification used an internal test certificate issuer; public DNS/ACME issuance and internet load resistance were not tested.
+
 ## Environment variables
 
 | Variable | Meaning / default |
@@ -39,6 +92,11 @@ For native development, the README bootstraps Python 3.12 and uv 0.12.23, then `
 | ALLOWED_HOSTS | Exact allowed hostnames; local defaults `127.0.0.1,localhost,api`, no wildcards. |
 | PROOFOPS_PUBLIC_DEMO | False by default; true allows anonymous reads of unchanged explicitly seeded results and denies every HTTP write. |
 | LOGIN_WINDOW_SECONDS / LOGIN_MAX_FAILURES / LOGIN_MAX_IP_ATTEMPTS | Shared database login limits; default 900-second windows, five account failures and 60 peer attempts. |
+| REQUEST_BODY_TIMEOUT_SECONDS / REQUEST_MAX_BUFFERED_BYTES | Absolute body-read deadline (10 seconds) and aggregate buffered payload budget (20 MiB). |
+| REQUEST_MAX_CONCURRENCY / REQUEST_MAX_PEER_CONCURRENCY / REQUEST_MAX_PRINCIPAL_CONCURRENCY / REQUEST_MAX_LOGIN_CONCURRENCY | Per-process concurrent admission defaults 16 / 8 / 4 / 2; no waiting queue. |
+| REQUEST_QUOTA_WINDOW_SECONDS / REQUEST_PEER_QUOTA / REQUEST_PRINCIPAL_QUOTA / REQUEST_MAX_IDENTITIES | Window 60 seconds, request quotas 600 / 300, at most 2,048 tracked peer/principal identities per map. Idle expired entries are reused; exhaustion fails closed. |
+| HOSTED_DOMAIN / ACME_EMAIL | DNS hostname and certificate contact in private `.env.hosted`; used by the standalone Caddy deployment. |
+| PROOFOPS_OWNER_PASSWORD / PROOFOPS_RUNTIME_PASSWORD | Independent hosted database credentials. API/worker receive only a runtime URL; bootstrap and owner credentials are confined to maintenance services. |
 | ARTIFACT_DIR | Dedicated directory inside application `artifacts/`; rejects research, code, evaluator and trust directories. |
 | AI_MODE | `off` by default; `live` enables only otherwise eligible configured calls. |
 | OPENAI_API_KEY / ANTHROPIC_API_KEY | Empty secret environment variables. Never committed or logged. |
@@ -66,7 +124,8 @@ Each input bundle carries its dated `rates.json`. The CLI can use an explicitly 
 | API startup refuses auth configuration | Generate missing secrets, run migrations, and check hosted HTTPS/Secure/admin requirements. Do not disable the authentication boundary. |
 | Login says invalid credentials or is rate limited | Use the configured account or rotate its password through the CLI. Wait for `Retry-After` after lockout; usernames receive generic errors. |
 | Login succeeds but a session is missing | Local HTTP requires `SESSION_COOKIE_SECURE=false`; hosted mode requires TLS and true. Use the same browser/API hostname. |
-| Request returns 401 / 403 | Sign in again for 401. For 403, check the user's role, public-demo mode, configured Origin and session-bound CSRF header. `/readyz` and `/docs` require authentication. |
+| Request returns 401 / 403 | Sign in again for 401 outside demo mode. For 403, check role, demo mode, Origin and CSRF. Public-demo writes always return 403; hosted docs are disabled. |
+| Request returns 408 / 429 / admission 503 | Complete uploads within the deadline and respect `Retry-After`; inspect active request/peer capacity. Do not remove quotas or trust forwarded identities to evade a shared proxy bucket. |
 | Readiness returns 503 | Start PostgreSQL and run `alembic upgrade head`; missing model keys do not affect readiness. |
 | Review remains queued | Start the worker and inspect `docker compose logs --tail 100 worker`. A queued job has no fabricated report. |
 | A worker died | Restart it. Expired leases are reclaimed up to three claims; dispatched charges stay uncertain. |
@@ -89,4 +148,4 @@ API errors omit raw provider bodies and secret-bearing input values. Database op
 
 ## Before team hosting
 
-Basic authentication, viewer/admin authorization, session/CSRF controls and shared login limits are implemented. Hosting still requires an operator-managed TLS proxy, secure secret delivery, private database access, encrypted backups, restore/retention procedures, monitoring and a reviewed deployment workflow. There is no tenant isolation, MFA/SSO, self-service recovery, separate approval role or complete authentication audit pipeline. Behind a proxy, users share its connection-peer rate-limit bucket because forwarded headers are not trusted. [Security](security.md) describes the boundaries and exact hosted/demo configuration; do not treat these controls as a production security certification.
+The supplied hosted deployment targets a dedicated read-only synthetic demo. Writable team hosting still needs reviewed recovery/edge limiting, secret delivery, encrypted backups, restore/retention procedures, monitoring and dependency maintenance. There is no tenant isolation, MFA/SSO, self-service recovery, separate approval role or external tamper-evident audit pipeline. Proxy peers share rate limits because forwarded headers are not trusted. [Security](security.md) describes these boundaries; this is not a production security certification.

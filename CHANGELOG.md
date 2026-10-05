@@ -1,5 +1,13 @@
 # Changelog
 
+## Hosted public demo hardening — 2026-10-06
+
+- Added authentication/authorization before protected body reads, absolute read deadlines, bounded concurrent/peer/principal admission and buffered payload quotas. Import parsing/storage runs off the event loop. Hosted docs/OpenAPI are disabled; API and proxy security headers cover rejection/error paths.
+- Preserved authenticated actors through imports, reviews/workers, billing and resets; added ID/status-only authentication/account audit events. Hosted PostgreSQL now separates bootstrap, migration owner and restricted runtime roles, with startup privilege checks and append-only runtime audit access.
+- Added standalone `compose.hosted.yaml`, private setup and a [Hosted public demo runbook](docs/operations.md#hosted-public-demo). Caddy provides automatic HTTPS/HSTS and is the only service publishing ports (80/443); internal API/worker run AI-off/read-only with restricted credentials and container limits. nginx runs unprivileged, and its build context excludes private environment/credential files.
+- Revalidated requested digest pins, upgraded final-stage OS packages and rebuilt images without cache with pulls. Hosted PostgreSQL advances to 18.6 in a separate volume; local PostgreSQL stays on 17.11. Patched nginx packages and replaced the stale PostgreSQL gosu helper while preserving tested volume initialization. Trivy found zero fixable HIGH/CRITICAL records in six final images, but **API and worker each retain 53 HIGH and 2 CRITICAL records without a published Debian fix**. This is not a clean scan; exact IDs, vendor statuses and counts are in [the security review](docs/security_review.md#hosted-demo-image-scan).
+- Verification: 426 backend tests, frontend build, 20 Chromium e2e tests, three screenshot-script checks, three built-image container checks and 16 local HTTPS proxy checks passed, with no skipped/weakened tests. Ruff and mypy passed. Review logic/scoring/evaluator data and tracked screenshots are unchanged; the existing local workspace was preserved. No public deployment, public ACME or live AWS/model calls are claimed.
+
 ## Workspace authentication and authorization — 2026-10-06
 
 - Added Argon2id user credentials, revocable expiring server sessions, login/logout, persistent account/peer login limits, and a default-deny API authentication boundary. Every write requires an admin and CSRF validation, except that viewers may log out of their own session. Health and the CSRF-protected login flow are the only public routes in ordinary mode; readiness and API documentation require a session.

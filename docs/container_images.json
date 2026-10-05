@@ -1,12 +1,145 @@
 {
-  "recorded_at": "2026-10-05",
-  "basis": "Exact image manifest digests resolved in the successful Docker BuildKit local build; pinned in Dockerfiles afterward.",
+  "recorded_at": "2026-10-06",
+  "basis": "Requested tag manifests were resolved again and pulled in uncached Compose builds. Python, Node and nginx already matched the current registry digests, so their pins were retained; final-stage distribution upgrades patched installed packages. PostgreSQL and Caddy pins were added. Only the built Linux ARM64 images listed below were scanned.",
   "images": [
-    {"reference": "python:3.12-slim-bookworm", "digest": "sha256:54c85f3c47607a77f32adec749d3c81d1348bf25833671f512b26a9b6d778cb3"},
-    {"reference": "ghcr.io/astral-sh/uv:0.12.23", "digest": "sha256:61d393e44e249f2e4b526b6c7ddcecce245946826e608e11c93ad4f5bba55b21"},
-    {"reference": "openpolicyagent/conftest:v0.71.0", "digest": "sha256:3ec6dad358db08acecda56b7a3184037cd810394a65046fafa4f33c7750141b1"},
-    {"reference": "node:22-alpine", "digest": "sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402"},
-    {"reference": "nginx:1.28-alpine", "digest": "sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236"}
+    {
+      "reference": "python:3.12-slim-bookworm",
+      "digest": "sha256:54c85f3c47607a77f32adec749d3c81d1348bf25833671f512b26a9b6d778cb3"
+    },
+    {
+      "reference": "ghcr.io/astral-sh/uv:0.12.23",
+      "digest": "sha256:61d393e44e249f2e4b526b6c7ddcecce245946826e608e11c93ad4f5bba55b21"
+    },
+    {
+      "reference": "openpolicyagent/conftest:v0.71.0",
+      "digest": "sha256:3ec6dad358db08acecda56b7a3184037cd810394a65046fafa4f33c7750141b1"
+    },
+    {
+      "reference": "node:22-alpine",
+      "digest": "sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402"
+    },
+    {
+      "reference": "nginx:1.28-alpine",
+      "digest": "sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236"
+    },
+    {
+      "reference": "postgres:17-alpine",
+      "digest": "sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
+      "use": "Local PostgreSQL 17.11; preserves 17.x volume compatibility."
+    },
+    {
+      "reference": "postgres:18-alpine",
+      "digest": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+      "use": "Hosted PostgreSQL 18.6; distinct hosted-db18 volume."
+    },
+    {
+      "reference": "caddy:2-alpine",
+      "digest": "sha256:1a81ac3d1a49b2b385a5bfafb8bd39fb40fa1d717461d825ee0d65df91a6e97b",
+      "use": "Hosted automatic HTTPS proxy."
+    }
   ],
-  "workload_note": "Measured experiment keeps its original local image configuration digest in every manifest. These source-image pins do not rewrite recorded measurements."
+  "workload_note": "Measured experiment keeps its original local image configuration digest in every manifest. These source-image pins do not rewrite recorded measurements.",
+  "hosted_scan": {
+    "recorded_at": "2026-10-06",
+    "scanner": "Trivy 0.75.0",
+    "platform": "linux/arm64",
+    "scanners": [
+      "vuln"
+    ],
+    "severities": [
+      "HIGH",
+      "CRITICAL"
+    ],
+    "advisory_db_updated_at": "2026-10-05T19:07:00.467981014Z",
+    "advisory_db_downloaded_at": "2026-10-05T20:50:37.219918Z",
+    "advisory_db_next_update": "2026-10-06T19:07:00.467980844Z",
+    "count_unit": "package/CVE record",
+    "limitation": "Not a clean scan. All remaining HIGH/CRITICAL records have no FixedVersion in Debian advisory data; this does not prove the absence of an upstream source fix.",
+    "images": [
+      {
+        "name": "proofops-api",
+        "image_id": "sha256:3a964c91b44fa9e0b5d9ca8bb0041ee6648db2cf4b2571fd97d0c79e256f0464",
+        "ignore_unfixed": {
+          "high": 0,
+          "critical": 0,
+          "report": "artifacts/hosted-security/trivy-api-fixable.json"
+        },
+        "unfiltered": {
+          "high": 53,
+          "critical": 2,
+          "report": "artifacts/hosted-security/trivy-api-all.json"
+        }
+      },
+      {
+        "name": "proofops-worker",
+        "image_id": "sha256:04d19b16b9c5d8b7d4097dca8363924fc894593e63ab1d83ab4ce3518ed255bd",
+        "ignore_unfixed": {
+          "high": 0,
+          "critical": 0,
+          "report": "artifacts/hosted-security/trivy-worker-fixable.json"
+        },
+        "unfiltered": {
+          "high": 53,
+          "critical": 2,
+          "report": "artifacts/hosted-security/trivy-worker-all.json"
+        }
+      },
+      {
+        "name": "proofops-web",
+        "image_id": "sha256:4d1edae65bc80c5b0e0563636c6f75721eade2297f98b511038e7e4ce1b3b977",
+        "ignore_unfixed": {
+          "high": 0,
+          "critical": 0,
+          "report": "artifacts/hosted-security/trivy-web-fixable.json"
+        },
+        "unfiltered": {
+          "high": 0,
+          "critical": 0,
+          "report": "artifacts/hosted-security/trivy-web-all.json"
+        }
+      },
+      {
+        "name": "proofops-db17",
+        "image_id": "sha256:b575844eb5a34d72b7b9390dc0044009fe3121cc14ab2c1428e6133b19981e22",
+        "ignore_unfixed": {
+          "high": 0,
+          "critical": 0,
+          "report": "artifacts/hosted-security/trivy-db17-fixable.json"
+        },
+        "unfiltered": {
+          "high": 0,
+          "critical": 0,
+          "report": "artifacts/hosted-security/trivy-db17-all.json"
+        }
+      },
+      {
+        "name": "proofops-db18",
+        "image_id": "sha256:ccd0be66b4df75eabcfdc65fea77d432a025761a66f26d4b90be679bf04e652f",
+        "ignore_unfixed": {
+          "high": 0,
+          "critical": 0,
+          "report": "artifacts/hosted-security/trivy-db18-fixable.json"
+        },
+        "unfiltered": {
+          "high": 0,
+          "critical": 0,
+          "report": "artifacts/hosted-security/trivy-db18-all.json"
+        }
+      },
+      {
+        "name": "proofops-caddy",
+        "image_id": "sha256:aef0f6b34639062380fabc285b5cfe467d9f1eef013fc0c1a09cf52e667e3813",
+        "ignore_unfixed": {
+          "high": 0,
+          "critical": 0,
+          "report": "artifacts/hosted-security/trivy-caddy-fixable.json"
+        },
+        "unfiltered": {
+          "high": 0,
+          "critical": 0,
+          "report": "artifacts/hosted-security/trivy-caddy-all.json"
+        }
+      }
+    ]
+  }
 }

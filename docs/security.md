@@ -33,13 +33,15 @@ Automation may use `--password-stdin` with a secret supplied over standard input
 | `GET /healthz` | Allowed | Allowed | Allowed |
 | `GET /api/v1/auth/login` | CSRF challenge | CSRF challenge | CSRF challenge |
 | `POST /api/v1/auth/login` | Password and login CSRF required | Same | Same |
-| Session, readiness, replays, list/detail, downloads, analytics, API docs | 401 | Allowed | Allowed |
+| Session, readiness, replays, list/detail, downloads, analytics, local API reference | 401 | Allowed | Allowed |
 | `POST /api/v1/auth/logout` | 401 | Session CSRF required | Session CSRF required |
 | Import bundle, run review, create/validate guard draft | 401 | 403 | Session CSRF required |
 | Record disposition, import billing sample, reset demo reviews | 401 | 403 | Session CSRF required |
 | Future HTTP routes | Auth required | Safe reads only | Writes also require CSRF |
 
 An outer authentication boundary protects routes even if a new handler omits a dependency. Only health and login are explicitly public in ordinary mode. Configured CORS preflights negotiate access without running an API handler. Tests enumerate every registered route and method, including framework docs/HEAD routes; adding an endpoint requires updating its role matrix. The frontend hides admin controls, but the API remains authoritative.
+
+Hosted applications register no `/docs`, `/redoc`, `/docs/oauth2-redirect` or `/openapi.json` routes. Local documentation is an authenticated, self-contained HTML reference and schema download, with no third-party scripts. CSP, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, no-store and referrer-policy headers wrap the entire API stack, including Host/origin/auth/size/quota rejections and unhandled 500 responses.
 
 Reset through `POST /api/v1/admin/reset-demo-data` additionally needs `{"confirm": true}`. The existing local-database restriction and running-job protection still apply. The CLI reset remains an explicit host-operator action; a web viewer cannot invoke it. Users and sessions survive resets.
 
@@ -54,9 +56,15 @@ Reset through `POST /api/v1/admin/reset-demo-data` additionally needs `{"confirm
 
 API responses are marked `Cache-Control: no-store`. Backend errors do not return password inputs or raw database exceptions. Frontend 401 responses unmount cached workspace data, 403 responses show the server error and refresh identity, and absolute expiry returns to sign-in. Downloads use the same error handling. In-progress requests that completed before revocation are not retroactively cancelled.
 
+HTTP admission precedes session lookup and password hashing. Per-process concurrency, peer/principal request quotas, a separate login concurrency bound, bounded identity maps and an aggregate body-byte budget reject excess work without a waiting queue. Protected bodies are buffered only after authentication, authorization, demo-mode and CSRF checks, with an absolute read deadline. Import parsing/storage run off the event loop. The supplied hosted deployment runs one API process with container CPU/memory limits; these are not distributed edge limits. Defaults and operator constraints are in [operations](operations.md#hosted-public-demo).
+
+Imports, queued/completed/failed reviews, reset and billing events carry the authenticated user ID. Worker attribution is saved with the job, independently of its lease owner; migrated historical jobs are explicitly `legacy-unattributed`. Account creation/password changes/disabling, admitted login successes/failures and throttled attempts, session rotation and logout add events containing IDs and fixed status values, never usernames, passwords, password hashes, tokens or request bodies. CLI actions identify `host-operator`; bootstrap creation identifies `bootstrap`. Runtime database credentials can SELECT/INSERT audit records but cannot UPDATE/DELETE them. Host/database owners remain trusted, and external append-only export and retention scheduling are not implemented.
+
 ## Hosted configuration
 
-Use the built frontend and a TLS reverse proxy; the Vite development server is not a public web server. Configure private environment values before startup:
+For the requested read-only public demo, use the standalone [Hosted public demo runbook](operations.md#hosted-public-demo). It generates a separate `.env.hosted`, provisions bootstrap/owner/runtime database roles, seeds synthetic results, and starts Caddy automatic HTTPS. Only ports 80/443 are published; API, web and database stay internal. Do not merge the hosted file with local Compose. Its API/worker mounts are read-only, AI is off, provider credentials are absent, and the worker is not started by default.
+
+Custom hosted deployments must preserve these settings and the restricted runtime database role:
 
 ```dotenv
 PROOFOPS_MODE=hosted
@@ -64,25 +72,18 @@ SECRET_KEY=<random value generated privately; at least 32 characters>
 SESSION_COOKIE_SECURE=true
 ALLOWED_HOSTS=reviews.example.com
 CORS_ORIGINS=https://reviews.example.com
-PROOFOPS_PUBLIC_DEMO=false
+PROOFOPS_PUBLIC_DEMO=true
 ```
 
-These are placeholders, not usable secrets. `SECRET_KEY` needs at least 16 distinct characters and rejects common placeholders. The local setup script generates a stronger random value suitable for reuse on a single deployment. Hosted settings also require a PostgreSQL URL containing a privately generated password of at least 32 characters and 16 distinct characters; placeholders and credential query overrides are rejected before connecting. The supplied Compose URL interpolation expects URL-safe characters, as produced by the setup script. Do not commit the filled environment or print `docker compose config` into shared logs.
+These are placeholders, not usable secrets. `SECRET_KEY` needs at least 16 distinct characters and rejects common placeholders. Hosted setup generates independent random credentials. Hosted settings also require a PostgreSQL URL containing a privately generated password of at least 32 characters and 16 distinct characters; placeholders and credential query overrides are rejected before connecting. API/worker startup additionally rejects superusers, database/schema owners, role memberships, DDL privileges and migration/audit modification privileges. The migration service uses a separate owner URL. Compose interpolation expects URL-safe characters, as produced by setup. Never commit the filled environment or print resolved Compose configuration; use `config --quiet` for validation.
 
 Before starting the hosted API, create an admin with the CLI after migrations, or provide both strong bootstrap environment values. Startup rejects missing/weak secrets, absent strong active admins, non-HTTPS origins, wildcards and insecure cookies. This applies to hosted public demos too. Local mode rejects external hosts/origins, and still requires a strong session secret; it permits initial CLI account setup before the first admin exists.
 
-Terminate HTTPS at an operator-managed proxy, forward the original Host and Origin, and proxy the web app and API under the same origin. Keep published API/PostgreSQL ports on loopback or a private network. The default Compose bindings remain `127.0.0.1`; do not expose them merely by replacing that address with `0.0.0.0`. Preserve `--no-proxy-headers` unless implementing and reviewing an explicit trusted-proxy policy. The repository does not provision certificates, DNS, a public listener or HSTS for your domain.
+The supplied Caddy service obtains/renews certificates, redirects HTTP to HTTPS and sets HSTS (`max-age=31536000`) at the TLS boundary. Configure DNS and host firewall rules as described in the runbook, preserve the certificate volumes, and forward the original Host and Origin for same-origin web/API traffic. API/database ports are not published in hosted Compose. The local development file retains loopback publications; replacing `127.0.0.1` with `0.0.0.0` is not a hosted deployment. Preserve `--no-proxy-headers` unless implementing and reviewing explicit trusted-proxy admission. Actual public DNS and ACME issuance are operator deployment steps; local verification used an internal test issuer.
 
 ## Anonymous public demo
 
-1. Use a dedicated demo database/workspace when possible. `proofops reset-demo-data --yes` replaces saved review data, preserving the documented unrelated accounting tables and files.
-2. Run the reset before enabling public mode:
-
-   ```sh
-   docker compose exec -T api proofops reset-demo-data --yes
-   ```
-
-3. Set `PROOFOPS_PUBLIC_DEMO=true` in the private environment and recreate the API with `docker compose up -d --force-recreate api`. Stop the worker for a dedicated read-only presentation if it is no longer needed.
+Use a dedicated demo database/workspace. In hosted Compose, run the separate `seed` maintenance service before starting the API; the hosted flag is already enabled and the API artifact volume is read-only. Follow the runbook for later reseeding. Outside that deployment, `proofops reset-demo-data --yes` remains an explicit host-operator action; seed before enabling `PROOFOPS_PUBLIC_DEMO=true` and recreate the API. Resets preserve the documented accounting tables/files and all audit history. Workers refuse to claim jobs whenever the public-demo flag is enabled.
 
 The UI opens directly with a viewer role and no sign-in/sign-out or admin controls. All unsafe HTTP methods return 403 regardless of an existing admin session. Only explicitly seeded membership rows, unchanged report/explanation hashes, the supplied replay hashes and original content-addressed exports are eligible for anonymous reading. Normal imported reviews are never included, even if they use synthetic inputs. Without a reset after the auth migration, the public listing is empty. Modified/unmarked results are omitted and their detail/export returns 404.
 
@@ -114,4 +115,4 @@ Both operations revoke that user's sessions. Disabling the last admin makes the 
 
 Run the complete backend and browser checks in [testing](testing.md). They use local PostgreSQL, synthetic accounts and AI-off replays; no cloud/model calls are needed. Browser credentials are generated into ignored, owner-readable `artifacts/private/browser-auth.json`; sessions stay in memory. Traces/videos are disabled because network traces can contain cookies and login bodies. Only the three synthetic result pages are captured into `docs/screenshots/`. Do not upload the entire artifacts directory.
 
-This is a basic single-workspace auth system, not a production security certification. It does not supply tenant or per-review access isolation, MFA/SSO, self-service recovery, separate approver duties, complete tamper-evident authentication auditing, intrusion alerting, a distributed edge DoS defense, automated secret management, encrypted database/backups, restore testing, retention policy or a TLS deployment. A compromised application host/database or an admin intentionally importing sensitive material remains outside these controls. XSS prevention still matters because malicious same-origin code could act with a browser's session. Review your deployment, dependencies, trusted origins and operator access before exposing real data.
+This is a single-workspace demo deployment, not a production security certification. It does not supply tenant or per-review isolation, MFA/SSO, self-service recovery, separate approver duties, an external tamper-evident audit sink, intrusion alerting, distributed edge DoS defense, automated secret management, encrypted backups or a retention/restore program. Known image findings without published Debian fixes remain in [the security review](security_review.md#hosted-demo-image-scan); filtered scan results must not be called clean. A compromised host/database owner or an admin intentionally importing sensitive material remains outside these controls. XSS prevention still matters because malicious same-origin code could act with a browser's session. Review dependencies, operator access and deployment controls before exposing real data.

@@ -42,7 +42,39 @@ cd frontend
 npm run screenshots:demo
 ```
 
-The capture authenticates with the prepared synthetic admin, verifies exact fixture hashes/template explanations and checks that no test username/password is visible. Review the resulting PNGs before committing. Authentication checks do not contact cloud/model APIs. PostgreSQL/Docker tests must run with local service access; sandbox connection failures are not a reason to weaken or skip them. Historical results in `docs/results/` and PDFs remain saved measurements; the current change's checks are recorded in `CHANGELOG.md`.
+The capture authenticates with the prepared synthetic admin, verifies exact fixture hashes/template explanations and checks that no test username/password is visible. Both e2e and screenshot commands honor `PROOFOPS_WEB_URL` for an isolated loopback stack and `PROOFOPS_BROWSER_AUTH_FILE` for its generated credentials. Review the resulting PNGs before committing; preserve historical documentation images when capturing verification-only evidence. Authentication checks do not contact cloud/model APIs. PostgreSQL/Docker tests must run with local service access; sandbox connection failures are not a reason to weaken or skip them. Historical results in `docs/results/` and PDFs remain saved measurements; the current change's checks are recorded in `CHANGELOG.md`.
+
+## Hosted container and HTTPS checks
+
+The normal backend suite includes admission/body-deadline/header tests, actor-bound audit tests, real-PostgreSQL runtime privilege tests and effective Compose checks. The following additional suites exercise the built nginx/PostgreSQL images and the actual Caddy TLS boundary. They need Docker, curl, Compose 2.24.4 or newer and free loopback ports 15080/15443. They use no public ACME or cloud/model API. Image/package/advisory downloads during builds and scans require network access.
+
+From the app root, after local configuration and frozen test dependencies are installed:
+
+```sh
+docker compose build --no-cache --pull db
+python3 -m scripts.prepare_hosted_checks
+hosted_check() {
+  docker compose --env-file artifacts/hosted-security/private/.env.hosted \
+    -p proofops-hosted-check -f compose.hosted.yaml \
+    -f artifacts/hosted-security/private/images.json \
+    -f artifacts/hosted-security/private/ports.yaml "$@"
+}
+hosted_check --profile worker --profile maintenance build --no-cache --pull
+hosted_check up -d db
+hosted_check run --rm migrate
+hosted_check run --rm --no-deps api proofops users create --username security-check-admin --role admin
+hosted_check run --rm --no-deps seed
+hosted_check up -d --wait
+.venv/bin/pytest tests/containers -q --junitxml=artifacts/hosted-security/containers.xml
+.venv/bin/pytest tests/hosted -q --junitxml=artifacts/hosted-security/tls-proxy.xml
+hosted_check --profile worker --profile maintenance down --volumes --remove-orphans
+```
+
+Choose a unique generated admin password at the non-echoing prompt. The preparation helper writes only ignored test configuration, generates independent private credentials, derives a test Caddyfile with its internal issuer, and replaces the public port bindings with loopback bindings. It does not modify the root `.env.hosted` or start containers. The fixed project name is reserved for these synthetic tests; do not run concurrent checks or point it at an existing workspace.
+
+Container tests use fresh labelled containers with no network, verify PostgreSQL 17/18 volume ownership and non-root operation, and start nginx read-only with all capabilities dropped. HTTPS checks force DNS to loopback and disable curl proxies. They verify seeded-only reads, read-only identity, every representative write rejection, disabled docs, Host/Origin rejections, redirect/HSTS/security headers and a controlled 502. The outage test verifies the project label before stopping and restarting only `proofops-hosted-check-api-1`. The final `down --volumes` removes only this disposable test project's data; it does not touch local `proofops` volumes.
+
+These checks verify local TLS behavior, not public DNS, ACME issuance or internet load resistance. Run both filtered and unfiltered Trivy scans as shown in [the security review](security_review.md#hosted-demo-image-scan), record the actual image IDs/advisory timestamp, and retain unresolved findings. Do not treat a zero `--ignore-unfixed` count as a clean scan or publish the private artifacts directory.
 
 ## T01–T24 acceptance matrix
 
