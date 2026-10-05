@@ -223,6 +223,10 @@ class AuthService:
 
     def initialize(self) -> None:
         security_configuration(self.settings)
+        if self.settings.proofops_mode == "hosted":
+            from proofops.storage.roles import assert_runtime_role
+
+            assert_runtime_role(self.factory)
         username = self.settings.proofops_admin_username
         password = self.settings.proofops_admin_password.get_secret_value()
         if bool(username) != bool(password):

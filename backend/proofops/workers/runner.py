@@ -32,7 +32,9 @@ def run_once(
     *, factory=None, settings: Settings | None = None, router: ModelRouter | None = None
 ) -> str | None:
     settings = settings or get_settings()
-    factory = factory or session_factory()
+    if settings.proofops_public_demo:
+        return None
+    factory = factory or session_factory(settings.database_url)
     owner = str(uuid4())
     job_id = claim_job(factory, owner, settings.job_lease_seconds)
     if not job_id:
@@ -161,6 +163,11 @@ def main():
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
+    settings = get_settings()
+    if settings.proofops_mode == "hosted":
+        from proofops.storage.roles import assert_runtime_role
+
+        assert_runtime_role(session_factory(settings.database_url))
     while True:
         try:
             handled = run_once()
