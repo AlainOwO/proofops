@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-05",
+  "software": [
+    {
+      "tool": "fastapi",
+      "version": "0.142.2",
+      "role": "Required API framework",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "uvicorn",
+      "version": "0.54.0",
+      "role": "Required ASGI HTTP server",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "pydantic",
+      "version": "2.13.5",
+      "role": "Required typed data contracts",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "pydantic-settings",
+      "version": "2.15.0",
+      "role": "Required environment settings",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "sqlalchemy",
+      "version": "2.1.3",
+      "role": "Required database mapping/transactions",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "alembic",
+      "version": "1.20.0",
+      "role": "Required database migrations",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "psycopg",
+      "version": "3.3.6",
+      "role": "Required PostgreSQL driver",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "boto3",
+      "version": "1.43.108",
+      "role": "Optional live AWS client; required adapter dependency",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "openai",
+      "version": "2.54.0",
+      "role": "Optional live provider; required SDK adapter dependency",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "anthropic",
+      "version": "0.125.0",
+      "role": "Optional live provider; required SDK adapter dependency",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "httpx",
+      "version": "0.28.1",
+      "role": "Required bounded HTTP client and SDK test transport",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "jsonschema",
+      "version": "4.26.0",
+      "role": "Required JSON Schema validation",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "pytest",
+      "version": "9.1.1",
+      "role": "Development test runner",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "hypothesis",
+      "version": "6.168.3",
+      "role": "Development generated-input tests",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "ruff",
+      "version": "0.16.10",
+      "role": "Development lint/format checks",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "mypy",
+      "version": "1.20.2",
+      "role": "Development Python type checks",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "reportlab",
+      "version": "4.5.1",
+      "role": "Documentation PDF generation only",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "pymupdf",
+      "version": "1.28.2",
+      "role": "Documentation PDF validation/rendering only",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "pillow",
+      "version": "12.3.0",
+      "role": "Documentation contact sheets only",
+      "source": "uv.lock"
+    },
+    {
+      "tool": "react",
+      "version": "19.3.0",
+      "role": "Required browser UI framework",
+      "source": "frontend/package-lock.json"
+    },
+    {
+      "tool": "react-dom",
+      "version": "19.3.0",
+      "role": "Required DOM renderer",
+      "source": "frontend/package-lock.json"
+    },
+    {
+      "tool": "typescript",
+      "version": "5.9.3",
+      "role": "Development browser type checker",
+      "source": "frontend/package-lock.json"
+    },
+    {
+      "tool": "vite",
+      "version": "7.3.6",
+      "role": "Development asset build/server",
+      "source": "frontend/package-lock.json"
+    },
+    {
+      "tool": "@playwright/test",
+      "version": "1.63.0",
+      "role": "Development browser automation",
+      "source": "frontend/package-lock.json"
+    },
+    {
+      "tool": "prettier",
+      "version": "3.6.2",
+      "role": "Development source formatter",
+      "source": "frontend/package-lock.json"
+    },
+    {
+      "tool": "lucide-react",
+      "version": "0.468.0",
+      "role": "Required interface icons",
+      "source": "frontend/package-lock.json"
+    },
+    {
+      "tool": "conftest",
+      "version": "0.71.0",
+      "role": "Required deterministic guard fixtures",
+      "source": "https://github.com/open-policy-agent/conftest/releases/download/v0.71.0/conftest_0.71.0_Darwin_arm64.tar.gz"
+    },
+    {
+      "tool": "k6",
+      "version": "2.3.0",
+      "role": "Required measured workload profiles",
+      "source": "https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-macos-arm64.zip"
+    },
+    {
+      "tool": "terraform",
+      "version": "1.16.5",
+      "role": "Optional isolated AWS scaffold",
+      "source": "https://releases.hashicorp.com/terraform/1.16.5/terraform_1.16.5_darwin_arm64.zip"
+    },
+    {
+      "tool": "Python",
+      "version": "3.12.15",
+      "role": "Required; application range 3.12.x",
+      "source": "Current docs build interpreter / uv.lock"
+    },
+    {
+      "tool": "uv",
+      "version": "0.12.23",
+      "role": "Required frozen dependency installer",
+      "source": "Dockerfile and CI"
+    },
+    {
+      "tool": "Node",
+      "version": "22 (container/LTS setup); host 25.7.0",
+      "role": "Frontend build; not a backend runtime",
+      "source": "frontend/Dockerfile and measured host"
+    },
+    {
+      "tool": "PostgreSQL",
+      "version": "17.6-alpine",
+      "role": "Required persistent transactional database",
+      "source": "compose.yaml"
+    },
+    {
+      "tool": "nginx",
+      "version": "1.28-alpine",
+      "role": "Container static web/proxy server",
+      "source": "frontend/Dockerfile"
+    },
+    {
+      "tool": "Terraform AWS provider",
+      "version": "6.67.0",
+      "role": "Optional isolated AWS scaffold; not deployed",
+      "source": "infra/aws-demo/.terraform.lock.hcl"
+    },
+    {
+      "tool": "Docker",
+      "version": "Docker version 29.6.1, build 8900f1d",
+      "role": "Required local container runtime; host version observed, not package-locked",
+      "source": "Local version command"
+    },
+    {
+      "tool": "Compose",
+      "version": "5.2.0",
+      "role": "Required local container runtime; host version observed, not package-locked",
+      "source": "Local version command"
+    }
+  ],
+  "deferred": [
+    "LangGraph",
+    "Kubernetes",
+    "vector database",
+    "trained router"
+  ]
+}

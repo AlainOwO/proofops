@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "origin": "local_observation",
+  "injected": true,
+  "image_digest": "sha256:a3660477c80e1169682bcc68a0f004033919d30c797e9deea27f22dfbf125270",
+  "image_digest_kind": "local_image_config_digest",
+  "platform": "linux/arm64",
+  "profile_hash": "09579106341134ceff778280229c5028ff0fa1ee627d458d496b2f079b1038dc",
+  "dependency_hash": "3b68d4afa2260bf25b6627a814aa5ffa5f5a48bdc260e238b3b192d3591fe835",
+  "server_hash": "8df50475a31be0c46b0a000692cde05659478334ad894fa3b612383f28ffacf1",
+  "warmup_policy": "100 sequential requests with 80/15/5 class mix, outside measured window",
+  "non_resize_config_hash": "4ab04c8ecac9bbcdb9cb82053651bf55b8974ec5420f599f7c8de19c301f0a72",
+  "observations": [
+    {
+      "role": "failure",
+      "memory_mib": 64,
+      "injected_pressure_mib": 128,
+      "started_at": "2026-10-05T00:28:13.428326+00:00",
+      "wait_exit_code": 137,
+      "container": {
+        "state": {
+          "Status": "exited",
+          "Running": false,
+          "Paused": false,
+          "Restarting": false,
+          "OOMKilled": true,
+          "Dead": false,
+          "Pid": 0,
+          "ExitCode": 137,
+          "Error": "",
+          "StartedAt": "2026-10-05T00:28:13.37002517Z",
+          "FinishedAt": "2026-10-05T00:28:13.774787962Z"
+        },
+        "restart_count": 0,
+        "memory_bytes": 67108864,
+        "nano_cpus": 1000000000,
+        "image": "sha256:a3660477c80e1169682bcc68a0f004033919d30c797e9deea27f22dfbf125270",
+        "labels": {
+          "com.docker.compose.project": "proofops",
+          "com.docker.compose.service": "workload",
+          "com.docker.compose.version": "5.2.0",
+          "proofops.owned": "workload-experiment"
+        }
+      },
+      "ended_at": "2026-10-05T00:28:13.936063+00:00",
+      "oom_confirmed_by_docker": true
+    },
+    {
+      "role": "repair",
+      "memory_mib": 256,
+      "injected_pressure_mib": 128,
+      "started_at": "2026-10-05T00:28:14.075146+00:00",
+      "independently_verified_correct_responses": 20,
+      "container": {
+        "state": {
+          "Status": "running",
+          "Running": true,
+          "Paused": false,
+          "Restarting": false,
+          "OOMKilled": false,
+          "Dead": false,
+          "Pid": 30069,
+          "ExitCode": 0,
+          "Error": "",
+          "StartedAt": "2026-10-05T00:28:14.014214462Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        "restart_count": 0,
+        "memory_bytes": 268435456,
+        "nano_cpus": 1000000000,
+        "image": "sha256:a3660477c80e1169682bcc68a0f004033919d30c797e9deea27f22dfbf125270",
+        "labels": {
+          "com.docker.compose.project": "proofops",
+          "com.docker.compose.service": "workload",
+          "com.docker.compose.version": "5.2.0",
+          "proofops.owned": "workload-experiment"
+        }
+      },
+      "ended_at": "2026-10-05T00:28:14.562170+00:00",
+      "oom_confirmed_by_docker": false
+    }
+  ],
+  "confirmed_failure_and_repair": true,
+  "scope": "128 MiB startup allocation in isolated cgroup-limited containers; not an AWS approved bound."
+}

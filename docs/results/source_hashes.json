@@ -1,0 +1,21 @@
+{
+  "artifacts/checks/backend.xml": "917ebb6c2f320fa307e534577f3a06a12d6dc3e58d67296cb3943bd3f2fd0a11",
+  "artifacts/checks/playwright.json": "db0b0236b52c451bd3fc9c30ff4fb7eddd2e1315c292b53949de3dabc0b86228",
+  "artifacts/evaluation/results.jsonl": "68cc00df8eddd51084d28150de6250ce59f7ad5291f6fe9cee037f08e3d927a6",
+  "artifacts/workload/baseline-smoke-01/manifest.json": "183b92e8cb44a23683a8155ca4f517498c88dd52c2868a1bbeac736153df8d88",
+  "artifacts/workload/baseline-smoke-01/baseline-smoke-01.k6-summary.json": "ba3d1a86a762d0bc9d4af54cdf8d5f1cae4f419d44089016c3412dd0e5c270d6",
+  "artifacts/workload/baseline-calibration-01/manifest.json": "b0d03e5d45fcbf9f4c8bbd0752f89f802373aaf953aaefc50436cf7f5809dc68",
+  "artifacts/workload/baseline-calibration-01/baseline-calibration-01.k6-summary.json": "b68be90962c9cbc0a915d810be79ccd21908dcc4abf0d9c45447cd73483ce545",
+  "artifacts/workload/baseline-full-01/manifest.json": "c1a9a1c4731c33ee6c7ccd9d316d1361329917bc4760e8e55a9267f7ba3a9dc5",
+  "artifacts/workload/baseline-full-01/baseline-full-01.k6-summary.json": "19d36a39327869e814fb0b74d52c3c667f7d379277adaefd1a2e22d3ee00530e",
+  "artifacts/workload/candidate-full-01/manifest.json": "151150c47a46df574b484a124b57e5607cfc9506eaaadc59af1952529792f6fc",
+  "artifacts/workload/candidate-full-01/candidate-full-01.k6-summary.json": "8df109b72af4fa93c62a31fb3096f67795fe74d2bb6e91b5a25b5d4cdd0a4e41",
+  "artifacts/workload/baseline-full-02/manifest.json": "285f5d5ee4d950e158db49e0d1e975227379eade9ab56dc6e44cc8589f780c38",
+  "artifacts/workload/baseline-full-02/baseline-full-02.k6-summary.json": "254c4209a0c174f358521ab0f85d60a35cf19a737024cbbb81a14b9d7afb879e",
+  "artifacts/workload/candidate-full-02/manifest.json": "dc941b6ff3a452365b6aa19267bff4ee23bce41011494b8bd08cc0a5b07dac76",
+  "artifacts/workload/candidate-full-02/candidate-full-02.k6-summary.json": "5608312abaa779efff8adb784367978f80889362b13252e60540b82cde08ca73",
+  "artifacts/workload/baseline-full-03/manifest.json": "807c01f4de85199e9d84ee3f2761846aae59bf8b57c9a535cef4902746cf0741",
+  "artifacts/workload/baseline-full-03/baseline-full-03.k6-summary.json": "7cc204d19509f9741a33c69a83bc074a73461c642fe083378893a95ceb10b8f2",
+  "artifacts/workload/candidate-full-03/manifest.json": "4837c2294895f5c07805fd97b903c8dd80e185b154d88cbb6ebdc29525256f5b",
+  "artifacts/workload/candidate-full-03/candidate-full-03.k6-summary.json": "7ad360d1f73a49c12076ad07203ea8ccc99df24379e02791dba068741089a994"
+}

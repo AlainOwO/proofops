@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "source_revision": "6816284fc257c6f80c9b8028cba76eb47a15b09b",
+  "status": "passed",
+  "origin": "local_observation",
+  "commands": [
+    {
+      "command": "git clone --no-local --no-hardlinks . artifacts/fresh-install",
+      "exit_code": 0
+    },
+    {
+      "command": ".bootstrap/bin/uv sync --project artifacts/fresh-install --frozen --no-dev",
+      "exit_code": 0,
+      "environment": "New .venv; 45 frozen runtime packages installed"
+    },
+    {
+      "command": ".venv/bin/proofops review --bundle fixtures/replays/valid-resize --ai off --output artifacts/fresh-valid",
+      "working_directory": "artifacts/fresh-install",
+      "exit_code": 0,
+      "outcome": "request_review"
+    },
+    {
+      "command": ".venv/bin/proofops replay artifacts/fresh-valid",
+      "working_directory": "artifacts/fresh-install",
+      "exit_code": 0,
+      "reproduced": true
+    }
+  ],
+  "scope": "New local checkout/runtime environment on macOS ARM64. No AWS/model credentials or PostgreSQL needed for CLI replay. PowerShell and an independent second developer were not tested."
+}

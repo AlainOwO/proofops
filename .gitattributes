@@ -1,0 +1,5 @@
+# Preserve generated PDF bytes and avoid text diffs or line-ending conversion.
+*.pdf binary
+
+# Preserve the upstream font license verbatim, including its whitespace.
+docs/licenses/bitstream-vera-license.txt -text -whitespace

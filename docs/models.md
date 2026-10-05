@@ -1,0 +1,21 @@
+# Model integration and inventory
+
+No exact live model ID is configured or evaluated for this handoff. `docs/model_inventory.json` records empty model slots, source dates, reasons for unknown prices/measurements and concrete intended tasks. OpenAI is the default provider slot for a first attempt and Anthropic for a bounded escalation; both roles can be reassigned. This is configurable routing plumbing, not a finding that either brand is cheaper, stronger or better.
+
+## How hosted inference is used
+
+The app serializes a system instruction, bounded deterministic facts and a JSON Schema, then sends them to a provider endpoint. A hosted model generates output tokens; the SDK returns content, completion status and usage. The application sees the request/response contract, not proprietary parameter counts, training data, internal architecture or private reasoning. No assumptions about those hidden details are needed.
+
+For explanation, input includes the exact outcome, allowed numeric facts, finding codes, evidence references, coverage and curated development material. The result is a typed explanation with citations and a next step. For guard drafting, input is the already-approved scope/bound/reference specification; output must preserve it exactly in draft state. Example: explain why a 1,024 MiB candidate violates a supplied 2,048 MiB floor, or re-express that exact approved floor as a draft. Neither task discovers a safe bound or executes a change.
+
+OpenAI uses the Responses API with `text.format`, a named strict schema, `store=false`, a maximum output and no tools. Anthropic uses Messages with separate system/user input, `output_config.format`, a maximum output and no tools. Complete non-streaming output is required. Provider grammar constraints are followed by application schema, citation, numeric and action checks. Refusal, truncation and unsupported/permanent errors stay explicit. No model output can replace a deterministic result, activate a guard, read evaluator files or run commands.
+
+## Routing, costs and limitations
+
+Template behavior is the default. Out-of-scope or missing required evidence stops unnecessary explanation calls. An eligible configured language task may use cheap-only, strong-only or routed policy. Routed mode starts with the configured first slot, and can escalate after mechanical failure; a transient retry consumes the same two-attempt maximum. Permanent quota/authentication/request errors and refusal do not create loops. Confidence and unsupported causal statements can still be wrong even when mechanics pass; live semantics require independent annotation.
+
+Before dispatch, the app requires an exact allowlisted model, key from the environment, structured-output capability, official-source USD rates no older than 31 days, and positive overall/per-task budgets. A conservative byte/framing estimate reserves planned cost atomically. Actual reported input, cache-read, cache-write and output usage determines reconciled cost. OpenAI reasoning usage, where reported, remains included in output rather than charged twice. No explicit reasoning or hosted-tool capability is enabled. Provider billing differences can exceed a reservation; the ledger records this and retains uncertainty instead of claiming a guaranteed external invoice cap.
+
+Cache hits preserve original usage and record current incremental cost separately. Failed/truncated output is never an accepted cache entry. Timeout/crash uncertainty retains reserved money. When both providers fail, the deterministic report and template next step remain available and AI unavailability is visible. Live quality, latency, parity and task-cost comparisons are null, not invented zeroes. Mocked official SDK requests have passed; they are not a model benchmark.
+
+Sources checked 2026-10-05: [OpenAI structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [OpenAI pricing reference](https://developers.openai.com/api/docs/pricing), [Anthropic structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs), [Anthropic pricing reference](https://platform.claude.com/docs/en/about-claude/pricing). No particular price or account-specific model access is asserted from these links.

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "markdown_documents_checked": 16,
+  "pdfs": [
+    {
+      "file": "docs/pdf/ProofOps_Project_Overview.pdf",
+      "sha256": "211cc85dd429811b8c04b3a3cbabb9bf3c6e8e0bcd334843bbc9724ab8e0644a",
+      "pages": 4,
+      "searchable_characters": 9717,
+      "bookmarks": 12,
+      "embedded_fonts": {
+        "BitstreamVeraSans-Roman": true,
+        "BitstreamVeraSans-Bold": true
+      },
+      "links": 12,
+      "rendered_pages": 4,
+      "contact_sheets": [
+        "docs/pdf/rendered/ProofOps_Project_Overview/contact-01.png"
+      ],
+      "issues": []
+    },
+    {
+      "file": "docs/pdf/ProofOps_Technical_and_Learning_Guide.pdf",
+      "sha256": "6e222d06768e8d802bbab2ebe4ee8db1401b9ca13f2f51779f05752f0160a868",
+      "pages": 28,
+      "searchable_characters": 75924,
+      "bookmarks": 59,
+      "embedded_fonts": {
+        "BitstreamVeraSans-Roman": true,
+        "BitstreamVeraSans-Bold": true
+      },
+      "links": 69,
+      "rendered_pages": 28,
+      "contact_sheets": [
+        "docs/pdf/rendered/ProofOps_Technical_and_Learning_Guide/contact-01.png",
+        "docs/pdf/rendered/ProofOps_Technical_and_Learning_Guide/contact-02.png",
+        "docs/pdf/rendered/ProofOps_Technical_and_Learning_Guide/contact-03.png",
+        "docs/pdf/rendered/ProofOps_Technical_and_Learning_Guide/contact-04.png",
+        "docs/pdf/rendered/ProofOps_Technical_and_Learning_Guide/contact-05.png"
+      ],
+      "issues": []
+    }
+  ],
+  "external_link_note": "URI syntax checked; no claim every external website is reachable offline.",
+  "visual_review": "All pages rendered; inspect contact sheets and detailed pages before recording human layout approval."
+}

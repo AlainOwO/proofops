@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-10-05",
+  "reviewer": "Codex visual inspection",
+  "method": "Visual inspection of all rendered pages through final contact sheets, with detailed page inspection during layout corrections.",
+  "scope": "Document layout only; not human usability testing or peer feedback.",
+  "pdfs": [
+    {
+      "file": "docs/pdf/ProofOps_Project_Overview.pdf",
+      "sha256": "211cc85dd429811b8c04b3a3cbabb9bf3c6e8e0bcd334843bbc9724ab8e0644a",
+      "pages": 4,
+      "reviewed_pages": 4,
+      "reviewed_contact_sheets": 1,
+      "all_pages_reviewed": true,
+      "remaining_observed_layout_issues": []
+    },
+    {
+      "file": "docs/pdf/ProofOps_Technical_and_Learning_Guide.pdf",
+      "sha256": "6e222d06768e8d802bbab2ebe4ee8db1401b9ca13f2f51779f05752f0160a868",
+      "pages": 28,
+      "reviewed_pages": 28,
+      "reviewed_contact_sheets": 5,
+      "all_pages_reviewed": true,
+      "remaining_observed_layout_issues": []
+    }
+  ],
+  "corrected_layout_issues": [
+    "Wrapped long test identifiers within table cells.",
+    "Corrected table heading wrapping and page splits.",
+    "Removed an unintended orphaned overview page."
+  ],
+  "final_observations": [
+    "No observed clipping, overflowing tables, missing glyphs or unintended empty pages.",
+    "Text, diagrams, table labels and page furniture remain readable."
+  ],
+  "automated_validation": "docs/pdf/validation.json"
+}

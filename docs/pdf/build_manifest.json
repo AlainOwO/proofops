@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "built_at": "2026-10-05T01:45:08.956754+00:00",
+  "sources": {
+    "docs/architecture.md": "57c5416f9f6cab5966a492ccac132858886dc1460c32241a79e7f5a9a59f9825",
+    "docs/aws.md": "57519643a2e12988d72dc010eed82e4569973a706078cfbba7f610c2c5f4d6c3",
+    "docs/data_sources.md": "8aa8de990b6e9eb0001174d1a1696bb67a6e72e4518bdaecd18bd930ab1223dd",
+    "docs/interview_walkthrough.md": "c530c957a690de6ac0de5753b430a76aae7b5723d5b4db5181f2db1c837e1859",
+    "docs/learning_path.md": "9111dbb77441d208d8e7db212d0f5f4fcfd88613b757ba9090bf520e46d0ecec",
+    "docs/model_inventory.json": "36ef5f4f9ac3fd0605132de00395a77428b2dc49e39b8b97cb5c6c8939b74133",
+    "docs/models.md": "a4365df1740a6124a6f3d0200171296b17ca32816aa369b49315517b636e72cd",
+    "docs/module_reference.md": "3440e2292ea3bece48f598d06e952b06b920ebcb1ede4644999709bd41425589",
+    "docs/operations.md": "a7d855e8f0130904225a18b3e40fe020363b7098a921842524aad8e5b51c4a91",
+    "docs/project_overview.md": "ecd259820f8b828e138d4044470b1ff92c3bdb8df5777525fff2f82e04b9ffce",
+    "docs/results/overview-results.md": "b4ebd5a5f3709bfd2d5993a50a41171d4c6182a9b313e3a580077a229efeb267",
+    "docs/results/results.md": "f34ee280cc7fd92a3a2a1198a91aba2db50740f0626a0db2ca1ba4d56b792fd9",
+    "docs/software_inventory.json": "1e5ed83043892a8d5b77fcfdad5f2d21fff82f521bd792098ba845173b207559",
+    "docs/technology.md": "ff26ab92ea44759c31e871483590462ab7016fc204ae01c61458d97affeaed9f",
+    "docs/testing.md": "230f8d49c9bc9ed7914305d1213fd615d1306b64f20e3516684a1492b4ca1598",
+    "evaluation/README.md": "c0814bf73d97a6316da75a5f673cdece137980b722911e4ad7fd6205f0bfad1a",
+    "scripts/build_docs.py": "baed8e89019fa34934daf5d0ee110fed8f2a04478392c38ed9328be137b2019b"
+  },
+  "outputs": {
+    "docs/pdf/ProofOps_Project_Overview.pdf": "211cc85dd429811b8c04b3a3cbabb9bf3c6e8e0bcd334843bbc9724ab8e0644a",
+    "docs/pdf/ProofOps_Technical_and_Learning_Guide.pdf": "6e222d06768e8d802bbab2ebe4ee8db1401b9ca13f2f51779f05752f0160a868"
+  }
+}

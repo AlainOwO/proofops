@@ -1,0 +1,885 @@
+{
+  "schema_version": 1,
+  "run_id": "331786c8-6a7f-496b-a899-739fc2730790",
+  "recorded_at": "2026-10-05T01:11:10.816964+00:00",
+  "mode": "replay",
+  "manifest_hash": "4f55007d154c1c71582df30780ade8592bfd2beec8f7f0a52bdb37fef032972b",
+  "corpus_version": "synthetic-60-v1",
+  "deterministic": {
+    "correct": 60,
+    "cases": 60,
+    "groups": 20
+  },
+  "policies": {
+    "template": {
+      "scheduled_tasks": 120,
+      "ran_tasks": 120,
+      "unrun_tasks": 0,
+      "provider_attempts": 0,
+      "accepted_output_coverage": {
+        "count": 111,
+        "denominator": 120
+      },
+      "semantic_correctness": {
+        "correct": 60,
+        "scored_explanations": 60,
+        "unscored_explanations": 0
+      },
+      "guard_correctness": {
+        "correct": 60,
+        "denominator": 60,
+        "applicable_drafts_correct": 54,
+        "applicable_drafts": 54,
+        "not_applicable_correct": 6,
+        "not_applicable": 6
+      },
+      "schema_citation_valid": {
+        "count": 57,
+        "denominator": 57,
+        "coverage_abstentions": 3
+      },
+      "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+      "unsafe_false_negatives": {
+        "count": 0,
+        "denominator": 18
+      },
+      "healthy_false_positives": {
+        "count": 0,
+        "denominator": 9
+      },
+      "correct_abstentions": {
+        "count": 30,
+        "denominator": 30
+      },
+      "total_actual_usd": "0",
+      "cost_per_executed_task_usd": "0",
+      "cost_per_correct_explanation_usd": "0",
+      "escalations": {
+        "count": 0,
+        "denominator": 120
+      },
+      "tasks_with_retry_or_escalation": 0,
+      "p50_end_to_end_seconds": 0.00023545802105218172,
+      "p95_end_to_end_seconds": 0.0002840788220055401,
+      "groups": 20,
+      "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+    },
+    "cheap_only": {
+      "scheduled_tasks": 120,
+      "ran_tasks": 0,
+      "unrun_tasks": 120,
+      "provider_attempts": 0,
+      "accepted_output_coverage": {
+        "count": 0,
+        "denominator": 0
+      },
+      "semantic_correctness": {
+        "correct": 0,
+        "scored_explanations": 0,
+        "unscored_explanations": 0
+      },
+      "guard_correctness": {
+        "correct": 0,
+        "denominator": 0,
+        "applicable_drafts_correct": 0,
+        "applicable_drafts": 0,
+        "not_applicable_correct": 0,
+        "not_applicable": 0
+      },
+      "schema_citation_valid": {
+        "count": 0,
+        "denominator": 0,
+        "coverage_abstentions": 0
+      },
+      "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+      "unsafe_false_negatives": {
+        "count": 0,
+        "denominator": 0
+      },
+      "healthy_false_positives": {
+        "count": 0,
+        "denominator": 0
+      },
+      "correct_abstentions": {
+        "count": 0,
+        "denominator": 0
+      },
+      "total_actual_usd": null,
+      "cost_per_executed_task_usd": null,
+      "cost_per_correct_explanation_usd": null,
+      "escalations": {
+        "count": 0,
+        "denominator": 0
+      },
+      "tasks_with_retry_or_escalation": 0,
+      "p50_end_to_end_seconds": null,
+      "p95_end_to_end_seconds": null,
+      "groups": 0,
+      "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+    },
+    "strong_only": {
+      "scheduled_tasks": 120,
+      "ran_tasks": 0,
+      "unrun_tasks": 120,
+      "provider_attempts": 0,
+      "accepted_output_coverage": {
+        "count": 0,
+        "denominator": 0
+      },
+      "semantic_correctness": {
+        "correct": 0,
+        "scored_explanations": 0,
+        "unscored_explanations": 0
+      },
+      "guard_correctness": {
+        "correct": 0,
+        "denominator": 0,
+        "applicable_drafts_correct": 0,
+        "applicable_drafts": 0,
+        "not_applicable_correct": 0,
+        "not_applicable": 0
+      },
+      "schema_citation_valid": {
+        "count": 0,
+        "denominator": 0,
+        "coverage_abstentions": 0
+      },
+      "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+      "unsafe_false_negatives": {
+        "count": 0,
+        "denominator": 0
+      },
+      "healthy_false_positives": {
+        "count": 0,
+        "denominator": 0
+      },
+      "correct_abstentions": {
+        "count": 0,
+        "denominator": 0
+      },
+      "total_actual_usd": null,
+      "cost_per_executed_task_usd": null,
+      "cost_per_correct_explanation_usd": null,
+      "escalations": {
+        "count": 0,
+        "denominator": 0
+      },
+      "tasks_with_retry_or_escalation": 0,
+      "p50_end_to_end_seconds": null,
+      "p95_end_to_end_seconds": null,
+      "groups": 0,
+      "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+    },
+    "routed": {
+      "scheduled_tasks": 120,
+      "ran_tasks": 0,
+      "unrun_tasks": 120,
+      "provider_attempts": 0,
+      "accepted_output_coverage": {
+        "count": 0,
+        "denominator": 0
+      },
+      "semantic_correctness": {
+        "correct": 0,
+        "scored_explanations": 0,
+        "unscored_explanations": 0
+      },
+      "guard_correctness": {
+        "correct": 0,
+        "denominator": 0,
+        "applicable_drafts_correct": 0,
+        "applicable_drafts": 0,
+        "not_applicable_correct": 0,
+        "not_applicable": 0
+      },
+      "schema_citation_valid": {
+        "count": 0,
+        "denominator": 0,
+        "coverage_abstentions": 0
+      },
+      "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+      "unsafe_false_negatives": {
+        "count": 0,
+        "denominator": 0
+      },
+      "healthy_false_positives": {
+        "count": 0,
+        "denominator": 0
+      },
+      "correct_abstentions": {
+        "count": 0,
+        "denominator": 0
+      },
+      "total_actual_usd": null,
+      "cost_per_executed_task_usd": null,
+      "cost_per_correct_explanation_usd": null,
+      "escalations": {
+        "count": 0,
+        "denominator": 0
+      },
+      "tasks_with_retry_or_escalation": 0,
+      "p50_end_to_end_seconds": null,
+      "p95_end_to_end_seconds": null,
+      "groups": 0,
+      "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+    }
+  },
+  "policies_by_split": {
+    "development": {
+      "template": {
+        "scheduled_tasks": 48,
+        "ran_tasks": 48,
+        "unrun_tasks": 0,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 48,
+          "denominator": 48
+        },
+        "semantic_correctness": {
+          "correct": 24,
+          "scored_explanations": 24,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 24,
+          "denominator": 24,
+          "applicable_drafts_correct": 24,
+          "applicable_drafts": 24,
+          "not_applicable_correct": 0,
+          "not_applicable": 0
+        },
+        "schema_citation_valid": {
+          "count": 24,
+          "denominator": 24,
+          "coverage_abstentions": 0
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 3
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 3
+        },
+        "correct_abstentions": {
+          "count": 18,
+          "denominator": 18
+        },
+        "total_actual_usd": "0",
+        "cost_per_executed_task_usd": "0",
+        "cost_per_correct_explanation_usd": "0",
+        "escalations": {
+          "count": 0,
+          "denominator": 48
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": 0.00023749948013573885,
+        "p95_end_to_end_seconds": 0.00032973320339806377,
+        "groups": 8,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      },
+      "cheap_only": {
+        "scheduled_tasks": 48,
+        "ran_tasks": 0,
+        "unrun_tasks": 48,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 0,
+          "denominator": 0
+        },
+        "semantic_correctness": {
+          "correct": 0,
+          "scored_explanations": 0,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 0,
+          "denominator": 0,
+          "applicable_drafts_correct": 0,
+          "applicable_drafts": 0,
+          "not_applicable_correct": 0,
+          "not_applicable": 0
+        },
+        "schema_citation_valid": {
+          "count": 0,
+          "denominator": 0,
+          "coverage_abstentions": 0
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "correct_abstentions": {
+          "count": 0,
+          "denominator": 0
+        },
+        "total_actual_usd": null,
+        "cost_per_executed_task_usd": null,
+        "cost_per_correct_explanation_usd": null,
+        "escalations": {
+          "count": 0,
+          "denominator": 0
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": null,
+        "p95_end_to_end_seconds": null,
+        "groups": 0,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      },
+      "strong_only": {
+        "scheduled_tasks": 48,
+        "ran_tasks": 0,
+        "unrun_tasks": 48,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 0,
+          "denominator": 0
+        },
+        "semantic_correctness": {
+          "correct": 0,
+          "scored_explanations": 0,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 0,
+          "denominator": 0,
+          "applicable_drafts_correct": 0,
+          "applicable_drafts": 0,
+          "not_applicable_correct": 0,
+          "not_applicable": 0
+        },
+        "schema_citation_valid": {
+          "count": 0,
+          "denominator": 0,
+          "coverage_abstentions": 0
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "correct_abstentions": {
+          "count": 0,
+          "denominator": 0
+        },
+        "total_actual_usd": null,
+        "cost_per_executed_task_usd": null,
+        "cost_per_correct_explanation_usd": null,
+        "escalations": {
+          "count": 0,
+          "denominator": 0
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": null,
+        "p95_end_to_end_seconds": null,
+        "groups": 0,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      },
+      "routed": {
+        "scheduled_tasks": 48,
+        "ran_tasks": 0,
+        "unrun_tasks": 48,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 0,
+          "denominator": 0
+        },
+        "semantic_correctness": {
+          "correct": 0,
+          "scored_explanations": 0,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 0,
+          "denominator": 0,
+          "applicable_drafts_correct": 0,
+          "applicable_drafts": 0,
+          "not_applicable_correct": 0,
+          "not_applicable": 0
+        },
+        "schema_citation_valid": {
+          "count": 0,
+          "denominator": 0,
+          "coverage_abstentions": 0
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "correct_abstentions": {
+          "count": 0,
+          "denominator": 0
+        },
+        "total_actual_usd": null,
+        "cost_per_executed_task_usd": null,
+        "cost_per_correct_explanation_usd": null,
+        "escalations": {
+          "count": 0,
+          "denominator": 0
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": null,
+        "p95_end_to_end_seconds": null,
+        "groups": 0,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      }
+    },
+    "calibration": {
+      "template": {
+        "scheduled_tasks": 24,
+        "ran_tasks": 24,
+        "unrun_tasks": 0,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 24,
+          "denominator": 24
+        },
+        "semantic_correctness": {
+          "correct": 12,
+          "scored_explanations": 12,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 12,
+          "denominator": 12,
+          "applicable_drafts_correct": 12,
+          "applicable_drafts": 12,
+          "not_applicable_correct": 0,
+          "not_applicable": 0
+        },
+        "schema_citation_valid": {
+          "count": 12,
+          "denominator": 12,
+          "coverage_abstentions": 0
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 6
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 3
+        },
+        "correct_abstentions": {
+          "count": 3,
+          "denominator": 3
+        },
+        "total_actual_usd": "0",
+        "cost_per_executed_task_usd": "0",
+        "cost_per_correct_explanation_usd": "0",
+        "escalations": {
+          "count": 0,
+          "denominator": 24
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": 0.00023620855063199997,
+        "p95_end_to_end_seconds": 0.0002561027475167066,
+        "groups": 4,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      },
+      "cheap_only": {
+        "scheduled_tasks": 24,
+        "ran_tasks": 0,
+        "unrun_tasks": 24,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 0,
+          "denominator": 0
+        },
+        "semantic_correctness": {
+          "correct": 0,
+          "scored_explanations": 0,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 0,
+          "denominator": 0,
+          "applicable_drafts_correct": 0,
+          "applicable_drafts": 0,
+          "not_applicable_correct": 0,
+          "not_applicable": 0
+        },
+        "schema_citation_valid": {
+          "count": 0,
+          "denominator": 0,
+          "coverage_abstentions": 0
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "correct_abstentions": {
+          "count": 0,
+          "denominator": 0
+        },
+        "total_actual_usd": null,
+        "cost_per_executed_task_usd": null,
+        "cost_per_correct_explanation_usd": null,
+        "escalations": {
+          "count": 0,
+          "denominator": 0
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": null,
+        "p95_end_to_end_seconds": null,
+        "groups": 0,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      },
+      "strong_only": {
+        "scheduled_tasks": 24,
+        "ran_tasks": 0,
+        "unrun_tasks": 24,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 0,
+          "denominator": 0
+        },
+        "semantic_correctness": {
+          "correct": 0,
+          "scored_explanations": 0,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 0,
+          "denominator": 0,
+          "applicable_drafts_correct": 0,
+          "applicable_drafts": 0,
+          "not_applicable_correct": 0,
+          "not_applicable": 0
+        },
+        "schema_citation_valid": {
+          "count": 0,
+          "denominator": 0,
+          "coverage_abstentions": 0
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "correct_abstentions": {
+          "count": 0,
+          "denominator": 0
+        },
+        "total_actual_usd": null,
+        "cost_per_executed_task_usd": null,
+        "cost_per_correct_explanation_usd": null,
+        "escalations": {
+          "count": 0,
+          "denominator": 0
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": null,
+        "p95_end_to_end_seconds": null,
+        "groups": 0,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      },
+      "routed": {
+        "scheduled_tasks": 24,
+        "ran_tasks": 0,
+        "unrun_tasks": 24,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 0,
+          "denominator": 0
+        },
+        "semantic_correctness": {
+          "correct": 0,
+          "scored_explanations": 0,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 0,
+          "denominator": 0,
+          "applicable_drafts_correct": 0,
+          "applicable_drafts": 0,
+          "not_applicable_correct": 0,
+          "not_applicable": 0
+        },
+        "schema_citation_valid": {
+          "count": 0,
+          "denominator": 0,
+          "coverage_abstentions": 0
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "correct_abstentions": {
+          "count": 0,
+          "denominator": 0
+        },
+        "total_actual_usd": null,
+        "cost_per_executed_task_usd": null,
+        "cost_per_correct_explanation_usd": null,
+        "escalations": {
+          "count": 0,
+          "denominator": 0
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": null,
+        "p95_end_to_end_seconds": null,
+        "groups": 0,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      }
+    },
+    "held_out": {
+      "template": {
+        "scheduled_tasks": 48,
+        "ran_tasks": 48,
+        "unrun_tasks": 0,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 39,
+          "denominator": 48
+        },
+        "semantic_correctness": {
+          "correct": 24,
+          "scored_explanations": 24,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 24,
+          "denominator": 24,
+          "applicable_drafts_correct": 18,
+          "applicable_drafts": 18,
+          "not_applicable_correct": 6,
+          "not_applicable": 6
+        },
+        "schema_citation_valid": {
+          "count": 21,
+          "denominator": 21,
+          "coverage_abstentions": 3
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 9
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 3
+        },
+        "correct_abstentions": {
+          "count": 9,
+          "denominator": 9
+        },
+        "total_actual_usd": "0",
+        "cost_per_executed_task_usd": "0",
+        "cost_per_correct_explanation_usd": "0",
+        "escalations": {
+          "count": 0,
+          "denominator": 48
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": 0.0002330630668438971,
+        "p95_end_to_end_seconds": 0.0002629835915286094,
+        "groups": 8,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      },
+      "cheap_only": {
+        "scheduled_tasks": 48,
+        "ran_tasks": 0,
+        "unrun_tasks": 48,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 0,
+          "denominator": 0
+        },
+        "semantic_correctness": {
+          "correct": 0,
+          "scored_explanations": 0,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 0,
+          "denominator": 0,
+          "applicable_drafts_correct": 0,
+          "applicable_drafts": 0,
+          "not_applicable_correct": 0,
+          "not_applicable": 0
+        },
+        "schema_citation_valid": {
+          "count": 0,
+          "denominator": 0,
+          "coverage_abstentions": 0
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "correct_abstentions": {
+          "count": 0,
+          "denominator": 0
+        },
+        "total_actual_usd": null,
+        "cost_per_executed_task_usd": null,
+        "cost_per_correct_explanation_usd": null,
+        "escalations": {
+          "count": 0,
+          "denominator": 0
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": null,
+        "p95_end_to_end_seconds": null,
+        "groups": 0,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      },
+      "strong_only": {
+        "scheduled_tasks": 48,
+        "ran_tasks": 0,
+        "unrun_tasks": 48,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 0,
+          "denominator": 0
+        },
+        "semantic_correctness": {
+          "correct": 0,
+          "scored_explanations": 0,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 0,
+          "denominator": 0,
+          "applicable_drafts_correct": 0,
+          "applicable_drafts": 0,
+          "not_applicable_correct": 0,
+          "not_applicable": 0
+        },
+        "schema_citation_valid": {
+          "count": 0,
+          "denominator": 0,
+          "coverage_abstentions": 0
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "correct_abstentions": {
+          "count": 0,
+          "denominator": 0
+        },
+        "total_actual_usd": null,
+        "cost_per_executed_task_usd": null,
+        "cost_per_correct_explanation_usd": null,
+        "escalations": {
+          "count": 0,
+          "denominator": 0
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": null,
+        "p95_end_to_end_seconds": null,
+        "groups": 0,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      },
+      "routed": {
+        "scheduled_tasks": 48,
+        "ran_tasks": 0,
+        "unrun_tasks": 48,
+        "provider_attempts": 0,
+        "accepted_output_coverage": {
+          "count": 0,
+          "denominator": 0
+        },
+        "semantic_correctness": {
+          "correct": 0,
+          "scored_explanations": 0,
+          "unscored_explanations": 0
+        },
+        "guard_correctness": {
+          "correct": 0,
+          "denominator": 0,
+          "applicable_drafts_correct": 0,
+          "applicable_drafts": 0,
+          "not_applicable_correct": 0,
+          "not_applicable": 0
+        },
+        "schema_citation_valid": {
+          "count": 0,
+          "denominator": 0,
+          "coverage_abstentions": 0
+        },
+        "decision_metrics_basis": "The deterministic engine's outcome; not a measure of model prose safety. Semantic scores are separate.",
+        "unsafe_false_negatives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "healthy_false_positives": {
+          "count": 0,
+          "denominator": 0
+        },
+        "correct_abstentions": {
+          "count": 0,
+          "denominator": 0
+        },
+        "total_actual_usd": null,
+        "cost_per_executed_task_usd": null,
+        "cost_per_correct_explanation_usd": null,
+        "escalations": {
+          "count": 0,
+          "denominator": 0
+        },
+        "tasks_with_retry_or_escalation": 0,
+        "p50_end_to_end_seconds": null,
+        "p95_end_to_end_seconds": null,
+        "groups": 0,
+        "independence_note": "Three variants per group are correlated; group counts, not variant counts, describe scenario coverage."
+      }
+    }
+  },
+  "latency_basis": "Local sequential evaluation: deterministic engine plus context/retrieval and router/SDK processing, no API queue. UI jobs expose queue timestamps separately.",
+  "uncertainty": {
+    "variants_per_group": 3,
+    "held_out_groups": 8,
+    "zero_error_independent_30_upper95": 0.09503385285530419,
+    "zero_error_independent_300_upper95": 0.00993608194445772,
+    "note": "The bound examples are hypothetical independent trials; they are not confidence bounds for this synthetic correlated corpus."
+  },
+  "limitations": [
+    "Original synthetic regression scenarios sharing one policy family; variants are correlated. No real-incident quality or parity claim.",
+    "Mocked adapter tests do not measure model quality.",
+    "Template semantics use a narrow independently authored rubric. New model prose requires output-bound independent annotations.",
+    "No live model quality, parity, context-quality preservation or realized savings is claimed."
+  ]
+}

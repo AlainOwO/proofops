@@ -43,10 +43,18 @@ Run relevant checks after each meaningful layer, fix failures before moving on, 
 
 - [x] Read research brief and required companion documents; inspect supplied artifacts.
 - [x] Record scope, known differences and milestone plan.
-- [ ] Foundation and reproducible environment.
-- [ ] Deterministic engine and replays.
-- [ ] Guard/performance workflow.
-- [ ] Collectors, adapters, routing and accounting.
-- [ ] API, worker, UI and CI.
-- [ ] Tests, workload experiments and evaluation.
-- [ ] Bug/security review, documentation/PDFs and final handoff.
+- [x] Foundation and reproducible environment.
+- [x] Deterministic engine and replays.
+- [x] Guard/performance workflow.
+- [x] Collectors, adapters, routing and accounting.
+- [x] API, worker, UI and CI.
+- [x] Tests, workload experiments and evaluation.
+- [x] Bug/security review, documentation/PDFs and final handoff.
+
+## Completed experiment decisions
+
+- Kept Linux x86_64 as the reviewed Fargate architecture and Linux ARM64 Docker as separately labelled local measurements. Local calibration froze a 2 CPU / 512 MiB baseline and 1 CPU / 256 MiB candidate before three alternating comparison pairs. The observed local OOM/repair does not approve the synthetic 2,048 MiB AWS guard.
+- Left both exact live model IDs and all model-specific price/quality fields unconfigured/null because no verified account access, current price selection or spending allowance was supplied. Both genuine SDK contracts and failures were tested with mocks; 360 provider-policy evaluation tasks remain unrun.
+- Preserved the 20-group 8/4/8 split. An explicit pre-first-run vocabulary erratum changed six development finding-code labels, without changing outcomes, predicates or the split. No human annotation or general parity is claimed.
+- `RATE_CARD_PATH` is an optional bounded CLI override; it is empty by default. An explicit `--rate-card` wins, both record the selected rate hash, and API bundles retain their own rate basis. This prevents accidental global replacement of an imported bundle's rates.
+- Added new `--series` output directories for repeat workload experiments; original measurements and frozen input hashes remain preserved.

@@ -1,0 +1,3176 @@
+[
+  {
+    "case_id": "g01-v1",
+    "group": "g01",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2833,
+    "context_hash": "c995451d7924df775d874ac7a062bb71eee7bf1e0d8bfbefb9bb438e89de9bf8",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g01-v1",
+    "group": "g01",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6431,
+    "context_hash": "5ee72fd244373b9af7743e2a53504dff563d4c1be6b375e7a445c7ae4cde1ba5",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g01-v2",
+    "group": "g01",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2833,
+    "context_hash": "44534fd2aabada95456db4ccd5e175366745b863abe49d685523313999245d14",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g01-v2",
+    "group": "g01",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6431,
+    "context_hash": "c33e8cb89c20545ea1cbfb059758e2145b317ec05d3ba678df7d7abc8d446127",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g01-v3",
+    "group": "g01",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2833,
+    "context_hash": "283da4d790ae2efcb2413be680ee533346fddebd7826ee1cfc6834e8bbc06b75",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g01-v3",
+    "group": "g01",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6431,
+    "context_hash": "8057a58e33ef07b7009e37d1e3543132e9579711840d99b7eba38c617f888f58",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g02-v1",
+    "group": "g02",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3838,
+    "context_hash": "432fa5fdab1b21a3dbbd46366d844e291d50ddbc6942c0771f9076bd78a2318a",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g02-v1",
+    "group": "g02",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7672,
+    "context_hash": "55274c46caa6a87678e9fcec4c0704864456ebe255ea2ad3a4a7a8c378b85031",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g02-v2",
+    "group": "g02",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3838,
+    "context_hash": "870d10db39469d751bc5bf4fcbd8e0c0ce697b737102caae5c111bd6de1dc71e",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g02-v2",
+    "group": "g02",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7672,
+    "context_hash": "c7c4f9d7c10f6795e4aa352266277a98d848f60c4b8d30e2191a738b687e9ece",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g02-v3",
+    "group": "g02",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 4224,
+    "context_hash": "ec21f2ca5fd8cfc7aadf926a077c188e96f4e7a6c3f9239b6fe9e9a5f0b22a42",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g02-v3",
+    "group": "g02",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6828,
+    "context_hash": "aeb78d94653f5ef0630443aedfc2961462762efbb1142098f8f5b08868745d1f",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g03-v1",
+    "group": "g03",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3229,
+    "context_hash": "4b6955b03c9918ad866091525a49a0a6f7106f92dafd7b554a89578449803aa9",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g03-v1",
+    "group": "g03",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 5597,
+    "context_hash": "10ee794451cd80d7298687718ee7c3c2ccd5542addd7c7de9cc346f1ecb61b77",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g03-v2",
+    "group": "g03",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3229,
+    "context_hash": "35731334365883d0a8b4e53af8c8370990a6bcc5feb7271e8bfb866e8c95b32b",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g03-v2",
+    "group": "g03",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 5601,
+    "context_hash": "804cd09adfcc6e8ebf56b98d9465f386f2adb23b533251a97acb6a92e5d46b33",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g03-v3",
+    "group": "g03",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3229,
+    "context_hash": "4b6955b03c9918ad866091525a49a0a6f7106f92dafd7b554a89578449803aa9",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g03-v3",
+    "group": "g03",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 5597,
+    "context_hash": "0bf13e0775fbce8ccdccdecc6433d357374b7ebbc15e227a92cf6e94742d55f0",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g04-v1",
+    "group": "g04",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3922,
+    "context_hash": "5286c44e17b0f81f0f99576c1149ca59fc8acc3b0e0fd884dae89ccb54256545",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g04-v1",
+    "group": "g04",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 8233,
+    "context_hash": "f678fd8fe924bce67b82799252596138c21fcdaf2351a3677f655074c4920b00",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g04-v2",
+    "group": "g04",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3922,
+    "context_hash": "5286c44e17b0f81f0f99576c1149ca59fc8acc3b0e0fd884dae89ccb54256545",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g04-v2",
+    "group": "g04",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 8260,
+    "context_hash": "b7fa4cf6307d4a12fa9108b3ec00755effb959ef686da8dc6899068ae034e1eb",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g04-v3",
+    "group": "g04",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3922,
+    "context_hash": "5286c44e17b0f81f0f99576c1149ca59fc8acc3b0e0fd884dae89ccb54256545",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g04-v3",
+    "group": "g04",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 8287,
+    "context_hash": "21d8b7998a1b749ed596342f50b10b6d99b6a82040387b1b4701e5c738c82389",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g05-v1",
+    "group": "g05",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3221,
+    "context_hash": "c571fc44790c94ff74192ef11274d857de24caf38020c98bc2407181d684e3ca",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g05-v1",
+    "group": "g05",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7024,
+    "context_hash": "ae1c68fee90e2abadd0e4690b1a0f717e80507885becc8915e2f23a34335218e",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g05-v2",
+    "group": "g05",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3222,
+    "context_hash": "28ee2a9b3c0ed3e0da7faed18b68c4758f525c10341a48483b88504ef86600ad",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g05-v2",
+    "group": "g05",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7025,
+    "context_hash": "739d6c579fbefbc2ffc5663cb498392f8a8d6380b66ee369b59f9ba58bea102d",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g05-v3",
+    "group": "g05",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3221,
+    "context_hash": "7d3fd50f143fd19d0e316152993087051315c4e9ddd108fc7f8f217d89966556",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g05-v3",
+    "group": "g05",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7024,
+    "context_hash": "5c2940ae2762653d3704e4c731ff9362576717440f3d318063bcdcb9a2aaecd1",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g06-v1",
+    "group": "g06",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2639,
+    "context_hash": "f88948db8494add7b376d7d335ce931f07c75e9af6cd60ca0ba5f59b32477dfd",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g06-v1",
+    "group": "g06",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6789,
+    "context_hash": "d7dcf3ac2935e80777b3a9bf4f9efc66a3c01e11d1f0b01ec719af1b479ae4b7",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g06-v2",
+    "group": "g06",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3063,
+    "context_hash": "2865f97a78f06e44cbfe24d6e330f7203211e0427e3f61509f60beb111013e47",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g06-v2",
+    "group": "g06",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7058,
+    "context_hash": "8d6a88e488ca8b771fe8efd8c4f2de830dca5232f2e90e3abdf2daeffef781ca",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g06-v3",
+    "group": "g06",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2639,
+    "context_hash": "f88948db8494add7b376d7d335ce931f07c75e9af6cd60ca0ba5f59b32477dfd",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g06-v3",
+    "group": "g06",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6789,
+    "context_hash": "c2dfd0f9f67d9e789303e97cb5fd6a99f60b03840e7a0cdf4b20116f04ea1b1a",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g07-v1",
+    "group": "g07",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3076,
+    "context_hash": "dd8143c97aae116790c8f32d4e2936800f4ec16e60a3a6c77ab2e7f9f86abec1",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g07-v1",
+    "group": "g07",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6869,
+    "context_hash": "f4e647282eec03824256435a6e886b9f8368941053354e3aae7cd0d1cc17c819",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g07-v2",
+    "group": "g07",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3076,
+    "context_hash": "dd8143c97aae116790c8f32d4e2936800f4ec16e60a3a6c77ab2e7f9f86abec1",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g07-v2",
+    "group": "g07",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6869,
+    "context_hash": "4e09720c1f08f47c7879db853fc1fd2a77c6a7e894540db483291b2b8c91cb93",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g07-v3",
+    "group": "g07",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3076,
+    "context_hash": "dd8143c97aae116790c8f32d4e2936800f4ec16e60a3a6c77ab2e7f9f86abec1",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g07-v3",
+    "group": "g07",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6869,
+    "context_hash": "8fdb68964c1b791f4aa3f6a3f1a8001fc93c83261b25ca60e9313c5e68cfc601",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g08-v1",
+    "group": "g08",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3076,
+    "context_hash": "a8de561a8890b26b607ee26142c215a8f0c302e88d4db35aca3206639aa3e534",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g08-v1",
+    "group": "g08",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6869,
+    "context_hash": "df87f4c160d312564f82246a3b96996eec7d488ebc4b6d94a66479f036b1c51e",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g08-v2",
+    "group": "g08",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3076,
+    "context_hash": "a8de561a8890b26b607ee26142c215a8f0c302e88d4db35aca3206639aa3e534",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g08-v2",
+    "group": "g08",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6869,
+    "context_hash": "457ea4c3577aafc4b7691b507c17a1ec793c95b9b679232e293f88621fedf434",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g08-v3",
+    "group": "g08",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3076,
+    "context_hash": "a8de561a8890b26b607ee26142c215a8f0c302e88d4db35aca3206639aa3e534",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g08-v3",
+    "group": "g08",
+    "split": "development",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6869,
+    "context_hash": "f06e656ee3e5a4ecad0edbbd61d68776ce24528986c817ce03435467b3b13031",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g09-v1",
+    "group": "g09",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2833,
+    "context_hash": "6d6f22c577d3dd3ed607e2ca23ab44151494fd1310e86b76690acd28eee58bf3",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g09-v1",
+    "group": "g09",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6431,
+    "context_hash": "c90f797dfe6d9de5c1145d27cd6a2f9dbc2686266947a3906f813cc8798c2e63",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g09-v2",
+    "group": "g09",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2833,
+    "context_hash": "6d6f22c577d3dd3ed607e2ca23ab44151494fd1310e86b76690acd28eee58bf3",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g09-v2",
+    "group": "g09",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6431,
+    "context_hash": "e4a32ae72c4f80cbe9e2c26306079a0b0adafe5186c35e0fc0b209c2f9b788a3",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g09-v3",
+    "group": "g09",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2833,
+    "context_hash": "6d6f22c577d3dd3ed607e2ca23ab44151494fd1310e86b76690acd28eee58bf3",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g09-v3",
+    "group": "g09",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6431,
+    "context_hash": "1e90d600f1da29673765464c70c4b886a21b8c39d7d6331032ff95b8318378a6",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g10-v1",
+    "group": "g10",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "d6940f9606312ab7d66dd670588242d2dad2eb921efbe4b34582b1dfff112fee",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g10-v1",
+    "group": "g10",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6676,
+    "context_hash": "611d93286f04ddc8e4389d68651da65d0e8814de1863d16e027712c2f2bb0520",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g10-v2",
+    "group": "g10",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "d6940f9606312ab7d66dd670588242d2dad2eb921efbe4b34582b1dfff112fee",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g10-v2",
+    "group": "g10",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6676,
+    "context_hash": "87af962ae09ab07143bbd88b3c191130d8aba46a6a6e82f96e4c92125d1f4db5",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g10-v3",
+    "group": "g10",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "d6940f9606312ab7d66dd670588242d2dad2eb921efbe4b34582b1dfff112fee",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g10-v3",
+    "group": "g10",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6676,
+    "context_hash": "dbc58da3ff4914a528d5d48afb0149253b643e91e4626c0196bae6509dd01f32",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g11-v1",
+    "group": "g11",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "d1c50bb4a7de6a3431653ce10ab212f61b1b9e92f2969dcf38d11a65b4c3b090",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g11-v1",
+    "group": "g11",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6659,
+    "context_hash": "cd49988bc9ff453153dcf0ba01d38794bd401943f5e5ba82e15efb8637a1d77b",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g11-v2",
+    "group": "g11",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "d1c50bb4a7de6a3431653ce10ab212f61b1b9e92f2969dcf38d11a65b4c3b090",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g11-v2",
+    "group": "g11",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6659,
+    "context_hash": "f086f48d1985d04050c36e1d51ca3fd13d65444b7adbf992cc36db3699defcac",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g11-v3",
+    "group": "g11",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "d1c50bb4a7de6a3431653ce10ab212f61b1b9e92f2969dcf38d11a65b4c3b090",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g11-v3",
+    "group": "g11",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6659,
+    "context_hash": "37b5fc627237e3404646148ce4405681198eb16681cd1b5f2f71096d21612627",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g12-v1",
+    "group": "g12",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3240,
+    "context_hash": "cde41c794fe2d6d8fbb8c6944794594ce782c425509e4b71543889585b3b1518",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g12-v1",
+    "group": "g12",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7210,
+    "context_hash": "60e8e7b51bae9a0915ab5cfcf5411ddcee96f3d12bb91a3c8a3cc78c32a7307c",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g12-v2",
+    "group": "g12",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3240,
+    "context_hash": "5486e2ce6edae16f834cd1ade8827b3d723a2507eb4abcb3fdd7764f49bc6b51",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g12-v2",
+    "group": "g12",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7210,
+    "context_hash": "2db427dca85cefb9de6b18d48f23cdf69b6b510e216dec998ad01a5e0443cd25",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g12-v3",
+    "group": "g12",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3240,
+    "context_hash": "a6d54b4fe20e26ce5b8440f07a85dfcfed39831bd61a817b207d8db6c9d4ae5b",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g12-v3",
+    "group": "g12",
+    "split": "calibration",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7210,
+    "context_hash": "b62e18728b3319f53413b840113a8b00a07ccf48dbc1927c1c6484a380272bbe",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g13-v1",
+    "group": "g13",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2846,
+    "context_hash": "859db6e332753a64a64bfffae17ab21dde6384951c2079f48a53b6dea7c8c212",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g13-v1",
+    "group": "g13",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7502,
+    "context_hash": "308424c8c28c3b568dcdf648d736a2d070fb46a27f1376468b6742f15416f0c5",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g13-v2",
+    "group": "g13",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2846,
+    "context_hash": "859db6e332753a64a64bfffae17ab21dde6384951c2079f48a53b6dea7c8c212",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g13-v2",
+    "group": "g13",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7502,
+    "context_hash": "d1a078ae9d325f90d12a7dc91f89b0d2ee1e20e82e6eac79e8563acaa75281fd",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g13-v3",
+    "group": "g13",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2846,
+    "context_hash": "859db6e332753a64a64bfffae17ab21dde6384951c2079f48a53b6dea7c8c212",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g13-v3",
+    "group": "g13",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7502,
+    "context_hash": "b302fd8faba32eb437638fd22b4dc245b9f4331750e421dea2fa062aa3567d32",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g14-v1",
+    "group": "g14",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3245,
+    "context_hash": "d04b1247918f99ee935eff9b676b83b457c79cda2a14c473722615fcbc56ee29",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g14-v1",
+    "group": "g14",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7221,
+    "context_hash": "f62934a263760ce1344b9ff65e46b2bfeb97e4b71e25d2eb66138536d8da9844",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g14-v2",
+    "group": "g14",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3245,
+    "context_hash": "d04b1247918f99ee935eff9b676b83b457c79cda2a14c473722615fcbc56ee29",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g14-v2",
+    "group": "g14",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7221,
+    "context_hash": "79280ab22cba87ddeb7f9ca8552fda55e85b888112eee72f3984d2c4d04a83be",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g14-v3",
+    "group": "g14",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3245,
+    "context_hash": "d04b1247918f99ee935eff9b676b83b457c79cda2a14c473722615fcbc56ee29",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g14-v3",
+    "group": "g14",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 8507,
+    "context_hash": "26573850b0a70b959e24a6387fc1e366282ab23722b9eee2a18b69a6a851ed7a",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g15-v1",
+    "group": "g15",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3231,
+    "context_hash": "5388861c3083eb01ad986c35647da2d60785ad75967ae4681d4c464687796fef",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g15-v1",
+    "group": "g15",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7443,
+    "context_hash": "7db43234bf534e22fa49a2a4c37c941d5e2c84d6bf167d1307aac83881284c42",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g15-v2",
+    "group": "g15",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3231,
+    "context_hash": "5388861c3083eb01ad986c35647da2d60785ad75967ae4681d4c464687796fef",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g15-v2",
+    "group": "g15",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7443,
+    "context_hash": "ee0bfc9c2e5a9d3af966d4df1caceeef11dc975fa33c4320088f718572c74fd9",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g15-v3",
+    "group": "g15",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3231,
+    "context_hash": "5388861c3083eb01ad986c35647da2d60785ad75967ae4681d4c464687796fef",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g15-v3",
+    "group": "g15",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 7443,
+    "context_hash": "80e234cb624b133051e1980e8e3645db245553011e677942634314959dfd2b34",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g16-v1",
+    "group": "g16",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "e6656b25a3dbb1bf74f35af8ab93f631284631711db05a7c3aa1182bc047b0ce",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g16-v1",
+    "group": "g16",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6635,
+    "context_hash": "45cd4f66e3d06dbc1da8c6edf81d893dec47d617892f9edcf8c82983899c64e5",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g16-v2",
+    "group": "g16",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "e6656b25a3dbb1bf74f35af8ab93f631284631711db05a7c3aa1182bc047b0ce",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g16-v2",
+    "group": "g16",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6636,
+    "context_hash": "2810e56795ed43486a38aff6060c67494ed66dd6b19c3cc27f1cce140e45d09f",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g16-v3",
+    "group": "g16",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 3946,
+    "context_hash": "2f7a1feba769ec8b42324fd725eaac5240280a340dd9dcfe4436b58fa51e5c25",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g16-v3",
+    "group": "g16",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 8083,
+    "context_hash": "8b56dff3f835e75f0a7c86d7be8eb6cfbd1952d7d51d65104ff124bbe5c22196",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g17-v1",
+    "group": "g17",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "94244a2062a369c444c9fa0497685963265fedd1f78c753b48e6f116e4c53fff",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g17-v1",
+    "group": "g17",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6635,
+    "context_hash": "aa5dce3c316b4e25a979f03b6436a6097411f7e6c22a6128f75bfdd23357cb10",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g17-v2",
+    "group": "g17",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "94244a2062a369c444c9fa0497685963265fedd1f78c753b48e6f116e4c53fff",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g17-v2",
+    "group": "g17",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6636,
+    "context_hash": "e7a891f5555472ade4cc13b15a88cd409b73f8a21384c2d7340f2bc165de8e02",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g17-v3",
+    "group": "g17",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "94244a2062a369c444c9fa0497685963265fedd1f78c753b48e6f116e4c53fff",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g17-v3",
+    "group": "g17",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6637,
+    "context_hash": "5dd64ba073e06eadf5a0731b75a32706637884ffae3de31ce412c06955cc9472",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g18-v1",
+    "group": "g18",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "3c62ef6ece5be04a52829b48faa828a9550416228595e0d91d2b9da6f3f91d68",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g18-v1",
+    "group": "g18",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6615,
+    "context_hash": "bb80fc9e57ec604f35178f0e8afbe296ee2b06763f6a8130a15562b340af3327",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g18-v2",
+    "group": "g18",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "3c62ef6ece5be04a52829b48faa828a9550416228595e0d91d2b9da6f3f91d68",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g18-v2",
+    "group": "g18",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6615,
+    "context_hash": "3ddbf80ce27dba8084b5824997c301b4d8dd91edd2c65818edeaea465be94561",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g18-v3",
+    "group": "g18",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2861,
+    "context_hash": "3c62ef6ece5be04a52829b48faa828a9550416228595e0d91d2b9da6f3f91d68",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g18-v3",
+    "group": "g18",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6615,
+    "context_hash": "a406c4bb8c3cda198eff5c790d9c8434113b651815f440409807a531b03a3d44",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g19-v1",
+    "group": "g19",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2407,
+    "context_hash": "2372df78337edb7c591ab2978402315474fdf28fca51e56af865a79c9e359085",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g19-v1",
+    "group": "g19",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6005,
+    "context_hash": "5effc683f9e96d050d34d0005b8847d1c4480426b38134d71ef800046fbd0151",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g19-v2",
+    "group": "g19",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2407,
+    "context_hash": "2372df78337edb7c591ab2978402315474fdf28fca51e56af865a79c9e359085",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g19-v2",
+    "group": "g19",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6005,
+    "context_hash": "023fcd8da38cbe69b03e0fb2208662f649f587094b7c7390b4ffb7274038c6ff",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g19-v3",
+    "group": "g19",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2407,
+    "context_hash": "2372df78337edb7c591ab2978402315474fdf28fca51e56af865a79c9e359085",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g19-v3",
+    "group": "g19",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6005,
+    "context_hash": "e60f7c4bc30b29cefeec0345b679151f66f6106d8840a5ca64e6c0647d4f6c93",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g20-v1",
+    "group": "g20",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2818,
+    "context_hash": "df9ea88856cc165fa7f601b28b28c86c46837afad1dba17d3f832f180bd07151",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g20-v1",
+    "group": "g20",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6416,
+    "context_hash": "d48a8c0c5a02829e119311acfacb01cb2c7dd8b43ae6bc4cb1d0bd559954eb81",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g20-v2",
+    "group": "g20",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2834,
+    "context_hash": "1f4f883fe8a6a1485aef5764c22e160d6147e9be8d5084555675f467477722a9",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g20-v2",
+    "group": "g20",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6432,
+    "context_hash": "66744966f3e852cde90b99ca4125ab83898ce8646556ce02cc3091f3c179942f",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g20-v3",
+    "group": "g20",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "compact",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "per-run detail"
+    ],
+    "input_bytes": 2834,
+    "context_hash": "b3fceb8bfaa12dd8eaa5e5a0b1524e5105c10b66c965cbdd827ca64864fb6280",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  },
+  {
+    "case_id": "g20-v3",
+    "group": "g20",
+    "split": "held_out",
+    "prompt_version": "explanation-v1",
+    "schema_version": 1,
+    "representation": "bounded_flat",
+    "source_fact_ids": [
+      "candidate.task_memory_mib",
+      "approved.minimum_task_memory_mib",
+      "incident.repair_verified",
+      "estimate.compute_difference",
+      "review.outcome"
+    ],
+    "omissions": [
+      "raw plan",
+      "raw logs",
+      "unselected development cards",
+      "unbounded raw distributions"
+    ],
+    "input_bytes": 6432,
+    "context_hash": "a0bf9c716e08c54d18a31d2480b35f4abe4eb2ca040a46044596c837f3e93b10",
+    "status": "prepared",
+    "quality_comparison": "unrun without live calls plus independent semantic annotations",
+    "billing_tokens": null,
+    "billing_note": "Serialization bytes are not provider-billed tokens."
+  }
+]

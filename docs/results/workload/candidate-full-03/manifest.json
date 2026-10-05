@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "run_id": "candidate-full-03",
+  "role": "candidate",
+  "origin": "local_observation",
+  "environment": "isolated-local-docker",
+  "image_digest": "sha256:a3660477c80e1169682bcc68a0f004033919d30c797e9deea27f22dfbf125270",
+  "image_digest_kind": "local_image_config_digest",
+  "platform": "linux/arm64",
+  "profile_hash": "09579106341134ceff778280229c5028ff0fa1ee627d458d496b2f079b1038dc",
+  "dependency_hash": "3b68d4afa2260bf25b6627a814aa5ffa5f5a48bdc260e238b3b192d3591fe835",
+  "server_hash": "8df50475a31be0c46b0a000692cde05659478334ad894fa3b612383f28ffacf1",
+  "warmup_policy": "100 sequential requests with 80/15/5 class mix, outside measured window",
+  "non_resize_config_hash": "4ab04c8ecac9bbcdb9cb82053651bf55b8974ec5420f599f7c8de19c301f0a72",
+  "allocation": {
+    "cpus": "1.0",
+    "memory_mib": 256
+  },
+  "config_hash": "56f7b06a6ac931e4d086efb89e36867206a7fea773ae4b836f48f6f98926df76",
+  "profile": "full",
+  "started_at": "2026-10-05T01:16:22.315402+00:00",
+  "ended_at": "2026-10-05T01:24:22.380567+00:00",
+  "offered": 20400,
+  "expected_scheduled_full_requests_approx": 20400,
+  "completed": 20400,
+  "correct": 20399,
+  "http_failures": 1,
+  "incorrect_successful_responses": 0,
+  "dropped_iterations": 0,
+  "unfinished_requests": 0,
+  "restarts": 0,
+  "p95_latency_ms": 6.190049999999999,
+  "request_classes": {
+    "small": {
+      "completed": 16320,
+      "correct": 16320,
+      "p95_latency_ms": 5.394
+    },
+    "medium": {
+      "completed": 3060,
+      "correct": 3059,
+      "p95_latency_ms": 6.7101
+    },
+    "large": {
+      "completed": 1020,
+      "correct": 1020,
+      "p95_latency_ms": 11.126999999999999
+    }
+  },
+  "terminal_status": "completed",
+  "k6_exit_code": 0,
+  "thresholds_failed": [],
+  "contract_passed": true,
+  "smoke_passed": false,
+  "container_before": {
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 59314,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T01:16:21.628545674Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "restart_count": 0,
+    "memory_bytes": 268435456,
+    "nano_cpus": 1000000000,
+    "image": "sha256:a3660477c80e1169682bcc68a0f004033919d30c797e9deea27f22dfbf125270",
+    "labels": {
+      "com.docker.compose.project": "proofops",
+      "com.docker.compose.service": "workload",
+      "com.docker.compose.version": "5.2.0",
+      "proofops.owned": "workload-experiment"
+    }
+  },
+  "container_after": {
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 59314,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T01:16:21.628545674Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "restart_count": 0,
+    "memory_bytes": 268435456,
+    "nano_cpus": 1000000000,
+    "image": "sha256:a3660477c80e1169682bcc68a0f004033919d30c797e9deea27f22dfbf125270",
+    "labels": {
+      "com.docker.compose.project": "proofops",
+      "com.docker.compose.service": "workload",
+      "com.docker.compose.version": "5.2.0",
+      "proofops.owned": "workload-experiment"
+    }
+  },
+  "summary_hash": "7ad360d1f73a49c12076ad07203ea8ccc99df24379e02791dba068741089a994",
+  "limitations": [
+    "Local ARM/Docker measurements are not AWS x86_64 operating-bound evidence.",
+    "No invoice, cloud savings or cross-run averaged p95 is reported."
+  ]
+}

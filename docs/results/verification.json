@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-05T01:42:22.103526+00:00",
+  "backend": {
+    "command": ".venv/bin/pytest tests/unit tests/policy tests/integration -q --junitxml=artifacts/checks/backend.xml",
+    "tests": 94,
+    "passed": 94,
+    "failures": 0,
+    "skipped": 0,
+    "artifact": "artifacts/checks/backend.xml",
+    "warning": "One upstream Starlette TestClient deprecation warning suggests httpx2; no skipped/failing tests."
+  },
+  "browser": {
+    "command": "npm run test:e2e (from frontend/)",
+    "stats": {
+      "startTime": "2026-10-05T01:31:41.933Z",
+      "duration": 7715.349,
+      "expected": 6,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "artifact": "artifacts/checks/playwright.json"
+  },
+  "evaluation": {
+    "command": ".venv/bin/proofops evaluate --manifest evaluation/manifest.json --mode replay --output artifacts/evaluation",
+    "deterministic": {
+      "correct": 60,
+      "cases": 60,
+      "groups": 20
+    },
+    "manifest_hash": "4f55007d154c1c71582df30780ade8592bfd2beec8f7f0a52bdb37fef032972b",
+    "artifact": "docs/results/evaluation-summary.json"
+  },
+  "workload": {
+    "command": ".venv/bin/python scripts/run_workload.py all",
+    "complete": true,
+    "passed": true,
+    "origin": "local_observation",
+    "artifact": "docs/results/workload/comparison.json"
+  },
+  "pressure_repair": {
+    "confirmed": true,
+    "artifact": "docs/results/workload/pressure-repair.json"
+  },
+  "terraform": {
+    "command": ".tools/bin/terraform -chdir=infra/aws-demo validate -json",
+    "format_version": "1.0",
+    "valid": true,
+    "error_count": 0,
+    "warning_count": 0,
+    "diagnostics": []
+  },
+  "quality": {
+    "recorded_at": "2026-10-05T01:34:40.054Z",
+    "status": "passed",
+    "checks": [
+      {
+        "name": "frontend_build",
+        "command": "npm run build",
+        "working_directory": "frontend",
+        "chunk_id": "7caa38",
+        "wall_time_seconds": 2.706150417,
+        "exit_code": 0,
+        "original_token_count": 101,
+        "output": "\n> proofops-web@0.1.0 build\n> tsc -b && vite build\n\nvite v7.3.6 building client environment for production...\ntransforming...\n\u2713 1579 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.61 kB \u2502 gzip:  0.37 kB\ndist/assets/index-g1wbfMdK.css   23.93 kB \u2502 gzip:  6.02 kB\ndist/assets/index-BwCRiE5Z.js   261.96 kB \u2502 gzip: 80.56 kB\n\u2713 built in 976ms\n"
+      },
+      {
+        "name": "web_and_workflow_format_syntax",
+        "command": "npx prettier --check ../.github/workflows/offline.yml src package.json playwright.config.ts",
+        "working_directory": "frontend",
+        "chunk_id": "1056ed",
+        "wall_time_seconds": 0.747484667,
+        "exit_code": 0,
+        "original_token_count": 17,
+        "output": "Checking formatting...\nAll matched files use Prettier code style!\n"
+      },
+      {
+        "name": "terraform_format",
+        "command": ".tools/bin/terraform -chdir=infra/aws-demo fmt -check",
+        "working_directory": ".",
+        "chunk_id": "ea90b7",
+        "wall_time_seconds": 0.258403209,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "name": "compose_config",
+        "command": "docker compose config --quiet",
+        "working_directory": ".",
+        "chunk_id": "4d9dc4",
+        "wall_time_seconds": 0.308432167,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "name": "python_lint",
+        "command": ".venv/bin/ruff check backend scripts tests evaluation demo",
+        "working_directory": ".",
+        "chunk_id": "61a0ac",
+        "wall_time_seconds": 4.375e-06,
+        "exit_code": 0,
+        "original_token_count": 5,
+        "output": "All checks passed!\n"
+      },
+      {
+        "name": "python_format",
+        "command": ".venv/bin/ruff format --check backend scripts tests evaluation demo",
+        "working_directory": ".",
+        "chunk_id": "162d5d",
+        "wall_time_seconds": 6.667e-06,
+        "exit_code": 0,
+        "original_token_count": 7,
+        "output": "62 files already formatted\n"
+      },
+      {
+        "name": "python_types",
+        "command": ".venv/bin/mypy backend/proofops",
+        "working_directory": ".",
+        "chunk_id": "e2984d",
+        "wall_time_seconds": 0.684138041,
+        "exit_code": 0,
+        "original_token_count": 11,
+        "output": "Success: no issues found in 33 source files\n"
+      },
+      {
+        "name": "research_integrity",
+        "command": ".venv/bin/python scripts/check_research.py",
+        "working_directory": ".",
+        "chunk_id": "dc690c",
+        "wall_time_seconds": 0.054288125,
+        "exit_code": 0,
+        "original_token_count": 18,
+        "output": "{\"checked\": 384, \"changed_or_missing\": [], \"new_research_files\": []}\n"
+      }
+    ]
+  },
+  "research": {
+    "checked": 384,
+    "changed_or_missing": [],
+    "new_research_files": []
+  },
+  "fresh_setup": {
+    "schema_version": 1,
+    "source_revision": "6816284fc257c6f80c9b8028cba76eb47a15b09b",
+    "status": "passed",
+    "origin": "local_observation",
+    "commands": [
+      {
+        "command": "git clone --no-local --no-hardlinks . artifacts/fresh-install",
+        "exit_code": 0
+      },
+      {
+        "command": ".bootstrap/bin/uv sync --project artifacts/fresh-install --frozen --no-dev",
+        "exit_code": 0,
+        "environment": "New .venv; 45 frozen runtime packages installed"
+      },
+      {
+        "command": ".venv/bin/proofops review --bundle fixtures/replays/valid-resize --ai off --output artifacts/fresh-valid",
+        "working_directory": "artifacts/fresh-install",
+        "exit_code": 0,
+        "outcome": "request_review"
+      },
+      {
+        "command": ".venv/bin/proofops replay artifacts/fresh-valid",
+        "working_directory": "artifacts/fresh-install",
+        "exit_code": 0,
+        "reproduced": true
+      }
+    ],
+    "scope": "New local checkout/runtime environment on macOS ARM64. No AWS/model credentials or PostgreSQL needed for CLI replay. PowerShell and an independent second developer were not tested."
+  },
+  "unrun": [
+    "live AWS smoke/deployment",
+    "paid OpenAI/Anthropic quality/cost/latency",
+    "downstream compact-versus-flat model quality",
+    "remote GitHub workflow/enforcement",
+    "Windows/PowerShell execution",
+    "uncoached human usability T24"
+  ]
+}

@@ -1,0 +1,94 @@
+# Testing and measured evidence
+
+A test compares observed behavior with an independently justified expected result, or oracle. Passing a test supports only its stated scope. The saved verification and workload tables in `docs/results/results.md` are generated from actual artifacts. The full machine record is `docs/results/verification.json`. Native logs and run manifests remain under `artifacts/`.
+
+## Types of verification
+
+Unit tests isolate decision/arithmetic/boundary behavior; property tests exercise many valid or invalid allocations. Integration tests use a real PostgreSQL database for transactions, idempotency, leases and concurrency. Policy tests execute actual Conftest/Rego, including healthy controls that make an always-deny implementation fail. SDK contract tests call mocked provider/AWS HTTP boundaries and verify parameters, completion states and accounting. They do not establish account access or model quality.
+
+Browser tests exercise the real local UI/API/worker. Load tests measure correct work and latency under offered demand. Fault injection proves a specific controlled failure and repair. Security/resilience tests attempt traversal, malformed JSON, secret retention, prompt injection, cross-scope cache reuse and ambiguous worker recovery. AI evaluation scores independent labels and semantics separately from schema. Human usability requires an uncoached consenting engineer; it was not replaced by browser automation.
+
+## Commands and prerequisites
+
+From the app root, install the frozen development dependencies and pinned Conftest/k6 as in the README. Start Docker PostgreSQL and create the dedicated test database with `python scripts/create_test_database.py`. Integration fixtures run Alembic migrations and refuse any database name other than `proofops_test`.
+
+```sh
+.venv/bin/pytest tests/unit tests/policy tests/integration -q --junitxml=artifacts/checks/backend.xml
+.venv/bin/ruff check backend scripts tests evaluation demo
+.venv/bin/ruff format --check backend scripts tests evaluation demo
+.venv/bin/mypy backend/proofops
+.venv/bin/proofops guards test
+.venv/bin/proofops evaluate --manifest evaluation/manifest.json --mode replay --output artifacts/evaluation
+```
+
+Browser checks require API, worker and web at ports 8000/5173, plus Chromium:
+
+```sh
+cd frontend
+npm ci
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+PowerShell uses `.venv\Scripts\pytest.exe`, `ruff.exe`, `mypy.exe`, `proofops.exe` and `python.exe` in place of `.venv/bin/...`. These exact PowerShell setup commands are documented but were not run on this macOS host. Backend JUnit and Playwright JSON are saved under `artifacts/checks/`; retained traces/screenshots are under `artifacts/playwright/` and `artifacts/screenshots/`. The Starlette TestClient emits one upstream httpx compatibility warning; no test is skipped because of it.
+
+## T01–T24 acceptance matrix
+
+For a focused Python row, run `.venv/bin/pytest <path>::<test_name> -q`. All listed Python tests also belong to the full backend command above and its JUnit artifact. The common input root is `fixtures/replays/`; policy cases derive from the trusted fixture specification, and negative semantic labels live only under `evaluation/evaluator_only/`.
+
+| ID | Executable evidence / fixture | Result and scope |
+|---|---|---|
+| T01 | `scripts/run_workload.py all`; `testing/virtual_users.js`; `artifacts/workload/comparison.json` | Measured local normal/peak traffic; per-run and per-class results retained. This is not AWS evidence. |
+| T02 | `tests/unit/test_review.py::test_three_report_paths`; `valid-resize/`; API/browser equivalents | Valid synthetic candidate requests engineering review only after its contract passes. Local candidate experiment reported separately. |
+| T03 | `tests/unit/test_review.py::test_violation_precedes_missing`; `unsafe-resize/`; policy fixtures | 1,024 MiB below the synthetic approved 2,048 MiB floor always revises; cost/AI cannot override. |
+| T04 | `scripts/run_workload.py pressure`; `artifacts/workload/pressure-repair.json` | Actual Docker-confirmed OOM under a 64 MiB limit with 128 MiB pressure, followed by verified repair at 256 MiB. |
+| T05 | `tests/unit/test_performance_boundaries.py::test_smoke_does_not_establish_capacity`; `incomplete-evidence/` | A 20-request smoke run collects evidence under a 10,000-request contract. |
+| T06 | `tests/unit/test_review.py::test_collection_states_do_not_become_zero`; `test_empty_stale_and_new_commit`; `tests/unit/test_aws_collectors.py` | Denied/pending/empty/stale states preserved; mocked SDK collection plus deterministic checks. Live CloudWatch unrun. |
+| T07 | `tests/unit/test_aws_collectors.py::test_sensitive_plan_bytes_never_survive_import`; `tests/unit/test_review.py::test_unsupported_numbers_stay_unknown` | Unknown/sensitive values remain unresolved and secrets do not survive import. |
+| T08 | `tests/unit/test_review.py::test_container_only_change_has_no_task_compute_saving` | Container-limit-only edits do not reduce task CPU/memory charges. |
+| T09 | `tests/unit/test_review.py::test_cost_null_zero_and_changed_hours`; frozen cost scenarios | Missing hours stay null; supported changed hours are recalculated. |
+| T10 | `tests/integration/test_api.py::test_focus_ingestion_is_idempotent_and_reconciles`; `test_billing_endpoint_and_mixed_currency_null_duplicate_rows`; `fixtures/billing/focus_sample.csv` | Real PostgreSQL ingestion verifies credits, nulls, currencies, identical rows and repeated imports. |
+| T11 | `tests/unit/test_review.py::test_low_cpu_without_demand_evidence_does_not_justify_resize` | Unit regression requires relevant demand/latency evidence; no live dependency-stall experiment claimed. |
+| T12 | `tests/policy/test_memory_guard.py::test_actual_rego_fixture_suite`; unrelated-service case | Exact named-service policy leaves another service alone; scope coverage stays explicit. |
+| T13 | `tests/unit/test_review.py::test_trusted_policy_cannot_be_weakened_by_input`; `tests/unit/test_cli.py::test_cli_trusted_map_cannot_be_changed_by_input`; `scripts/ci_review.py` | Trusted revision/map used despite candidate self-weakening. Local CI regression passes; remote enforcement unconfigured. |
+| T14 | `tests/unit/test_review.py::test_empty_stale_and_new_commit`; guard fixture cases; browser changed-commit test | Commit/image/config/expiry changes invalidate applicability while old replay remains reproducible. |
+| T15 | `tests/unit/test_review.py::test_model_cannot_change_facts_or_action` | Invented citation or numeric/action mutation is mechanically rejected. |
+| T16 | `tests/unit/test_evaluation.py::test_valid_citations_do_not_validate_causal_inference` | Authored unsupported-causality control passes mechanics but fails semantic annotation. |
+| T17 | `tests/unit/test_provider_adapters.py::test_quota_and_throttle_are_distinct_and_sdk_does_not_retry`; `tests/integration/test_budget_jobs.py::test_transient_retry_consumes_the_second_attempt` | Mocked permanent failures do not loop; transient retry consumes the bounded attempt allowance. |
+| T18 | `tests/unit/test_provider_adapters.py::test_openai_terminal_states`; `test_anthropic_actual_sdk_mapping_and_terminal_states` | Refusal/truncation/nonterminal output is not a successful cached explanation. |
+| T19 | `tests/integration/test_budget_jobs.py::test_atomic_budget_reservations_and_duplicate_dispatch`; `test_worker_crash_after_dispatch_keeps_charge_pending_and_does_not_retry` | Real PostgreSQL concurrency/recovery; uncertain spend remains reserved and undispatched twice. |
+| T20 | `tests/unit/test_import_security.py::test_injected_log_instructions_get_no_authority_or_label_access` | Injected approval/deletion/disclosure instructions gain no tools or authority; runtime label boundary holds. |
+| T21 | `tests/unit/test_evaluation.py::test_confident_wrong_answer_is_not_an_acceptance_signal` | Authored confidently wrong control remains a semantic failure. No live cheap-model quality claim. |
+| T22 | `tests/unit/test_review.py::test_mismatched_population_inconclusive`; `tests/unit/test_performance_boundaries.py::test_local_arm_measurements_cannot_validate_x86_contract` | Incompatible units/timing/population/platform cannot establish improvement. |
+| T23 | `tests/integration/test_budget_jobs.py::test_both_provider_results_unusable_preserves_deterministic_guard` | Mocked failure of both providers leaves deterministic findings and visible AI unavailability. |
+| T24 | Manual uncoached workflow from `docs/interview_walkthrough.md` | **Unrun:** needs consenting engineer. Record completion, elapsed time, errors and help; no fabricated feedback. |
+
+## Workload method and repeatability
+
+The full k6 profile lasts eight minutes with an 80/15/5 small/medium/large mix. An open arrival-rate schedule offers 5–100 requests/second, allocating virtual users up to a cap. A virtual user is an execution slot, not an independent human. Offered rate and service latency jointly determine required concurrency. Dropped iterations reveal when the generator cannot begin scheduled work; slowing a closed loop would conceal this demand.
+
+Warmup sends 100 verified requests before the measured window. The HTTP body carries a request ID, currency and bounded integer-cent items. The independent k6 oracle checks response ID/currency/count/total; a wrong HTTP 200 is an incorrect success, never useful work. p95 is a percentile of sampled latencies, not an average. Small/medium/large p95 and each repetition must meet the same limit; percentiles are not averaged across runs.
+
+The frozen full contract requires at least 10,000 correct responses per run, p95 strictly below 250 ms, HTTP failures strictly below 1%, no incorrect successes, no dropped iterations and no restarts. Equality fails the two strict limits. Calibration uses a baseline before any candidate result. Three alternating baseline/candidate pairs use the same local image, profile and dependency hashes; baseline is 2 CPUs / 512 MiB and candidate 1 CPU / 256 MiB. These allocations are local cgroup settings, not Fargate task sizes or a cloud cost estimate.
+
+```sh
+docker compose --profile workload up -d --build workload
+.venv/bin/python scripts/run_workload.py all
+```
+
+The first series is preserved under `artifacts/workload/`. To run a new independent series without overwriting it:
+
+```sh
+.venv/bin/python scripts/run_workload.py all --series repeat-01
+```
+
+To resume missing comparison runs after calibration, use `compare` with the same optional `--series`; frozen inputs must still match. Do not rebuild/change the workload image, server, profile or dependency lock mid-series. Full `all` takes about 57 minutes. Pressure uses only a newly owned labelled local container, never the API, database or AWS. A failed candidate remains failed; a missing summary is an execution failure, not a zero-latency pass.
+
+## Interpretation and unrun checks
+
+Passing means the stated checks passed for the exact supplied inputs. A known breach is a failure. Insufficient/incompatible measurements are inconclusive, even if the code correctly chooses `collect_evidence`. Unrun means prerequisites were absent. Local Linux ARM64 Docker measurements cannot validate the synthetic Linux x86_64 AWS approval. No cloud invoice or realized savings was measured.
+
+The FOCUS file is a separate 1,000-row sample: 13 negative billed rows, BilledCost `20.52022672899` USD and EffectiveCost `14.97651418586` USD. Tests derive those totals from the actual pinned input. They are not production dashboard constants.
+
+Live AWS smoke, paid OpenAI/Anthropic quality/latency/cost, a downstream compact-versus-flat model comparison, remote GitHub Actions, Windows execution and human usability remain unrun. Their next prerequisites are documented configuration/account access and budgets, an authorized repository workflow, a Windows host, or a consenting peer as applicable. None blocks the supported local replay workflow.
