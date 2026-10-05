@@ -8,6 +8,7 @@
 - Added 29 reset tests covering confirmation/EOF/interruption, protected database/path boundaries, linked-record cleanup, accounting/file preservation, repeated reset, exact engine-result parity, downloadable replay, running/concurrent jobs and rollback. All 29 passed against the dedicated PostgreSQL test database; the existing upstream TestClient deprecation warning remains.
 - Added a five-step Docker quick demo at the top of README, using this repository's configured clone URL and a one-command reset shortcut. Added a separate screenshot capture command using the existing Playwright configuration; it reads only the three seeded fixture results, verifies their input hashes/template mode, and leaves the demo at exactly three reviews.
 - Saved and embedded full-page PNGs for valid resize, unsafe resize and incomplete evidence under `docs/screenshots/`. All three were visually inspected: only synthetic fixture content and generic local-workspace labels appear, with no keys, personal data or PNG metadata.
+- Verification: all 123 backend tests, the native frontend build, Docker API/worker/web rebuild/startup, 12 e2e tests and three screenshot captures passed. Ruff, mypy and changed-file formatting checks passed. Reset was exercised in the API container after e2e, leaving exactly three completed reviews at `http://127.0.0.1:5173`. No live AWS/model calls were made; source fixtures, evaluation/research data and published PDFs were unchanged. Current check records are listed in `IMPLEMENTATION_STATUS.md`.
 
 ## UI polish — 2026-10-05
 
