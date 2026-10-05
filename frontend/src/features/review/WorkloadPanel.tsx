@@ -1,4 +1,5 @@
-import { Empty } from "../../components/Empty";
+import { TableScroll } from "../../components/TableScroll";
+import { StatePanel } from "../../components/StatePanel";
 import { originLabel } from "../../lib/format";
 import type { CoreReport } from "../../types";
 
@@ -23,12 +24,12 @@ export function WorkloadPanel({
         </span>
       </div>
       {!performance.runs.length ? (
-        <Empty title="Workload evidence is missing">
+        <StatePanel title="Workload evidence is missing">
           Add compatible baseline and candidate artifacts before requesting
           review.
-        </Empty>
+        </StatePanel>
       ) : (
-        <div className="table-scroll">
+        <TableScroll label="Workload comparison table">
           <table className="workload-table">
             <thead>
               <tr>
@@ -89,7 +90,7 @@ export function WorkloadPanel({
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       )}
       <p className="panel-footnote">
         {performance.aggregation} Origin: {originLabel[origin]}. A smoke test

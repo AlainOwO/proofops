@@ -34,11 +34,15 @@ export function ReviewForm({
   onRunReview,
 }: ReviewFormProps) {
   return (
-    <aside className="panel start-panel">
+    <aside
+      className="panel start-panel"
+      aria-labelledby="start-review-heading"
+      aria-busy={busy === "review"}
+    >
       <div className="start-icon">
         <Layers size={23} />
       </div>
-      <h2>Start with a replay</h2>
+      <h2 id="start-review-heading">Start with a replay</h2>
       <p>
         Explore a complete review with labelled synthetic evidence. No
         credentials needed.
@@ -46,6 +50,7 @@ export function ReviewForm({
       <label htmlFor="replay-choice">Review scenario</label>
       <select
         id="replay-choice"
+        aria-describedby="replay-evidence-note"
         value={replay}
         disabled={!!file}
         onChange={(event) => onReplayChange(event.target.value)}
@@ -54,7 +59,7 @@ export function ReviewForm({
         <option value="unsafe-resize">Below the floor · 4 GiB → 1 GiB</option>
         <option value="incomplete-evidence">Missing candidate evidence</option>
       </select>
-      <div className="fixture-note">
+      <div className="fixture-note" id="replay-evidence-note">
         <Info size={14} />
         <span>
           Prices, approvals and workload results in these examples are
@@ -110,6 +115,11 @@ export function ReviewForm({
         Run review
         <ArrowRight size={16} />
       </button>
+      {busy === "review" && (
+        <p className="form-status" role="status">
+          Importing inputs and queueing your review…
+        </p>
+      )}
       <div className="start-footer">
         <ShieldCheck size={13} />
         The report requests engineering review.

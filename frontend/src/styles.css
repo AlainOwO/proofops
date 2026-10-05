@@ -25,6 +25,31 @@
 body {
   margin: 0;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 20;
+  padding: 12px 18px;
+  border-radius: 6px;
+  color: var(--ink);
+  background: white;
+  clip-path: inset(50%);
+}
+.skip-link:focus {
+  clip-path: none;
+}
 button,
 input,
 select,
@@ -151,6 +176,15 @@ tbody tr:hover {
 }
 .table-scroll {
   overflow-x: auto;
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+}
+.table-scroll:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: -2px;
+}
+.table-hint {
+  display: none;
 }
 .app-shell {
   display: flex;
@@ -459,6 +493,20 @@ main {
   margin: 12px 0 5px;
   line-height: 1;
 }
+.metric strong.metric-unavailable {
+  font-size: 20px;
+  letter-spacing: -0.3px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.metric-placeholder {
+  display: block;
+  width: 65%;
+  max-width: 100px;
+  height: 32px;
+  border-radius: 4px;
+  background: #e7ede5;
+}
 .metric small {
   color: #93a08f;
   font-size: 11px;
@@ -478,6 +526,62 @@ main {
   grid-template-columns: minmax(0, 1fr) 294px;
   gap: 22px;
   align-items: start;
+}
+.review-sidebar {
+  min-width: 0;
+}
+.how-it-works {
+  padding: 23px 21px;
+}
+.how-it-works h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.how-it-works h2 svg {
+  color: var(--teal);
+  flex-shrink: 0;
+}
+.how-it-works ol {
+  counter-reset: review-step;
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+}
+.how-it-works li {
+  counter-increment: review-step;
+  position: relative;
+  padding-left: 33px;
+  margin-bottom: 19px;
+}
+.how-it-works li::before {
+  content: counter(review-step);
+  position: absolute;
+  left: 0;
+  top: -1px;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: #eef4e8;
+  color: #4d6b40;
+  font-size: 12px;
+  font-weight: 600;
+}
+.how-it-works strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+.how-it-works p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  margin-top: 5px;
+}
+.how-it-works-note {
+  border-top: 1px solid var(--line);
+  padding-top: 15px;
 }
 .panel {
   background: white;
@@ -664,6 +768,10 @@ main {
   white-space: nowrap;
   max-width: 200px;
 }
+.file-upload:focus-within {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
 .start-panel .button.full {
   justify-content: flex-start;
   font-size: 11px;
@@ -693,7 +801,7 @@ main {
   text-align: center;
   max-width: 500px;
   margin: auto;
-  color: #8fa286;
+  color: #5e7855;
 }
 .empty h3 {
   color: #526847;
@@ -702,43 +810,24 @@ main {
   font-weight: 500;
 }
 .empty p {
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.8;
-  color: #92a087;
+  color: var(--muted);
   max-width: 340px;
   margin: auto;
 }
-.workflow-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: #97a18e;
-  border-block: 1px solid var(--line);
-  padding: 22px 0;
-  margin-top: 8px;
-  font-size: 11px;
+.state-action {
+  margin-top: 22px;
 }
-.workflow-strip > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
+.state-error,
+.state-error h3 {
+  color: #9a493c;
 }
-.workflow-strip .eyebrow {
-  font-size: 11px;
-  color: #9aa690;
-  letter-spacing: 0.8px;
-}
-.step-number {
-  background: #eaf0e3;
-  color: #7e9470;
-  font-size: 11px;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: inline-grid;
-  place-items: center;
+.form-status {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 12px;
 }
 .page-footer {
   display: flex;
@@ -754,6 +843,8 @@ main {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 26px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .back-link {
   display: inline-flex;
@@ -767,6 +858,7 @@ main {
 }
 .report-heading h1 {
   font-size: 27px;
+  overflow-wrap: anywhere;
 }
 .heading-separator {
   margin: 0 12px;
@@ -796,6 +888,12 @@ main {
   border: 1px solid;
   border-radius: 8px;
   margin-bottom: 25px;
+}
+.decision-banner > div,
+.finding > div,
+.error-banner > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .decision-banner.ready {
   background: #edf5e8;
@@ -1303,6 +1401,13 @@ pre {
   font-size: 11px;
   margin-top: 21px;
 }
+.job-panel .button {
+  margin-top: 16px;
+}
+.job-panel.state-error,
+.job-panel.state-error h1 {
+  color: #9a493c;
+}
 .billing-totals {
   padding: 5px 23px 24px;
 }
@@ -1368,7 +1473,6 @@ pre {
 .cost-caption,
 .cost-comparison span,
 .report-date,
-.workflow-strip,
 .sidebar-note p {
   color: #73806b;
 }
@@ -1457,14 +1561,6 @@ pre {
   .review-layout td {
     padding-inline: 13px;
   }
-  .workflow-strip {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 15px;
-  }
-  .workflow-strip > .eyebrow {
-    flex-basis: 100%;
-  }
   .cost-highlight {
     flex-wrap: wrap;
     gap: 8px;
@@ -1513,6 +1609,16 @@ pre {
   .review-layout {
     grid-template-columns: 1fr;
   }
+  .review-sidebar {
+    grid-row: 1;
+  }
+  .table-hint {
+    display: block;
+    padding: 0 17px 12px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
   .start-panel {
     max-width: none;
     display: block;
@@ -1543,9 +1649,6 @@ pre {
     flex-direction: column;
     gap: 7px;
   }
-  .workflow-strip {
-    font-size: 11px;
-  }
   .sidebar-note {
     padding-inline: 8px;
   }
@@ -1567,7 +1670,8 @@ pre {
     padding: 15px 18px;
     flex-direction: row;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
   }
   .app-shell {
     display: block;
@@ -1595,11 +1699,20 @@ pre {
     font-size: 11px;
     padding: 9px;
     gap: 5px;
+    min-height: 44px;
   }
   .sidebar nav svg {
     width: 15px;
   }
   .nav-count {
+    display: none;
+  }
+  .sidebar .sidebar-bottom {
+    display: flex;
+    width: 100%;
+    padding: 0;
+  }
+  .sidebar-bottom small {
     display: none;
   }
   .main-shell {
@@ -1621,6 +1734,10 @@ pre {
   }
   .page-heading {
     gap: 12px;
+    flex-wrap: wrap;
+  }
+  .page-heading > div {
+    min-width: 0;
   }
   .page-heading h1 {
     font-size: 25px;
@@ -1641,7 +1758,7 @@ pre {
     margin-bottom: 20px;
   }
   .metric {
-    padding: 17px 15px;
+    padding: 15px 12px;
     min-height: 115px;
   }
   .metric .eyebrow {
@@ -1688,6 +1805,9 @@ pre {
   }
   .cost-highlight > strong {
     font-size: 32px;
+  }
+  .cost-highlight {
+    flex-wrap: wrap;
   }
   .findings {
     padding-inline: 17px;
@@ -1742,18 +1862,141 @@ pre {
   .disposition-form select {
     width: 100%;
   }
-  .workflow-strip > svg {
-    display: none;
-  }
-  .workflow-strip {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  .workflow-strip > .eyebrow {
-    grid-column: 1/-1;
-  }
   .configuration > svg {
     width: 18px;
+  }
+  .configuration {
+    gap: 12px;
+    padding-inline: 17px;
+  }
+  .configuration strong {
+    font-size: 20px;
+  }
+  .configuration > div {
+    min-width: 0;
+  }
+  .main-shell input,
+  .main-shell select {
+    min-height: 44px;
+  }
+  .button,
+  .button.small,
+  .icon-button,
+  .back-link,
+  .text-button {
+    min-height: 44px;
+    white-space: normal;
+  }
+  .icon-button {
+    min-width: 44px;
+  }
+  .advanced summary,
+  .explanation-content summary,
+  .evidence-list summary,
+  .class-details summary,
+  .billing-details summary {
+    min-height: 44px;
+    padding-block: 10px;
+    line-height: 1.6;
+  }
+  .start-footer {
+    white-space: normal;
+    line-height: 1.6;
+    text-align: center;
+  }
+  .start-footer svg {
+    flex-shrink: 0;
+  }
+  .finding {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .finding > div {
+    flex: 1;
+  }
+  .finding-level {
+    flex-basis: 100%;
+    padding-left: 14px;
+  }
+  .inline-form input,
+  .disposition-form input {
+    min-width: 0;
+    width: 100%;
+  }
+  .error-banner {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .error-banner > div {
+    flex: 1;
+  }
+  .job-panel {
+    padding: 44px 20px;
+  }
+  .reviews-table,
+  .reviews-table tbody {
+    display: block;
+  }
+  .reviews-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .reviews-table tbody tr {
+    display: block;
+    position: relative;
+    margin: 0 17px;
+    padding: 14px 0;
+    border-top: 1px solid var(--line);
+  }
+  .reviews-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border: 0;
+    padding: 6px 0;
+  }
+  .reviews-table td:first-child {
+    padding-right: 44px;
+  }
+  .reviews-table td[data-label]::before {
+    content: attr(data-label);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .reviews-table .review-open {
+    position: absolute;
+    top: 8px;
+    right: -8px;
+    padding: 0;
+  }
+  .reviews-table .review-link,
+  .reviews-table .review-link > span {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+@media (max-width: 380px) {
+  .sidebar nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .sidebar nav > a {
+    flex: 1;
+    justify-content: center;
+  }
+  .topbar-right {
+    gap: 4px;
+  }
+  .breadcrumb {
+    gap: 5px;
+  }
+  .local-pill {
+    font-size: 10px;
+    letter-spacing: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1786,7 +2029,6 @@ pre {
 .main-shell .guard-notice,
 .main-shell .review-link span,
 .main-shell .workload-table td small,
-.main-shell .workflow-strip,
 .main-shell .configuration > div > span:last-child,
 .main-shell .cost-comparison span {
   color: #5e6e56;
@@ -1811,4 +2053,10 @@ pre {
 .main-shell .fixture-note,
 .main-shell .guard-notice {
   font-size: 12px;
+}
+@media (max-width: 620px) {
+  .main-shell input,
+  .main-shell select {
+    font-size: 16px;
+  }
 }

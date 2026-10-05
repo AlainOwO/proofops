@@ -10,6 +10,7 @@ import {
 export function AppShell({
   total,
   ready,
+  loading,
   isOutcomes,
   reportId,
   busy,
@@ -18,6 +19,7 @@ export function AppShell({
 }: {
   total: number | null;
   ready: boolean;
+  loading: boolean;
   isOutcomes: boolean;
   reportId?: string;
   busy: string;
@@ -26,6 +28,16 @@ export function AppShell({
 }) {
   return (
     <div className="app-shell">
+      <a
+        href="#main-content"
+        className="skip-link"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("main-content")?.focus();
+        }}
+      >
+        Skip to content
+      </a>
       <aside className="sidebar">
         <a className="brand" href="#/reviews" aria-label="ProofOps home">
           <span className="brand-mark">
@@ -45,11 +57,19 @@ export function AppShell({
         </div>
         <p className="nav-label">WORKSPACE</p>
         <nav aria-label="Main navigation">
-          <a href="#/reviews" className={!isOutcomes ? "active" : ""}>
+          <a
+            href="#/reviews"
+            className={!isOutcomes ? "active" : ""}
+            aria-current={!isOutcomes ? "page" : undefined}
+          >
             <GitPullRequest size={18} />
             Reviews<span className="nav-count">{total ?? "—"}</span>
           </a>
-          <a href="#/outcomes" className={isOutcomes ? "active" : ""}>
+          <a
+            href="#/outcomes"
+            className={isOutcomes ? "active" : ""}
+            aria-current={isOutcomes ? "page" : undefined}
+          >
             <Activity size={18} />
             Outcomes
           </a>
@@ -66,7 +86,11 @@ export function AppShell({
           <span className={`connection-dot ${ready ? "connected" : ""}`} />
           <div>
             <strong>
-              {ready ? "Local backend ready" : "Connecting to backend"}
+              {ready
+                ? "Local backend ready"
+                : loading
+                  ? "Connecting to backend"
+                  : "Backend unavailable"}
             </strong>
             <small>Advisory · no deployment access</small>
           </div>
@@ -85,6 +109,7 @@ export function AppShell({
             <button
               className="icon-button"
               aria-label="Refresh backend data"
+              disabled={!!busy}
               onClick={onRefresh}
             >
               <RefreshCw
@@ -97,7 +122,7 @@ export function AppShell({
             </span>
           </div>
         </header>
-        <main>
+        <main id="main-content" tabIndex={-1}>
           {children}
           <footer className="page-footer">
             <span>ProofOps · evidence before change</span>

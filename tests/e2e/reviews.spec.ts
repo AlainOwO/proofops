@@ -19,6 +19,14 @@ async function runReplay(page: Page, scenario: string, result: string) {
   ).toBeVisible();
 }
 
+async function expectNoPageOverflow(page: Page) {
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+}
+
 for (const [scenario, result] of [
   ["valid-resize", "Ready for engineering review"],
   ["unsafe-resize", "Revise the change"],
@@ -44,6 +52,22 @@ for (const [scenario, result] of [
     ).toBeVisible();
     await page.screenshot({
       path: `../artifacts/screenshots/${scenario}.png`,
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expectNoPageOverflow(page);
+    const workload = page.getByRole("region", {
+      name: "Workload comparison table",
+      exact: true,
+    });
+    await workload.focus();
+    await expect(workload).toBeFocused();
+    await page.keyboard.press("ArrowRight");
+    await expect
+      .poll(() => workload.evaluate((element) => element.scrollLeft))
+      .toBeGreaterThan(0);
+    await page.screenshot({
+      path: `../artifacts/screenshots/${scenario}-mobile.png`,
       fullPage: true,
     });
     const download = page.waitForEvent("download");
@@ -122,6 +146,18 @@ test("outcomes preserve operator intent and sample billing totals", async ({
     path: "../artifacts/screenshots/outcomes.png",
     fullPage: true,
   });
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page
+    .getByText("Inspect service and currency totals", { exact: true })
+    .click();
+  await expectNoPageOverflow(page);
+  await expect(
+    page.getByRole("region", { name: "Billing service and currency totals" }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "../artifacts/screenshots/outcomes-mobile.png",
+    fullPage: true,
+  });
 });
 
 test("reviews are usable on a narrow viewport and unavailable data is not zero", async ({
@@ -135,21 +171,31 @@ test("reviews are usable on a narrow viewport and unavailable data is not zero",
     path: "../artifacts/screenshots/reviews.png",
     fullPage: true,
   });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect(
-    page.getByRole("button", { name: "Run review", exact: true }),
-  ).toBeVisible();
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true);
-  await page.screenshot({
-    path: "../artifacts/screenshots/mobile.png",
-    fullPage: true,
-  });
+  for (const width of [320, 768, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    const runButton = page.getByRole("button", {
+      name: "Run review",
+      exact: true,
+    });
+    await expect(runButton).toBeVisible();
+    await expectNoPageOverflow(page);
+    const form = await page
+      .getByRole("complementary", { name: "Start with a replay" })
+      .boundingBox();
+    const history = await page
+      .getByRole("region", { name: "Recent reviews", exact: true })
+      .boundingBox();
+    expect(form!.y).toBeLessThan(history!.y);
+    await page.getByRole("button", { name: "New review", exact: true }).click();
+    await expect(page.getByLabel("Review scenario")).toBeFocused();
+    await page.screenshot({
+      path: `../artifacts/screenshots/reviews-${width}.png`,
+      fullPage: true,
+    });
+  }
   await page.route("**/api/v1/analytics", (route) => route.abort());
   await page.reload();
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(page.locator(".metric").first()).toContainText("Unavailable");
+  await expectNoPageOverflow(page);
 });

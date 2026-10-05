@@ -1,5 +1,6 @@
+import { TableScroll } from "../../components/TableScroll";
 import { Database, LoaderCircle } from "lucide-react";
-import { Empty } from "../../components/Empty";
+import { StatePanel } from "../../components/StatePanel";
 import { money } from "../../lib/format";
 import type { Analytics } from "../../types";
 
@@ -8,7 +9,7 @@ export function BillingPanel({
   busy,
   onLoadSample,
 }: {
-  data: Analytics | null;
+  data: Analytics;
   busy: string;
   onLoadSample: () => void;
 }) {
@@ -34,13 +35,11 @@ export function BillingPanel({
           Load billing sample
         </button>
       </div>
-      {!data?.billing.totals.length ? (
-        <Empty
-          title={data ? "No billing rows imported" : "Analytics unavailable"}
-        >
+      {!data.billing.totals.length ? (
+        <StatePanel title="No billing rows imported">
           Load the supplied licensed sample to inspect arithmetic, credits and
           separate accounting measures.
-        </Empty>
+        </StatePanel>
       ) : (
         <>
           <div className="billing-totals">
@@ -72,7 +71,7 @@ export function BillingPanel({
           </p>
           <details className="billing-details">
             <summary>Inspect service and currency totals</summary>
-            <div className="table-scroll">
+            <TableScroll label="Billing service and currency totals">
               <table>
                 <thead>
                   <tr>
@@ -97,7 +96,7 @@ export function BillingPanel({
                   ))}
                 </tbody>
               </table>
-            </div>
+            </TableScroll>
           </details>
         </>
       )}

@@ -3,13 +3,14 @@ import { Metric } from "../../components/Metric";
 import type { Analytics, Outcome, Summary } from "../../types";
 import { ReviewList } from "./ReviewList";
 import { ReviewForm, type ReviewFormProps } from "./ReviewForm";
-import { WorkflowPath } from "./WorkflowPath";
+import { HowItWorks } from "./HowItWorks";
 
 export function ReviewsPage({
   reviews,
   total,
   analytics,
-  loaded,
+  loading,
+  onRetry,
   query,
   onQueryChange,
   onOpen,
@@ -18,7 +19,8 @@ export function ReviewsPage({
   reviews: Summary[];
   total: number | null;
   analytics: Analytics | null;
-  loaded: boolean;
+  loading: boolean;
+  onRetry: () => void;
   query: string;
   onQueryChange: (query: string) => void;
   onOpen: (id: string) => void;
@@ -55,22 +57,26 @@ export function ReviewsPage({
           label="TOTAL REVIEWS"
           value={total ?? "Unavailable"}
           note="Saved in this workspace"
+          loading={loading}
         />
         <Metric
           label="READY FOR REVIEW"
           value={count("request_review")}
           note="Required checks passed"
+          loading={loading}
           accent
         />
         <Metric
           label="CHANGES TO REVISE"
           value={count("revise_change")}
           note="Known contract violations"
+          loading={loading}
         />
         <Metric
           label="NEED MORE EVIDENCE"
           value={count("collect_evidence")}
           note="Incomplete or incompatible inputs"
+          loading={loading}
         />
       </div>
       <div className="review-layout">
@@ -78,14 +84,18 @@ export function ReviewsPage({
           reviews={reviews}
           filtered={filtered}
           total={total}
-          loaded={loaded}
+          loading={loading}
+          busy={!!form.busy}
+          onRetry={onRetry}
           query={query}
           onQueryChange={onQueryChange}
           onOpen={onOpen}
         />
-        <ReviewForm {...form} />
+        <div className="review-sidebar">
+          <ReviewForm {...form} />
+          <HowItWorks />
+        </div>
       </div>
-      <WorkflowPath />
     </>
   );
 }

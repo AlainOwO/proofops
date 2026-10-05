@@ -22,6 +22,9 @@ export function App() {
     mode,
     ready,
     loaded,
+    workspaceLoading,
+    detailError,
+    retryDetail,
     reportId,
     isOutcomes,
     navigate,
@@ -39,10 +42,15 @@ export function App() {
     <AppShell
       total={total}
       ready={ready}
+      loading={workspaceLoading}
       isOutcomes={isOutcomes}
       reportId={reportId}
       busy={busy}
-      onRefresh={() => action("refresh", refresh)}
+      onRefresh={() =>
+        detailError && !detail?.report
+          ? retryDetail()
+          : action("refresh", refresh)
+      }
     >
       <ErrorBanner error={error} onDismiss={() => setError("")} />
       {reportId ? (
@@ -92,12 +100,19 @@ export function App() {
             }
           />
         ) : (
-          <JobView detail={detail} onBack={() => navigate("/reviews")} />
+          <JobView
+            detail={detail}
+            error={detailError}
+            onRetry={retryDetail}
+            onBack={() => navigate("/reviews")}
+          />
         )
       ) : isOutcomes ? (
         <OutcomesPage
           data={analytics}
           busy={busy}
+          loading={!loaded || (workspaceLoading && analytics === null)}
+          onRetry={() => action("refresh", refresh)}
           onLoadSample={() =>
             action("billing", () =>
               api("/api/v1/billing/import-sample", { method: "POST" }),
@@ -110,7 +125,8 @@ export function App() {
           reviews={reviews}
           total={total}
           analytics={analytics}
-          loaded={loaded}
+          loading={!loaded || (workspaceLoading && total === null)}
+          onRetry={() => action("refresh", refresh)}
           query={query}
           onQueryChange={setQuery}
           onOpen={(id) => navigate(`/reviews/${id}`)}

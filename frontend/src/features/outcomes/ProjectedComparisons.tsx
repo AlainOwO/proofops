@@ -1,15 +1,16 @@
+import { TableScroll } from "../../components/TableScroll";
 import { ArrowDownRight } from "lucide-react";
 import { Badge } from "../../components/Badge";
 import { Origin } from "../../components/Origin";
 import { date, money } from "../../lib/format";
-import { Empty } from "../../components/Empty";
+import { StatePanel } from "../../components/StatePanel";
 import type { Analytics } from "../../types";
 
 export function ProjectedComparisons({
   data,
   onOpen,
 }: {
-  data: Analytics | null;
+  data: Analytics;
   onOpen: (id: string) => void;
 }) {
   return (
@@ -24,13 +25,13 @@ export function ProjectedComparisons({
         </div>
         <ArrowDownRight size={20} />
       </div>
-      {!data?.projected_comparisons.length ? (
-        <Empty title={data ? "No projections yet" : "Analytics unavailable"}>
+      {!data.projected_comparisons.length ? (
+        <StatePanel title="No projections yet">
           Complete a review to compare its scoped baseline and candidate
           estimates.
-        </Empty>
+        </StatePanel>
       ) : (
-        <div className="table-scroll">
+        <TableScroll label="Projected comparisons table">
           <table>
             <thead>
               <tr>
@@ -78,7 +79,7 @@ export function ProjectedComparisons({
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       )}
     </section>
   );

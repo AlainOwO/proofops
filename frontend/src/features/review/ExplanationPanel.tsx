@@ -1,3 +1,4 @@
+import { TableScroll } from "../../components/TableScroll";
 import type { ReactNode } from "react";
 import { FileCheck2 } from "lucide-react";
 import { date, human, money } from "../../lib/format";
@@ -42,7 +43,7 @@ export function ExplanationPanel({
         )}
         <details>
           <summary>Inspect cited facts and assumptions</summary>
-          <div className="table-scroll">
+          <TableScroll label="Cited facts table">
             <table>
               <thead>
                 <tr>
@@ -63,7 +64,7 @@ export function ExplanationPanel({
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableScroll>
           {cost && (
             <>
               <h4>Cost assumptions</h4>

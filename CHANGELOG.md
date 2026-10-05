@@ -3,7 +3,10 @@
 ## UI polish — 2026-10-05
 
 - Split the frontend entry point into an app shell, reviews/report/outcomes components, a workspace hook, and shared presentation helpers. The extraction preserves markup, API requests, hash routes, polling, form state and displayed review results.
+- Added explicit loading, empty, filtered and unavailable states, accurate backend status, and retry controls that reload saved data without submitting another review. Added a short “How this works” panel, mobile review cards and form-first ordering, visible focus, a skip link, and keyboard-accessible scrolling for wide tables.
+- Extended browser coverage for all three report paths on narrow screens, 320/390/768 px reviews layouts, unavailable/empty analytics, retry polling, filter/setup persistence and stale response protection. The frontend build now includes the actual browser-test directory in TypeScript checks.
 - Assumptions: keep the existing local, single-service workflow and visual identity; use the supplied synthetic replays with recorded evaluation time and AI off. Review rules, outcomes, cost arithmetic, approved constraints and evidence requirements remain unchanged. Research files and evaluator data are outside this work; test outputs stay in ignored application artifacts.
+- Verification: 94 backend tests and 12 Chromium tests passed; native TypeScript/Vite and Docker frontend builds passed. Browser checks ran against the rebuilt local web container, with screenshots inspected on desktop and narrow layouts. Formatting and unused-symbol checks passed. No live AWS or model calls were made; the existing upstream TestClient deprecation warning remains.
 
 ## 0.1.0 — 2026-10-05
 

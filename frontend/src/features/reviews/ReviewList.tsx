@@ -1,6 +1,6 @@
 import { ArrowUpRight, Search } from "lucide-react";
 import { Badge } from "../../components/Badge";
-import { Empty } from "../../components/Empty";
+import { StatePanel } from "../../components/StatePanel";
 import { Origin } from "../../components/Origin";
 import { date, human } from "../../lib/format";
 import type { Summary } from "../../types";
@@ -9,7 +9,9 @@ export interface ReviewListProps {
   reviews: Summary[];
   filtered: Summary[];
   total: number | null;
-  loaded: boolean;
+  loading: boolean;
+  busy: boolean;
+  onRetry: () => void;
   query: string;
   onQueryChange: (query: string) => void;
   onOpen: (id: string) => void;
@@ -19,25 +21,35 @@ export function ReviewList({
   reviews,
   filtered,
   total,
-  loaded,
+  loading,
+  busy,
+  onRetry,
   query,
   onQueryChange,
   onOpen,
 }: ReviewListProps) {
   return (
-    <section className="panel reviews-panel">
+    <section
+      className="panel reviews-panel"
+      aria-labelledby="recent-reviews-heading"
+    >
       <div className="panel-heading">
         <div>
-          <h2>Recent reviews</h2>
+          <h2 id="recent-reviews-heading">Recent reviews</h2>
           <p>
-            {loaded
-              ? `Latest ${reviews.length} of ${total} reviews`
-              : "Loading backend state…"}
+            {loading
+              ? "Fetching saved reviews…"
+              : total === null
+                ? "Saved reviews could not be loaded."
+                : query
+                  ? `${filtered.length} matching of ${reviews.length} displayed reviews`
+                  : `Latest ${reviews.length} of ${total} reviews`}
           </p>
         </div>
         <label className="search">
           <Search size={15} />
           <input
+            type="search"
             aria-label="Filter displayed reviews"
             placeholder="Filter reviews"
             value={query}
@@ -45,25 +57,58 @@ export function ReviewList({
           />
         </label>
       </div>
-      {!filtered.length ? (
-        <Empty
+      {loading ? (
+        <StatePanel title="Loading reviews" kind="loading">
+          Fetching saved reviews from the local workspace.
+        </StatePanel>
+      ) : total === null ? (
+        <StatePanel
+          title="Reviews unavailable"
+          kind="error"
+          action={
+            <button
+              className="button secondary"
+              onClick={onRetry}
+              disabled={busy}
+            >
+              Retry loading reviews
+            </button>
+          }
+        >
+          Check that the local backend is running, then try again.
+        </StatePanel>
+      ) : !filtered.length ? (
+        <StatePanel
           title={
-            query
-              ? "No matching reviews"
-              : !loaded
-                ? "Loading reviews"
-                : total === null
-                  ? "Reviews unavailable"
-                  : "Your first review starts here"
+            query ? "No matching reviews" : "Your first review starts here"
+          }
+          action={
+            query ? (
+              <button
+                className="button secondary"
+                onClick={() => onQueryChange("")}
+              >
+                Clear filter
+              </button>
+            ) : (
+              <button
+                className="button secondary"
+                onClick={() =>
+                  document.getElementById("replay-choice")?.focus()
+                }
+              >
+                Choose a scenario
+              </button>
+            )
           }
         >
           {query
-            ? "Try another service, commit or outcome."
+            ? "Try another service, commit or outcome, or clear the filter to see your saved reviews."
             : "Run a supplied replay or import a sanitized bundle to see the evidence behind a change."}
-        </Empty>
+        </StatePanel>
       ) : (
         <div className="table-scroll">
-          <table>
+          <table className="reviews-table" aria-label="Recent reviews">
             <thead>
               <tr>
                 <th>Service / change</th>
@@ -90,13 +135,13 @@ export function ReviewList({
                       </span>
                     </button>
                   </td>
-                  <td>
+                  <td data-label="Decision">
                     <Badge outcome={item.outcome} state={human(item.state)} />
                   </td>
-                  <td>
+                  <td data-label="Evidence">
                     <Origin value={item.origin} />
                   </td>
-                  <td>
+                  <td className="review-open">
                     <button
                       className="icon-button"
                       aria-label={`Open review ${item.id}`}

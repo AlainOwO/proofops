@@ -19,6 +19,9 @@ export function useWorkspace() {
   const [mode, setMode] = useState("replay");
   const [ready, setReady] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [workspaceLoading, setWorkspaceLoading] = useState(true);
+  const [detailError, setDetailError] = useState("");
+  const [detailAttempt, setDetailAttempt] = useState(0);
   const reportId = route.match(/^\/reviews\/([a-f0-9-]{36})/)?.[1];
   const isOutcomes = route === "/outcomes";
   const routeRef = useRef(route);
@@ -27,39 +30,58 @@ export function useWorkspace() {
     window.location.hash = value;
   };
   useEffect(() => {
-    const listener = () =>
+    const listener = () => {
       setRoute(window.location.hash.slice(1) || "/reviews");
+      setError("");
+    };
     window.addEventListener("hashchange", listener);
     return () => window.removeEventListener("hashchange", listener);
   }, []);
 
   const refresh = useCallback(async () => {
-    const [listing, stats, health] = await Promise.all([
-      api<{ items: Summary[]; total: number }>("/api/v1/reviews?limit=100"),
-      api<Analytics>("/api/v1/analytics"),
-      api<{ status: string }>("/readyz"),
-    ]);
-    setReviews(listing.items);
-    setTotal(listing.total);
-    setAnalytics(stats);
-    setReady(health.status === "ready");
-    setLoaded(true);
+    setWorkspaceLoading(true);
+    try {
+      const [listing, stats, health] = await Promise.all([
+        api<{ items: Summary[]; total: number }>("/api/v1/reviews?limit=100"),
+        api<Analytics>("/api/v1/analytics"),
+        api<{ status: string }>("/readyz"),
+      ]);
+      setReviews(listing.items);
+      setTotal(listing.total);
+      setAnalytics(stats);
+      setReady(health.status === "ready");
+    } catch (error) {
+      setReady(false);
+      throw error;
+    } finally {
+      setLoaded(true);
+      setWorkspaceLoading(false);
+    }
   }, []);
   useEffect(() => {
     refresh().catch((error) => {
       setError(error.message);
-      setLoaded(true);
-      setReady(false);
     });
   }, [refresh]);
   const refreshDetail = useCallback(async () => {
     if (!reportId) return;
     const suffix = route.includes("?") ? "?" + route.split("?")[1] : "";
-    const response = await api<Detail>(`/api/v1/reviews/${reportId}${suffix}`);
-    if (routeRef.current === route) setDetail(response);
-    return response;
+    try {
+      const response = await api<Detail>(
+        `/api/v1/reviews/${reportId}${suffix}`,
+      );
+      if (routeRef.current === route) {
+        setDetail(response);
+        setDetailError("");
+      }
+      return response;
+    } catch (error) {
+      if (routeRef.current === route) setDetailError((error as Error).message);
+      throw error;
+    }
   }, [reportId, route]);
   useEffect(() => {
+    setDetailError("");
     if (!reportId) {
       setDetail(null);
       return;
@@ -86,7 +108,12 @@ export function useWorkspace() {
       stopped = true;
       clearTimeout(timer);
     };
-  }, [reportId, refreshDetail, refresh]);
+  }, [reportId, refreshDetail, refresh, detailAttempt]);
+
+  function retryDetail() {
+    setError("");
+    setDetailAttempt((attempt) => attempt + 1);
+  }
 
   async function runReview() {
     setError("");
@@ -147,6 +174,9 @@ export function useWorkspace() {
     mode,
     ready,
     loaded,
+    workspaceLoading,
+    detailError,
+    retryDetail,
     reportId,
     isOutcomes,
     navigate,

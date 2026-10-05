@@ -13,10 +13,14 @@ export function ErrorBanner({
         <div role="alert" className="error-banner">
           <XCircle size={18} />
           <div>
-            <strong>Something needs attention</strong>
+            <strong>Request failed</strong>
             <p>{error}</p>
           </div>
-          <button className="text-button" onClick={onDismiss}>
+          <button
+            className="text-button"
+            onClick={onDismiss}
+            aria-label="Dismiss error"
+          >
             Dismiss
           </button>
         </div>

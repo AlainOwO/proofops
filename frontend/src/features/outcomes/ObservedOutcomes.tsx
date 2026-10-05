@@ -1,14 +1,15 @@
+import { TableScroll } from "../../components/TableScroll";
 import { Activity } from "lucide-react";
 import { Origin } from "../../components/Origin";
 import { human } from "../../lib/format";
-import { Empty } from "../../components/Empty";
+import { StatePanel } from "../../components/StatePanel";
 import type { Analytics } from "../../types";
 
 export function ObservedOutcomes({
   data,
   onOpen,
 }: {
-  data: Analytics | null;
+  data: Analytics;
   onOpen: (id: string) => void;
 }) {
   return (
@@ -23,17 +24,13 @@ export function ObservedOutcomes({
         </div>
         <Activity size={20} />
       </div>
-      {!data?.observed_outcomes.length ? (
-        <Empty
-          title={
-            data ? "No observed outcomes recorded" : "Analytics unavailable"
-          }
-        >
+      {!data.observed_outcomes.length ? (
+        <StatePanel title="No observed outcomes recorded">
           Record a disposition from a review. Measured performance and billed
           savings require their own evidence.
-        </Empty>
+        </StatePanel>
       ) : (
-        <div className="table-scroll">
+        <TableScroll label="Observed outcomes table">
           <table>
             <thead>
               <tr>
@@ -65,7 +62,7 @@ export function ObservedOutcomes({
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       )}
     </section>
   );
