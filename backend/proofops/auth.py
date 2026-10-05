@@ -24,6 +24,32 @@ from proofops.storage.database import AuthSessionRow, LoginThrottleRow, UserRow
 HASHER = PasswordHasher(time_cost=3, memory_cost=65_536, parallelism=2, type=Type.ID)
 LOGIN_CSRF_TTL = 600
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "api", "testserver"}
+AUTH_PRUNE_BATCH = 100
+
+
+def prune_expired_auth(session, now: datetime, window: timedelta) -> None:
+    """Bound maintenance work and never wait on another login's locked rows."""
+    expired_sessions = (
+        select(AuthSessionRow.token_hash)
+        .where(AuthSessionRow.expires_at <= now)
+        .order_by(AuthSessionRow.expires_at)
+        .limit(AUTH_PRUNE_BATCH)
+        .with_for_update(skip_locked=True)
+    )
+    session.execute(delete(AuthSessionRow).where(AuthSessionRow.token_hash.in_(expired_sessions)))
+    expired_throttles = (
+        select(LoginThrottleRow.key_hash)
+        .where(
+            LoginThrottleRow.window_start < now - window * 2,
+            or_(LoginThrottleRow.blocked_until.is_(None), LoginThrottleRow.blocked_until <= now),
+        )
+        .order_by(LoginThrottleRow.window_start)
+        .limit(AUTH_PRUNE_BATCH)
+        .with_for_update(skip_locked=True)
+    )
+    session.execute(
+        delete(LoginThrottleRow).where(LoginThrottleRow.key_hash.in_(expired_throttles))
+    )
 
 
 def normalize_username(username: str) -> str:
@@ -266,45 +292,46 @@ class AuthService:
         now = utcnow()
         window = timedelta(seconds=self.settings.login_window_seconds)
         username = username.strip().lower()
-        limits = {
-            self.mac("login-user", username): self.settings.login_max_failures,
-            self.mac("login-peer", peer): self.settings.login_max_ip_attempts,
-        }
-        account_key = self.mac("login-user", username)
         with self.factory.begin() as session:
-            session.execute(delete(AuthSessionRow).where(AuthSessionRow.expires_at <= now))
-            session.execute(
-                delete(LoginThrottleRow).where(
-                    LoginThrottleRow.window_start < now - window * 2,
-                    or_(
-                        LoginThrottleRow.blocked_until.is_(None),
-                        LoginThrottleRow.blocked_until <= now,
-                    ),
-                )
-            )
-            # Consistent lock order also covers concurrent attempts from multiple API processes.
-            for key in sorted(limits):
+
+            def available_counter(key: str, maximum: int) -> LoginThrottleRow | None:
                 session.execute(
                     insert(LoginThrottleRow)
                     .values(key_hash=key, attempts=0, window_start=now)
                     .on_conflict_do_nothing(index_elements=[LoginThrottleRow.key_hash])
                 )
-            counters = session.scalars(
-                select(LoginThrottleRow)
-                .where(LoginThrottleRow.key_hash.in_(limits))
-                .order_by(LoginThrottleRow.key_hash)
-                .with_for_update()
-            ).all()
-            for counter in counters:
+                counter = session.scalars(
+                    select(LoginThrottleRow)
+                    .where(LoginThrottleRow.key_hash == key)
+                    .with_for_update()
+                ).one()
                 if counter.blocked_until and counter.blocked_until > now:
-                    return None, True
+                    return None
                 if counter.window_start + window <= now or counter.blocked_until is not None:
                     counter.attempts, counter.window_start, counter.blocked_until = 0, now, None
-                if counter.attempts >= limits[counter.key_hash]:
+                if counter.attempts >= maximum:
                     counter.blocked_until = now + window
-                    return None, True
-            for counter in counters:
-                counter.attempts += 1
+                    return None
+                return counter
+
+            # Every process locks peer -> account -> user, in that order. A blocked
+            # peer cannot allocate arbitrary username rows or trigger maintenance.
+            peer_counter = available_counter(
+                self.mac("login-peer", peer), self.settings.login_max_ip_attempts
+            )
+            if peer_counter is None:
+                return None, True
+            if peer_counter.attempts == 0:
+                prune_expired_auth(session, now, window)
+            peer_counter.attempts += 1
+            if peer_counter.attempts >= self.settings.login_max_ip_attempts:
+                peer_counter.blocked_until = now + window
+            account_counter = available_counter(
+                self.mac("login-user", username), self.settings.login_max_failures
+            )
+            if account_counter is None:
+                return None, True
+            account_counter.attempts += 1
             user = session.scalar(
                 select(UserRow).where(UserRow.username == username).with_for_update()
             )
@@ -314,13 +341,10 @@ class AuthService:
             except (VerifyMismatchError, VerificationError, InvalidHashError):
                 pass
             if not valid or user is None or not user.active:
-                for counter in counters:
-                    if counter.attempts >= limits[counter.key_hash]:
-                        counter.blocked_until = now + window
+                if account_counter.attempts >= self.settings.login_max_failures:
+                    account_counter.blocked_until = now + window
                 return None, False
-            for counter in counters:
-                if counter.key_hash == account_key:
-                    counter.attempts, counter.blocked_until = 0, None
+            account_counter.attempts, account_counter.blocked_until = 0, None
             if HASHER.check_needs_rehash(user.password_hash):
                 user.password_hash = HASHER.hash(password)
             token = secrets.token_urlsafe(32)

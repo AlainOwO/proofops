@@ -303,7 +303,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
                 version = session.execute(
                     text("SELECT version_num FROM alembic_version")
                 ).scalar_one()
-                if version != "c8429d7a6e10":
+                if version != "e7d91b4c2a60":
                     return JSONResponse(
                         {"status": "not_ready", "reason": "migrations required"}, status_code=503
                     )

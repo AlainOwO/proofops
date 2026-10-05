@@ -61,7 +61,7 @@ class LoginThrottleRow(Base):
     __tablename__ = "auth_login_throttles"
     key_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
-    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     blocked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
