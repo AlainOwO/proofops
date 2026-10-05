@@ -1,6 +1,8 @@
 # CI trust and reproduction
 
-The committed workflow performs secret-free backend/evaluation checks, frontend build/browser tests and a trusted-policy recurrence demonstration. Action commits were resolved from official release endpoints on 2026-10-05 and recorded in `build_tool_sources.json`. The workflow uses read-only repository permissions and does not use `pull_request_target`.
+The committed workflow performs backend/evaluation checks, frontend build/browser tests and a trusted-policy recurrence demonstration without cloud/model credentials. It generates ephemeral local database/session secrets and synthetic browser credentials during setup; no fixed passwords are embedded in the workflow. Action commits were resolved from official release endpoints on 2026-10-05 and recorded in `build_tool_sources.json`. The workflow uses read-only repository permissions and does not use `pull_request_target`.
+
+The browser job signs in, runs all e2e tests, reseeds the three results and runs the existing screenshot script. Network traces/videos and persisted browser cookie files are disabled. Artifact uploads use explicit report/screenshot directories, excluding `.env` and `artifacts/private/`. Local equivalents are verified; editing this workflow does not claim a remote Actions run or deployment.
 
 The trusted-policy job checks out the base revision in `trusted/` and candidate fixture data in `incoming/`. It executes the base engine and policy code. `scripts/ci_review.py` copies only bounded allowlisted JSON files, rejects links and evaluator paths, and requires the candidate identity mapping to match the trusted mapping. The candidate cannot supply its own weakened policy/template. The known-bad synthetic fixture must still produce `revise_change`; the script treats that expected rejection as a passing regression test.
 

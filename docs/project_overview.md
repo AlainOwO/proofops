@@ -40,7 +40,7 @@ The local k6 experiment performs smoke, calibration and three baseline/candidate
 
 The implemented scope is one mapped Linux on-demand Fargate service, account and region, one task CPU/memory cost model and one memory-floor guard family. Multi-cloud discovery, Kubernetes, autonomous production changes/rollback, general diagnosis, arbitrary generated policy, public SaaS, multi-tenant identity and a trained router are deferred.
 
-Infracost, AWS DevOps Agent, Compute Optimizer and existing incident/CI tooling already cover related work. ProofOps demonstrates a reproducible link between a proposed change, evidence, an approved constraint and an operator outcome. It makes no worldwide novelty or commercial-superiority claim. Protected source-control/workflow review, authentication, secure secrets and retention would be additional requirements for team hosting.
+Infracost, AWS DevOps Agent, Compute Optimizer and existing incident/CI tooling already cover related work. ProofOps demonstrates a reproducible link between a proposed change, evidence, an approved constraint and an operator outcome. It makes no worldwide novelty or commercial-superiority claim. Basic admin/viewer authentication and CSRF-protected sessions now gate the shared workspace. Team hosting still requires TLS operations, protected source-control/workflow review, secure secret delivery, retention and account isolation; see [security](security.md).
 
 ## Data and ownership
 

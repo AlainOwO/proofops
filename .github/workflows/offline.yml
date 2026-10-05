@@ -12,18 +12,9 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    services:
-      postgres:
-        image: postgres:17.6-alpine
-        env:
-          POSTGRES_DB: proofops_test
-          POSTGRES_USER: proofops
-          POSTGRES_PASSWORD: proofops_local
-        ports: ["55432:5432"]
-        options: --health-cmd "pg_isready -U proofops -d proofops_test" --health-interval 2s --health-timeout 3s --health-retries 30
     env:
       AI_MODE: "off"
-      TEST_DATABASE_URL: postgresql+psycopg://proofops:proofops_local@127.0.0.1:55432/proofops_test
+      AWS_EC2_METADATA_DISABLED: "true"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
@@ -35,6 +26,9 @@ jobs:
       - run: uv run ruff check backend scripts tests evaluation demo
       - run: uv run ruff format --check backend scripts tests evaluation demo
       - run: uv run mypy backend/proofops
+      - run: python scripts/configure_local.py
+      - run: docker compose up -d --wait db
+      - run: uv run python scripts/create_test_database.py
       - run: uv run pytest tests/unit tests/policy tests/integration --junitxml=artifacts/checks/backend.xml
       - run: uv run proofops evaluate --mode replay
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -55,6 +49,8 @@ jobs:
             name: offline-results,
             path: "artifacts/checks\nartifacts/evaluation",
           }
+      - run: docker compose down
+        if: always()
   trusted-policy-demo:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -88,21 +84,40 @@ jobs:
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      AI_MODE: "off"
+      AWS_EC2_METADATA_DISABLED: "true"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with: { node-version: "22" }
-      - run: cp .env.example .env
-      - run: docker compose up -d --build
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with: { python-version: "3.12" }
+      - run: python -m pip install uv==0.12.23
+      - run: uv sync --frozen --no-dev
+      - run: python scripts/configure_local.py
+      - run: docker compose up -d --build --wait
+      - run: uv run python scripts/prepare_browser_auth.py
       - run: npm ci
         working-directory: frontend
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
       - run: npm run test:e2e
         working-directory: frontend
+      - run: docker compose exec -T api proofops reset-demo-data --yes
+      - run: npm run screenshots:demo
+        working-directory: frontend
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
-        with: { name: browser-results, path: artifacts }
+        with:
+          name: browser-results
+          # Explicit paths exclude private credentials, environment files and cookie state.
+          path: |
+            artifacts/checks
+            artifacts/screenshots
+            artifacts/playwright
+            artifacts/playwright-demo
+            docs/screenshots
       - run: docker compose down
         if: always()

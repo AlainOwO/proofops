@@ -6,7 +6,7 @@ A test compares observed behavior with an independently justified expected resul
 
 Unit tests isolate decision/arithmetic/boundary behavior; property tests exercise many valid or invalid allocations. Integration tests use a real PostgreSQL database for transactions, idempotency, leases and concurrency. Policy tests execute actual Conftest/Rego, including healthy controls that make an always-deny implementation fail. SDK contract tests call mocked provider/AWS HTTP boundaries and verify parameters, completion states and accounting. They do not establish account access or model quality.
 
-Browser tests exercise the real local UI/API/worker. Load tests measure correct work and latency under offered demand. Fault injection proves a specific controlled failure and repair. Security/resilience tests attempt traversal, malformed JSON, secret retention, prompt injection, cross-scope cache reuse and ambiguous worker recovery. AI evaluation scores independent labels and semantics separately from schema. Human usability requires an uncoached consenting engineer; it was not replaced by browser automation.
+Browser tests exercise the real local UI/API/worker, including login/logout, viewer restrictions and all three review scenarios; explicitly mocked browser tests cover transport/empty states, expiry timing and demo presentation. Backend auth tests use PostgreSQL to cover every endpoint/method for anonymous, viewer and admin, CSRF on every write, current roles, session rotation/revocation, concurrent/persistent login limits, startup rejection and public-demo isolation. The endpoint inventory fails if a route is omitted. Load tests measure correct work and latency under offered demand. Fault injection proves a specific controlled failure and repair. Security/resilience tests also attempt traversal, malformed JSON, secret retention, prompt injection, cross-scope cache reuse and ambiguous worker recovery. AI evaluation scores independent labels and semantics separately from schema. Human usability requires an uncoached consenting engineer; it was not replaced by browser automation.
 
 ## Commands and prerequisites
 
@@ -21,9 +21,10 @@ From the app root, install the frozen development dependencies and pinned Confte
 .venv/bin/proofops evaluate --manifest evaluation/manifest.json --mode replay --output artifacts/evaluation
 ```
 
-Browser checks require API, worker and web at ports 8000/5173, plus Chromium:
+Browser checks require the local AI-off API, worker and web at ports 8000/5173, plus Chromium and generated test credentials. From the app root:
 
 ```sh
+.venv/bin/python scripts/prepare_browser_auth.py
 cd frontend
 npm ci
 npm run build
@@ -31,7 +32,17 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-PowerShell uses `.venv\Scripts\pytest.exe`, `ruff.exe`, `mypy.exe`, `proofops.exe` and `python.exe` in place of `.venv/bin/...`. These exact PowerShell setup commands are documented but were not run on this macOS host. Backend JUnit and Playwright JSON are saved under `artifacts/checks/`; retained traces/screenshots are under `artifacts/playwright/` and `artifacts/screenshots/`. The Starlette TestClient emits one upstream httpx compatibility warning; no test is skipped because of it.
+PowerShell uses `.venv\Scripts\pytest.exe`, `ruff.exe`, `mypy.exe`, `proofops.exe` and `python.exe` in place of `.venv/bin/...`. These exact PowerShell setup commands are documented but were not run on this macOS host. Backend JUnit and Playwright JSON are saved under `artifacts/checks/`; screenshots are under `artifacts/playwright/` and `artifacts/screenshots/`. Traces/videos are disabled because they can contain session cookies and passwords. The test setup creates synthetic users and saves random credentials only in owner-readable, ignored `artifacts/private/browser-auth.json`; an alternate file can be selected with `PROOFOPS_BROWSER_AUTH_FILE`. It never writes cookie state to disk. Do not upload the entire artifacts directory. The Starlette TestClient emits one upstream httpx compatibility warning; no test is skipped because of it.
+
+After e2e, reset the demo and capture the three README screenshots with the existing script:
+
+```sh
+docker compose exec -T api proofops reset-demo-data --yes
+cd frontend
+npm run screenshots:demo
+```
+
+The capture authenticates with the prepared synthetic admin, verifies exact fixture hashes/template explanations and checks that no test username/password is visible. Review the resulting PNGs before committing. Authentication checks do not contact cloud/model APIs. PostgreSQL/Docker tests must run with local service access; sandbox connection failures are not a reason to weaken or skip them. Historical results in `docs/results/` and PDFs remain saved measurements; the current change's checks are recorded in `CHANGELOG.md`.
 
 ## T01–T24 acceptance matrix
 

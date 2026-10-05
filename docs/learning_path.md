@@ -28,4 +28,4 @@ The build order assumes an already comfortable Python/Docker developer. A beginn
 - [pytest getting started](https://docs.pytest.org/en/stable/getting-started.html), [Playwright introduction](https://playwright.dev/docs/intro), [GitHub Actions](https://docs.github.com/en/actions)
 - [OpenAI structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [Anthropic structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
 
-Later topics include production identity/authorization, managed secret delivery, retention and observability, broader AWS coverage and larger independently reviewed model evaluations. Kubernetes, LangGraph and vector databases are deferred, not hidden prerequisites.
+Follow the [authentication boundary and setup](security.md) to study Argon2id, sessions, CSRF, role enforcement and shared login limits. Later topics include MFA/SSO and tenant isolation, managed secret delivery, retention and observability, broader AWS coverage and larger independently reviewed model evaluations. Kubernetes, LangGraph and vector databases are deferred, not hidden prerequisites.

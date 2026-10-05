@@ -1,6 +1,6 @@
 # Architecture and data flow
 
-ProofOps is a local, single-operator review application for one explicitly mapped Linux x86_64 ECS Fargate service. A change starts with a bounded input bundle. The shared Python engine owns normalization, Decimal costs, coverage, performance comparison and the final outcome. React reads persisted backend state.
+ProofOps is a shared-workspace review application for one explicitly mapped Linux x86_64 ECS Fargate service. Authenticated admins can submit changes; viewers can read results. A change starts with a bounded input bundle. The shared Python engine owns normalization, Decimal costs, coverage, performance comparison and the final outcome. React reads persisted backend state only after a verified session (or explicit public-demo viewer access).
 
 ```mermaid
 flowchart LR
@@ -37,10 +37,12 @@ Costs use Decimal rates, vCPU/MiB conversions and explicit billable task-hours. 
 
 ## Persistence and boundaries
 
-PostgreSQL stores contracts, changes, normalized evidence, workload runs, leased jobs, immutable reports, guard revisions/drafts, outcomes, attempts, budget ledger/cache, billing rows and audit events. Alembic is required before readiness succeeds. Content-addressed ZIP artifacts live outside the web root in `artifacts/`; downloads resolve server-assigned hashes, not client filesystem paths.
+PostgreSQL stores contracts, changes, normalized evidence, workload runs, leased jobs, immutable reports, guard revisions/drafts, outcomes, attempts, budget ledger/cache, billing rows and audit events. Separate tables hold Argon2id users, keyed session digests with expiry, shared login limits and explicit public-demo membership. Alembic is required before authenticated readiness succeeds. Content-addressed ZIP artifacts live outside the web root in `artifacts/`; downloads resolve server-assigned hashes, not client filesystem paths.
+
+Host and origin checks wrap a default-deny authentication boundary. Health and login are explicitly public; all other HTTP routes require a session. Every write requires admin and CSRF, except that viewers can log out with CSRF. CORS is credentialed only for configured exact origins. Public demo is a separate read-only allowlist, restricted to unchanged seeded fixture results and their original exports. Neither the authentication layer nor its database migration changes the review engine. [Security](security.md) documents session/bootstrap behavior and hosted prerequisites.
 
 The raw Terraform plan is parsed in memory and discarded after extracting a bounded allowlist. Sensitivity/unknown metadata is retained as paths; values stay unresolved. ZIP imports reject unknown filenames, duplicate paths, traversal, symlinks, encryption and expansion beyond limits. JSON rejects duplicate keys, non-finite numbers and excessive nesting. Nothing in an imported plan/repository is executed.
 
 Model context is built from matched report facts and original development cards/examples. It contains no research evaluator paths, labels or revealing case IDs. Provider adapters have no tools. Mechanical schema/citation checks do not prove causal reasoning; evaluator annotations score semantics separately. API/worker containers do not contain the evaluation corpus.
 
-The local controls do not implement multi-user identity, tenant isolation or public hosting. Real team enforcement requires authenticated roles, retention policies, deployment-specific authorization and protected trusted workflows. Kubernetes, other services/clouds, autonomous deployment and trained routing remain outside this build.
+Multiple users share one workspace; tenant/per-review isolation, MFA, production TLS deployment, retention and complete auth auditing are not implemented. Team enforcement also needs deployment-specific approvals and protected trusted workflows. Kubernetes, other services/clouds, autonomous deployment and trained routing remain outside this build.

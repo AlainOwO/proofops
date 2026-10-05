@@ -4,7 +4,7 @@ ProofOps reviews a proposed ECS Fargate cost change against a versioned operatin
 
 ## Quick demo
 
-Prerequisites: Git and Docker Desktop / Docker Engine with Compose v2. These commands use a macOS/Linux shell. Initial image/package downloads need Internet access; the demo needs no AWS credentials or API keys.
+Prerequisites: Git, Python 3 (for local secret generation), and Docker Desktop / Docker Engine with Compose v2. These commands use a macOS/Linux shell. Initial image/package downloads need Internet access; the demo needs no AWS credentials or API keys.
 
 1. **Clone and enter the repository.**
 
@@ -13,16 +13,17 @@ Prerequisites: Git and Docker Desktop / Docker Engine with Compose v2. These com
    cd proofops
    ```
 
-2. **Create the local configuration** with AI off and empty keys.
+2. **Create the local configuration** with generated database/session secrets, AI off and empty provider keys. Existing values are preserved; no password is printed.
 
    ```sh
-   test -f .env || cp .env.example .env
+   python3 scripts/configure_local.py
    ```
 
-3. **Build and start the app.** Compose runs the database migrations.
+3. **Build and start the app, then create an admin account.** Compose runs the database migrations. Choose your own strong password at the hidden prompt; there is no default password. Account creation is needed only once.
 
    ```sh
    docker compose up -d --build --wait
+   docker compose exec api proofops users create --username workspace-admin --role admin
    ```
 
 4. **Replace saved reviews with the three completed demo results.** `--yes` confirms the reset; omit it for an interactive confirmation.
@@ -31,7 +32,7 @@ Prerequisites: Git and Docker Desktop / Docker Engine with Compose v2. These com
    docker compose exec -T api proofops reset-demo-data --yes
    ```
 
-5. **Open [http://127.0.0.1:5173](http://127.0.0.1:5173).** Recent reviews now contains exactly three results. Select a row to inspect it, then use **All reviews** to return. No **Run review** clicks are needed for this seeded demo.
+5. **Open [http://127.0.0.1:5173](http://127.0.0.1:5173) and sign in.** Recent reviews now contains exactly three results. Select a row to inspect it, then use **All reviews** to return. No **Run review** clicks are needed for this seeded demo.
 
    | Replay | Saved result |
    |---|---|
@@ -45,12 +46,12 @@ The local workflow works without AWS credentials or API keys. The supplied revie
 
 ## Start with Docker
 
-Prerequisites: Git and Docker Desktop / Docker Engine with Compose v2. Run commands from the repository root: `proofops/` after cloning, or `proofops-app/` inside the read-only research pack. Initial image/package downloads need Internet access.
+Prerequisites: Git, Python 3 and Docker Desktop / Docker Engine with Compose v2. Run commands from the repository root: `proofops/` after cloning, or `proofops-app/` inside the read-only research pack. Initial image/package downloads need Internet access.
 
 macOS/Linux:
 
 ```sh
-test -f .env || cp .env.example .env
+python3 scripts/configure_local.py
 docker compose up -d --build
 docker compose ps
 ```
@@ -58,22 +59,34 @@ docker compose ps
 Windows PowerShell:
 
 ```powershell
-if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+py scripts/configure_local.py
 docker compose up -d --build
 docker compose ps
 ```
 
-Open **http://127.0.0.1:5173**. Choose a replay and select **Run review**. The worker processes the persisted job; the page polls actual job state. Import, inspect findings, export a reproducible bundle, prepare a guard draft, run its fixtures, and record an operator disposition. Loading the FOCUS billing sample twice preserves exactly one import.
+Create an admin once with `docker compose exec api proofops users create --username workspace-admin --role admin`, then sign in at **http://127.0.0.1:5173**. Choose a replay and select **Run review**. The worker processes the persisted job; the page polls actual job state. Import, inspect findings, export a reproducible bundle, prepare a guard draft, run its fixtures, and record an operator disposition. Loading the FOCUS billing sample twice preserves exactly one import.
 
 | Service | Local address | Purpose |
 |---|---|---|
 | Web | `http://127.0.0.1:5173` | Reviews, evidence detail and outcomes |
-| API | `http://127.0.0.1:8000` | `/healthz`, `/readyz`, `/docs` and validated API |
+| API | `http://127.0.0.1:8000` | Public `/healthz`; authenticated `/readyz`, `/docs` and API |
 | PostgreSQL | `127.0.0.1:55432` | Local database; container port 5432 |
 | Reporting workload | `http://127.0.0.1:8080` | Optional `workload` Compose profile |
 | Experiment target | `127.0.0.1:18080` | Temporary container owned by the workload runner |
 
-Compose runs migrations before starting the API and worker. The API and worker use the `proofops` database; tests require the separate `proofops_test` database. Loopback binding and origin checks are local controls, not production authentication.
+Compose runs migrations before starting the API and worker. The API and worker use the `proofops` database; tests require the separate `proofops_test` database. Compose remains bound to loopback. Authentication, server-side roles and CSRF now protect the API; exposing a deployment requires HTTPS and the hosted configuration below.
+
+## Authentication and hosting
+
+`admin` can import bundles, run reviews, prepare/validate guard drafts, record dispositions, import billing samples and reset demo reviews. `viewer` can read the shared workspace and download review/tested guard bundles. Create a viewer with `docker compose exec api proofops users create --username workspace-viewer --role viewer`. Both roles can sign out. There is no signup or default password.
+
+Passwords use Argon2id. Sessions expire after eight hours by default and use HttpOnly, SameSite=Lax cookies; local HTTP explicitly disables Secure in `.env`. Every API route requires a session except the health check and login flow. State-changing requests also require CSRF validation, including login and logout. Login attempts are limited in PostgreSQL by account and connection peer.
+
+For hosting, set `PROOFOPS_MODE=hosted`, `SESSION_COOKIE_SECURE=true`, a random `SECRET_KEY`, exact `ALLOWED_HOSTS` and HTTPS `CORS_ORIGINS`. Create a strong admin via the CLI before starting the hosted API, or supply both one-time bootstrap variables `PROOFOPS_ADMIN_USERNAME` and `PROOFOPS_ADMIN_PASSWORD`. Missing/weak auth configuration prevents startup. Put the built web app behind your TLS reverse proxy, keep database/API ports private, and keep Uvicorn's `--no-proxy-headers` setting. Use URL-safe generated database passwords with the supplied Compose file.
+
+`PROOFOPS_PUBLIC_DEMO=true` provides anonymous viewer access to only the three unchanged results seeded by `proofops reset-demo-data --yes`. All web writes return 403, even with an admin cookie. Existing private reviews, billing, dispositions, guard drafts and model accounting remain inaccessible. Seed before enabling the flag; hosted auth configuration is still required. This flag does not publish an existing workspace wholesale.
+
+See [security and auth setup](docs/security.md) for exact setup, migration, credential rotation, CSRF and demo instructions. This is one shared workspace, with no tenant isolation, MFA/SSO, self-service recovery, complete security audit pipeline, retention/backup automation or supplied production TLS deployment. See [operations](docs/operations.md) for remaining deployment responsibilities.
 
 ## Three-scenario walkthrough
 
@@ -114,11 +127,12 @@ To regenerate only these three screenshots with the existing Playwright setup, i
 
 ```sh
 docker compose exec -T api proofops reset-demo-data --yes
+.venv/bin/python scripts/prepare_browser_auth.py
 cd frontend
 npm run screenshots:demo
 ```
 
-The capture checks that exactly three completed replays are present, their input hashes match the supplied fixtures, and their explanations use template mode; it reads the saved results and writes `docs/screenshots/` plus ignored Playwright check artifacts. It does not submit more reviews. Run it after e2e tests, which intentionally create additional reviews.
+The setup script creates synthetic accounts with random passwords in ignored `artifacts/private/browser-auth.json`; use it only with the local, AI-off workspace. The capture signs in with those credentials, checks that exactly three completed replays are present, their input hashes match the supplied fixtures, and their explanations use template mode. It reads the saved results and writes `docs/screenshots/` plus ignored Playwright check artifacts. It does not submit more reviews. Usernames/passwords never appear in the captures; network traces are disabled. Run it after e2e tests, which intentionally create additional reviews.
 
 ## Replay and guard commands
 
@@ -166,7 +180,7 @@ python3 -m venv .bootstrap
 .bootstrap/bin/python -m pip install uv==0.12.23
 .bootstrap/bin/uv python install 3.12
 .bootstrap/bin/uv sync --frozen --group dev --group docs
-test -f .env || cp .env.example .env
+python3 scripts/configure_local.py
 docker compose up -d db
 .venv/bin/alembic upgrade head
 .venv/bin/python scripts/create_test_database.py
@@ -180,7 +194,7 @@ py -3 -m venv .bootstrap
 .bootstrap\Scripts\python.exe -m pip install uv==0.12.23
 .bootstrap\Scripts\uv.exe python install 3.12
 .bootstrap\Scripts\uv.exe sync --frozen --group dev --group docs
-if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+py scripts/configure_local.py
 docker compose up -d db
 .venv\Scripts\alembic.exe upgrade head
 .venv\Scripts\python.exe scripts/create_test_database.py
@@ -190,7 +204,7 @@ docker compose up -d db
 Choose Docker or native processes for the same ports. If switching to native development, stop the container API/worker/web with `docker compose stop api worker web`. In three terminals, from the app root:
 
 ```sh
-.venv/bin/uvicorn proofops.api.app:app --host 127.0.0.1 --port 8000
+.venv/bin/uvicorn proofops.api.app:app --host 127.0.0.1 --port 8000 --no-proxy-headers
 ```
 
 ```sh
@@ -203,7 +217,7 @@ npm ci
 npm run dev
 ```
 
-For the first two commands on PowerShell, use `.venv\Scripts\uvicorn.exe` and `.venv\Scripts\proofops-worker.exe`. The frontend commands are identical.
+For the first two commands on PowerShell, use `.venv\Scripts\uvicorn.exe` and `.venv\Scripts\proofops-worker.exe`. The frontend commands are identical. If an admin has not been created, run `.venv/bin/proofops users create --username workspace-admin --role admin` after the migration, then sign in.
 
 Run the checks from the app root:
 
@@ -215,9 +229,10 @@ Run the checks from the app root:
 .venv/bin/proofops evaluate --mode replay
 ```
 
-Then, with the local API, worker and web running:
+Then, with the local API, worker and web running, prepare synthetic browser identities and run all browser tests:
 
 ```sh
+.venv/bin/python scripts/prepare_browser_auth.py
 cd frontend
 npm ci
 npm run build
@@ -242,7 +257,7 @@ Existing run directories are preserved. `scripts/run_workload.py compare` resume
 
 ## Configuration and boundaries
 
-`.env.example` contains empty API keys and `AI_MODE=off`. Never commit a populated `.env`, Terraform state, private plans or API keys. No provider/model ID or price is fabricated. [Model inventory](docs/model_inventory.json) records the unconfigured roles, SDK contracts and unrun live measurements.
+`.env.example` contains placeholders for auth/database secrets, empty API keys and `AI_MODE=off`. Never commit a populated `.env`, browser credentials/cookie state, Terraform state, private plans or API keys. Existing installations keep their database password during local setup; changing a PostgreSQL container environment variable does not rotate an existing database role. See [migration and rotation](docs/security.md#upgrading-and-rotating-credentials). No provider/model ID or price is fabricated. [Model inventory](docs/model_inventory.json) records the unconfigured roles, SDK contracts and unrun live measurements.
 
 Live AI requires `AI_MODE=live`, an allowed provider, a verified exact model ID, its environment key, a current USD price entry in `config/model_prices.json`, and positive `AI_BUDGET_USD` and `AI_MAX_TASK_COST_USD`. Replay remains available with missing keys. The router allows at most two attempts per task, counts failed-call spend, and retains uncertain reservations after timeouts/crashes. AI cannot change a deterministic finding or activate policy. See [provider contracts](docs/provider_contracts.md) and [operations](docs/operations.md).
 

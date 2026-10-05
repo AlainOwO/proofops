@@ -19,7 +19,7 @@ Allow about ten minutes. Use a running local app at `http://127.0.0.1:5173`; no 
 - **Why not average p95?** A percentile summarizes a distribution. Averaging per-run percentiles is not the percentile of combined requests and can hide a bad run or request class.
 - **What happens after a timeout?** Unknown provider charges remain pending; the worker does not assume zero cost and retry indefinitely.
 - **What does a hash prove?** Exact byte identity. It does not prove that uploaded measurements are truthful or that an old observation applies now.
-- **What would change for a team?** Add authenticated roles, approval separation, protected CI/workflows, secure secret storage, retention and account isolation. None is implied by loopback binding.
+- **What would change for a team?** Basic admin/viewer authentication is implemented. A team deployment still needs HTTPS operations, MFA/SSO as appropriate, approval separation, protected CI/workflows, secure secret storage, retention and account isolation. See [security](security.md); loopback binding alone grants none of these controls.
 - **What was actually measured?** Local test/adapter contracts, deterministic synthetic evaluation and local Docker workload behavior. Live AWS/provider quality, remote CI and uncoached human use are still unrun.
 
 ## Glossary

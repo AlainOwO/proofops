@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: proofops
       POSTGRES_USER: proofops
-      POSTGRES_PASSWORD: proofops_local
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Generate local secrets with scripts/configure_local.py}
     ports: ["127.0.0.1:55432:5432"]
     volumes: ["proofops-db:/var/lib/postgresql/data"]
     healthcheck:
@@ -17,15 +17,15 @@ services:
     build: .
     command: ["alembic", "upgrade", "head"]
     environment:
-      DATABASE_URL: postgresql+psycopg://proofops:proofops_local@db:5432/proofops
+      DATABASE_URL: postgresql+psycopg://proofops:${POSTGRES_PASSWORD}@db:5432/proofops
     depends_on:
       db: {condition: service_healthy}
   api:
     build: .
-    command: ["uvicorn", "proofops.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "proofops.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers"]
     env_file: [.env]
     environment:
-      DATABASE_URL: postgresql+psycopg://proofops:proofops_local@db:5432/proofops
+      DATABASE_URL: postgresql+psycopg://proofops:${POSTGRES_PASSWORD}@db:5432/proofops
       ARTIFACT_DIR: /app/artifacts
     ports: ["127.0.0.1:8000:8000"]
     volumes: ["proofops-artifacts:/app/artifacts"]
@@ -36,7 +36,7 @@ services:
     command: ["proofops-worker"]
     env_file: [.env]
     environment:
-      DATABASE_URL: postgresql+psycopg://proofops:proofops_local@db:5432/proofops
+      DATABASE_URL: postgresql+psycopg://proofops:${POSTGRES_PASSWORD}@db:5432/proofops
       ARTIFACT_DIR: /app/artifacts
     volumes: ["proofops-artifacts:/app/artifacts"]
     depends_on:

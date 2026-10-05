@@ -18,4 +18,4 @@ COPY demo demo
 RUN uv sync --frozen --no-dev && useradd --uid 10001 --create-home proofops && mkdir -p /app/artifacts && chown proofops:proofops /app/artifacts
 ENV PATH="/app/.venv/bin:$PATH"
 USER proofops
-CMD ["uvicorn", "proofops.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "proofops.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers"]
