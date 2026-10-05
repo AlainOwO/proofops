@@ -1197,6 +1197,21 @@ function ReportDetail({
                   candidate {cost.candidate_task_hours ?? "unknown"}. Rate date:{" "}
                   {date(cost.price_date)}.
                 </p>
+                <p>
+                  Cost per correctly completed request: baseline{" "}
+                  {money(
+                    cost.cost_per_correct_request?.baseline,
+                    cost.currency,
+                    8,
+                  )}
+                  ; candidate{" "}
+                  {money(
+                    cost.cost_per_correct_request?.candidate,
+                    cost.currency,
+                    8,
+                  )}
+                  . This comparison requires matching cost and workload windows.
+                </p>
               </>
             )}
             {explanation?.limitations && (
@@ -1352,6 +1367,18 @@ function Outcomes({
           note="Pending charges remain reserved"
         />
       </div>
+      <p className="muted analytics-note">
+        Provider call latency: p50{" "}
+        {data?.model.p50_seconds == null
+          ? "not measured"
+          : `${data.model.p50_seconds.toFixed(2)} s`}
+        {" · "}p95{" "}
+        {data?.model.p95_seconds == null
+          ? "not measured"
+          : `${data.model.p95_seconds.toFixed(2)} s`}
+        . Call timings exclude queue time; saved evaluation results report full
+        task latency.
+      </p>
       <section className="panel">
         <div className="panel-heading">
           <div>

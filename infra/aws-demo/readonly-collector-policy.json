@@ -1,0 +1,10 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {"Sid": "CallerIdentity", "Effect": "Allow", "Action": "sts:GetCallerIdentity", "Resource": "*"},
+    {"Sid": "SingleService", "Effect": "Allow", "Action": "ecs:DescribeServices", "Resource": "arn:aws:ecs:ap-south-1:111122223333:service/proofops-demo/reports-api"},
+    {"Sid": "TaskAndMetricsReads", "Effect": "Allow", "Action": ["ecs:DescribeTaskDefinition", "ecs:ListTasks", "ecs:DescribeTasks", "cloudwatch:GetMetricData"], "Resource": "*", "Condition": {"StringEquals": {"aws:RequestedRegion": "ap-south-1"}}},
+    {"Sid": "StartScopedLogQuery", "Effect": "Allow", "Action": "logs:StartQuery", "Resource": "arn:aws:logs:ap-south-1:111122223333:log-group:/proofops/demo:*"},
+    {"Sid": "LogQueryLifecycle", "Effect": "Allow", "Action": ["logs:GetQueryResults", "logs:StopQuery"], "Resource": "*", "Condition": {"StringEquals": {"aws:RequestedRegion": "ap-south-1"}}}
+  ]
+}

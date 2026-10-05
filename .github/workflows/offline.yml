@@ -1,0 +1,108 @@
+name: ProofOps offline checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: proofops-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_DB: proofops_test
+          POSTGRES_USER: proofops
+          POSTGRES_PASSWORD: proofops_local
+        ports: ["55432:5432"]
+        options: --health-cmd "pg_isready -U proofops -d proofops_test" --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      AI_MODE: "off"
+      TEST_DATABASE_URL: postgresql+psycopg://proofops:proofops_local@127.0.0.1:55432/proofops_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - run: python -m pip install uv==0.12.23
+      - run: uv sync --frozen --group dev --group docs
+      - run: uv run python scripts/install_tools.py
+      - run: uv run ruff check backend scripts tests evaluation demo
+      - run: uv run ruff format --check backend scripts tests evaluation demo
+      - run: uv run mypy backend/proofops
+      - run: uv run pytest tests/unit tests/policy tests/integration --junitxml=artifacts/checks/backend.xml
+      - run: uv run proofops evaluate --mode replay
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          {
+            node-version: "22",
+            cache: npm,
+            cache-dependency-path: frontend/package-lock.json,
+          }
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          {
+            name: offline-results,
+            path: "artifacts/checks\nartifacts/evaluation",
+          }
+  trusted-policy-demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AI_MODE: "off"
+      CANDIDATE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          path: trusted
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: incoming
+          sparse-checkout: fixtures/replays
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with: { python-version: "3.12" }
+      - run: python -m pip install uv==0.12.23
+      - run: uv sync --frozen --no-dev
+        working-directory: trusted
+      - run: uv run python scripts/ci_review.py --bundle ../incoming/fixtures/replays/unsafe-resize --source-revision "$CANDIDATE_REVISION"
+        working-directory: trusted
+      - run: cat artifacts/ci-review/summary.md >> "$GITHUB_STEP_SUMMARY"
+        working-directory: trusted
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with: { name: trusted-review-bundle, path: trusted/artifacts/ci-review }
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with: { node-version: "22" }
+      - run: cp .env.example .env
+      - run: docker compose up -d --build
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run test:e2e
+        working-directory: frontend
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with: { name: browser-results, path: artifacts }
+      - run: docker compose down
+        if: always()

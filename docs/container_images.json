@@ -1,0 +1,12 @@
+{
+  "recorded_at": "2026-10-05",
+  "basis": "Exact image manifest digests resolved in the successful Docker BuildKit local build; pinned in Dockerfiles afterward.",
+  "images": [
+    {"reference": "python:3.12-slim-bookworm", "digest": "sha256:54c85f3c47607a77f32adec749d3c81d1348bf25833671f512b26a9b6d778cb3"},
+    {"reference": "ghcr.io/astral-sh/uv:0.12.23", "digest": "sha256:61d393e44e249f2e4b526b6c7ddcecce245946826e608e11c93ad4f5bba55b21"},
+    {"reference": "openpolicyagent/conftest:v0.71.0", "digest": "sha256:3ec6dad358db08acecda56b7a3184037cd810394a65046fafa4f33c7750141b1"},
+    {"reference": "node:22-alpine", "digest": "sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402"},
+    {"reference": "nginx:1.28-alpine", "digest": "sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236"}
+  ],
+  "workload_note": "Measured experiment keeps its original local image configuration digest in every manifest. These source-image pins do not rewrite recorded measurements."
+}

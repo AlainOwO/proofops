@@ -16,5 +16,14 @@
     "source_url": "https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-macos-arm64.zip",
     "archive_sha256": "b2417a3038edc5fe81dc178a889237724b595c5c9cfed875822008e46e862c7d",
     "binary_sha256": "efb8282e24ffe18f54ce3679eaa71d72e0645bbb97b14e2a05cc8b192abf48e3"
+  },
+  {
+    "tool": "terraform",
+    "version": "1.16.5",
+    "platform": "Darwin",
+    "architecture": "arm64",
+    "source_url": "https://releases.hashicorp.com/terraform/1.16.5/terraform_1.16.5_darwin_arm64.zip",
+    "archive_sha256": "ecdef65e24193d627f27c39baeda31295f08c938d8a3d4764f442fb916d4b7dc",
+    "binary_sha256": "22df21d6313d216a8c43737fc8c07411dd744925059f946e86d60cbad1acea23"
   }
 ]
