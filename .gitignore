@@ -27,3 +27,4 @@ docs/pdf/rendered/
 *.tfplan
 *.tfvars
 crash.log
+.hypothesis/
