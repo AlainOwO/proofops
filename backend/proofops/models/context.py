@@ -12,6 +12,57 @@ SYSTEM = (
     "Return only the requested JSON object; keep the summary under 120 words. Never include confidence scores."
 )
 
+SOURCE_KINDS = ("terraform", "task_configuration", "workload_baseline", "workload_candidate")
+RECORD_STATES = {
+    "collection": ("complete", "pending", "denied", "failed", "not_configured", "not_requested"),
+    "freshness": ("fresh", "stale", "unknown"),
+    "coverage": ("sufficient", "insufficient", "unsupported"),
+    "origin": ("synthetic_fixture", "benchmark", "local_observation", "aws_observation"),
+}
+
+
+def coverage_context(report: ReviewReport) -> dict:
+    """Project only status counts; imported record IDs/source labels stay local."""
+    sources = report.coverage.get("sources", {})
+    summaries = {}
+    for kind in SOURCE_KINDS:
+        if kind not in sources:
+            continue
+        source = sources[kind]
+        records = source.get("records", [])
+        coverage = source.get("coverage")
+        summaries[kind] = {
+            "coverage": coverage if coverage in RECORD_STATES["coverage"] else "unknown",
+            "record_count": len(records),
+            "state_counts": {
+                field: {
+                    state: sum(record.get(field) == state for record in records) for state in states
+                }
+                for field, states in RECORD_STATES.items()
+            },
+        }
+    return {
+        **{
+            key: report.coverage.get(key) is True
+            for key in ("supported", "trusted_contract", "guard_applicable")
+        },
+        "sources": summaries,
+        "additional_source_count": len(set(sources) - set(SOURCE_KINDS)),
+    }
+
+
+def performance_context(report: ReviewReport) -> dict:
+    runs = report.performance.get("runs", [])
+    return {
+        **{
+            key: report.performance.get(key) is True for key in ("comparable", "complete", "passed")
+        },
+        "valid_repetitions": {
+            role: sum(run.get("role") == role and run.get("valid_evidence") is True for run in runs)
+            for role in ("baseline", "candidate")
+        },
+    }
+
 
 def explanation_context(report: ReviewReport, *, compact: bool = True) -> tuple[str, str, dict]:
     root = Path(__file__).parent / "development"
@@ -35,7 +86,7 @@ def explanation_context(report: ReviewReport, *, compact: bool = True) -> tuple[
         "origin": report.origin.value,
         "evaluation_time": report.evaluation_reference_time.isoformat(),
         "limitations": {
-            "coverage": report.coverage,
+            "coverage": coverage_context(report),
             "excluded_costs": report.cost.excluded if report.cost else [],
             "performance_complete": report.performance.get("complete", False),
         },
@@ -53,20 +104,24 @@ def explanation_context(report: ReviewReport, *, compact: bool = True) -> tuple[
     }
     if not compact:
         packet["bounded_details"] = {
-            "findings": [item.model_dump(mode="json") for item in report.findings],
-            "performance": report.performance,
+            "findings": [
+                {"code": item.code, "severity": item.severity} for item in report.findings
+            ],
+            "performance": performance_context(report),
         }
     context = canonical(packet).decode()
     if len(context.encode()) > 24_000:
         raise ValueError("prepared context exceeds its 24 KiB bound")
     metadata = {
-        "prompt_version": "explanation-v1",
+        "prompt_version": "explanation-v2",
         "schema_version": 1,
         "representation": "compact" if compact else "bounded_flat",
         "source_fact_ids": [item.fact_id for item in report.facts],
         "omissions": [
             "raw plan",
             "raw logs",
+            "free-form evidence IDs and source labels",
+            "workload IDs and finding prose",
             "unselected development cards",
             "per-run detail" if compact else "unbounded raw distributions",
         ],
