@@ -44,6 +44,22 @@ EXPORT_FILES = {
     "versions.json",
 }
 REPLAYS = {"valid-resize", "unsafe-resize", "incomplete-evidence"}
+# Suppress the whole value, rather than trying to guess where a quoted,
+# multiline or escaped credential ends. This is deliberately conservative;
+# arbitrary unlabelled secrets still must not be imported as public metadata.
+CREDENTIAL_TEXT = re.compile(
+    r"(?i)(?:"
+    r"(?:password|passwd|secret|token|api[_-]?key|access[_-]?key|private[_-]?key)"
+    r"[\w-]{0,80}(?:\\*[\"'])?\s*[:=]"
+    r"|\b(?:authorization|(?:set-)?cookie)(?:\\*[\"'])?\s*[:=]"
+    r"|\b(?:bearer|basic)\s+\S+"
+    r"|-----BEGIN [A-Z ]*PRIVATE KEY-----"
+    r"|\b[a-z][a-z0-9+.-]{0,31}://[^\s/:@]+:[^\s/@]*@"
+    r"|\b(?:AKIA|ASIA)[A-Z0-9]{16}\b"
+    r"|\bsk-[A-Za-z0-9_-]{12,}\b"
+    r"|\b(?:gh[pousr]_|github_pat_|xox[baprs]-)[A-Za-z0-9_-]{12,}\b"
+    r")"
+)
 
 
 class Manifest(Record):
@@ -53,13 +69,7 @@ class Manifest(Record):
 
 
 def redact_text(value: str) -> str:
-    value = re.sub(r"(?i)(bearer\s+)[^\s,;]+", r"\1[REDACTED]", value)
-    value = re.sub(
-        r"(?i)((?:api[_-]?key|password|secret|token)\s*[:=]\s*)[^\s,;]+", r"\1[REDACTED]", value
-    )
-    value = re.sub(r"\b(?:AKIA|ASIA)[A-Z0-9]{16}\b", "[REDACTED]", value)
-    value = re.sub(r"\bsk-[A-Za-z0-9_-]{12,}\b", "[REDACTED]", value)
-    return value[:1000]
+    return "[REDACTED]" if CREDENTIAL_TEXT.search(value) else value[:1000]
 
 
 def bounded_zip(
