@@ -1,8 +1,4 @@
-import {
-  expect,
-  test,
-  type Page,
-} from "../../frontend/node_modules/@playwright/test";
+import { expect, test, type Page } from "../browser-auth";
 import type { Analytics, Detail, Summary } from "../../frontend/src/types";
 
 // Browser-only responses for empty and transport states. reviews.spec.ts runs
@@ -136,9 +132,7 @@ test("unavailable workspace data stays unknown and retry only reloads data", asy
     page.getByRole("heading", { name: "Your first review starts here" }),
   ).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(0);
-  await expect(
-    page.getByText("Local backend ready", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Backend ready", { exact: true })).toBeVisible();
   expect(writes).toEqual([]);
 });
 

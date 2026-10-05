@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { expect, test } from "../../frontend/node_modules/@playwright/test";
+import { browserCredentials, expect, test } from "../browser-auth";
 import type { Detail, Summary } from "../../frontend/src/types";
 
 for (const [scenario, outcome, heading] of [
@@ -46,7 +46,7 @@ for (const [scenario, outcome, heading] of [
       page.getByRole("heading", { name: heading, exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByText("Local backend ready", { exact: true }),
+      page.getByText("Backend ready", { exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Evidence coverage" }),
@@ -54,6 +54,16 @@ for (const [scenario, outcome, heading] of [
     await expect(
       page.getByRole("heading", { name: "Workload comparison" }),
     ).toBeVisible();
+    await expect(page.locator(".local-pill")).toHaveText("ADMIN");
+    const visibleText = await page.locator("body").innerText();
+    const credentials = Object.values(browserCredentials()).flatMap(
+      (identity) => [identity.username, identity.password],
+    );
+    // Boolean assertion avoids leaking a credential into failure output.
+    expect(credentials.some((value) => visibleText.includes(value))).toBe(
+      false,
+    );
+    await expect(page.locator('input[type="password"]')).toHaveCount(0);
     await page.screenshot({
       path: resolve(appRoot, "docs/screenshots", `${scenario}.png`),
       fullPage: true,

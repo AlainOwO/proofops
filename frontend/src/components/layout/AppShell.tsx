@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useAuth } from "../../features/auth/AuthGate";
 import {
   Activity,
   ChevronRight,
@@ -26,6 +27,7 @@ export function AppShell({
   onRefresh: () => void;
   children: ReactNode;
 }) {
+  const { session, logout, signingOut } = useAuth();
   return (
     <div className="app-shell">
       <a
@@ -50,7 +52,7 @@ export function AppShell({
         <div className="workspace">
           <span className="workspace-icon">P</span>
           <div>
-            <strong>Local workspace</strong>
+            <strong>{session.public_demo ? "Public demo" : "Workspace"}</strong>
             <small>Infrastructure review</small>
           </div>
           <ChevronRight size={15} />
@@ -87,7 +89,7 @@ export function AppShell({
           <div>
             <strong>
               {ready
-                ? "Local backend ready"
+                ? "Backend ready"
                 : loading
                   ? "Connecting to backend"
                   : "Backend unavailable"}
@@ -105,7 +107,13 @@ export function AppShell({
             </span>
           </div>
           <div className="topbar-right">
-            <span className="local-pill">LOCAL / DEMO</span>
+            <span className="local-pill">
+              {session.public_demo
+                ? "DEMO · READ-ONLY"
+                : session.role === "admin"
+                  ? "ADMIN"
+                  : "VIEWER · READ-ONLY"}
+            </span>
             <button
               className="icon-button"
               aria-label="Refresh backend data"
@@ -117,9 +125,17 @@ export function AppShell({
                 className={busy === "refresh" ? "spin" : ""}
               />
             </button>
-            <span className="avatar" title="Local demo operator">
-              LO
-            </span>
+            {!session.public_demo && (
+              <button
+                className="button secondary small sign-out"
+                onClick={() => {
+                  void logout();
+                }}
+                disabled={signingOut}
+              >
+                Sign out
+              </button>
+            )}
           </div>
         </header>
         <main id="main-content" tabIndex={-1}>
@@ -127,8 +143,7 @@ export function AppShell({
           <footer className="page-footer">
             <span>ProofOps · evidence before change</span>
             <span>
-              Local, single-service review · estimates and observations stay
-              separate
+              Single-service review · estimates and observations stay separate
             </span>
           </footer>
         </main>

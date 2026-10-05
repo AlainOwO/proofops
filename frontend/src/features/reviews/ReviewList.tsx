@@ -4,6 +4,7 @@ import { StatePanel } from "../../components/StatePanel";
 import { Origin } from "../../components/Origin";
 import { date, human } from "../../lib/format";
 import type { Summary } from "../../types";
+import { useCanWrite } from "../auth/AuthGate";
 
 export interface ReviewListProps {
   reviews: Summary[];
@@ -28,6 +29,7 @@ export function ReviewList({
   onQueryChange,
   onOpen,
 }: ReviewListProps) {
+  const canWrite = useCanWrite();
   return (
     <section
       className="panel reviews-panel"
@@ -59,7 +61,7 @@ export function ReviewList({
       </div>
       {loading ? (
         <StatePanel title="Loading reviews" kind="loading">
-          Fetching saved reviews from the local workspace.
+          Fetching saved reviews from the workspace.
         </StatePanel>
       ) : total === null ? (
         <StatePanel
@@ -75,12 +77,16 @@ export function ReviewList({
             </button>
           }
         >
-          Check that the local backend is running, then try again.
+          Check that the backend is running, then try again.
         </StatePanel>
       ) : !filtered.length ? (
         <StatePanel
           title={
-            query ? "No matching reviews" : "Your first review starts here"
+            query
+              ? "No matching reviews"
+              : canWrite
+                ? "Your first review starts here"
+                : "No saved reviews"
           }
           action={
             query ? (
@@ -90,7 +96,7 @@ export function ReviewList({
               >
                 Clear filter
               </button>
-            ) : (
+            ) : canWrite ? (
               <button
                 className="button secondary"
                 onClick={() =>
@@ -99,12 +105,14 @@ export function ReviewList({
               >
                 Choose a scenario
               </button>
-            )
+            ) : undefined
           }
         >
           {query
             ? "Try another service, commit or outcome, or clear the filter to see your saved reviews."
-            : "Run a supplied replay or import a sanitized bundle to see the evidence behind a change."}
+            : canWrite
+              ? "Run a supplied replay or import a sanitized bundle to see the evidence behind a change."
+              : "An administrator can add reviews to this workspace."}
         </StatePanel>
       ) : (
         <div className="table-scroll">

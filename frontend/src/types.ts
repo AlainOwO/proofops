@@ -1,3 +1,11 @@
+export interface SessionInfo {
+  username: string | null;
+  role: "admin" | "viewer";
+  public_demo: boolean;
+  csrf_token: string | null;
+  expires_at: string | null;
+}
+
 export type Outcome =
   | "request_review"
   | "revise_change"

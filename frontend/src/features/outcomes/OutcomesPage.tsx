@@ -6,6 +6,7 @@ import type { Analytics } from "../../types";
 import { ProjectedComparisons } from "./ProjectedComparisons";
 import { ObservedOutcomes } from "./ObservedOutcomes";
 import { BillingPanel } from "./BillingPanel";
+import { useAuth } from "../auth/AuthGate";
 
 export function OutcomesPage({
   data,
@@ -22,6 +23,7 @@ export function OutcomesPage({
   onLoadSample: () => void;
   onOpen: (id: string) => void;
 }) {
+  const { session } = useAuth();
   return (
     <>
       <div className="page-heading">
@@ -80,7 +82,9 @@ export function OutcomesPage({
           </p>
           <ProjectedComparisons data={data} onOpen={onOpen} />
           <ObservedOutcomes data={data} onOpen={onOpen} />
-          <BillingPanel data={data} busy={busy} onLoadSample={onLoadSample} />
+          {!session.public_demo && (
+            <BillingPanel data={data} busy={busy} onLoadSample={onLoadSample} />
+          )}
           <p className="muted analytics-note">
             {data?.bounds} {data?.model.basis}
           </p>
@@ -104,7 +108,7 @@ export function OutcomesPage({
           >
             {loading
               ? "Fetching projections, operator decisions and billing data."
-              : "Check that the local backend is running, then try again. Missing analytics do not mean zero activity or spend."}
+              : "Check that the backend is running, then try again. Missing analytics do not mean zero activity or spend."}
           </StatePanel>
         </section>
       )}

@@ -3,6 +3,7 @@ import { Database, LoaderCircle } from "lucide-react";
 import { StatePanel } from "../../components/StatePanel";
 import { money } from "../../lib/format";
 import type { Analytics } from "../../types";
+import { useCanWrite } from "../auth/AuthGate";
 
 export function BillingPanel({
   data,
@@ -13,6 +14,7 @@ export function BillingPanel({
   busy: string;
   onLoadSample: () => void;
 }) {
+  const canWrite = useCanWrite();
   return (
     <section className="panel billing-panel">
       <div className="panel-heading">
@@ -22,23 +24,26 @@ export function BillingPanel({
             Licensed FOCUS benchmark rows. This is not the demo service’s bill.
           </p>
         </div>
-        <button
-          className="button secondary small"
-          disabled={!!busy}
-          onClick={onLoadSample}
-        >
-          {busy === "billing" ? (
-            <LoaderCircle className="spin" size={15} />
-          ) : (
-            <Database size={15} />
-          )}
-          Load billing sample
-        </button>
+        {canWrite && (
+          <button
+            className="button secondary small"
+            disabled={!!busy}
+            onClick={onLoadSample}
+          >
+            {busy === "billing" ? (
+              <LoaderCircle className="spin" size={15} />
+            ) : (
+              <Database size={15} />
+            )}
+            Load billing sample
+          </button>
+        )}
       </div>
       {!data.billing.totals.length ? (
         <StatePanel title="No billing rows imported">
-          Load the supplied licensed sample to inspect arithmetic, credits and
-          separate accounting measures.
+          {canWrite
+            ? "Load the supplied licensed sample to inspect arithmetic, credits and separate accounting measures."
+            : "An administrator can import the supplied billing sample."}
         </StatePanel>
       ) : (
         <>

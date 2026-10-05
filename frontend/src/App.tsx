@@ -6,8 +6,17 @@ import { ReviewsPage } from "./features/reviews/ReviewsPage";
 import { ReportDetail } from "./features/review/ReportDetail";
 import { JobView } from "./features/review/JobView";
 import { OutcomesPage } from "./features/outcomes/OutcomesPage";
+import { AuthGate } from "./features/auth/AuthGate";
 
 export function App() {
+  return (
+    <AuthGate>
+      <Workspace />
+    </AuthGate>
+  );
+}
+
+function Workspace() {
   const {
     reviews,
     total,

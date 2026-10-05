@@ -10,6 +10,8 @@ import {
 import { Badge } from "../../components/Badge";
 import { human } from "../../lib/format";
 import type { CoreReport, Draft } from "../../types";
+import { useCanWrite } from "../auth/AuthGate";
+import { DownloadLink } from "../../components/DownloadLink";
 
 export function GuardPanel({
   draft,
@@ -26,6 +28,7 @@ export function GuardPanel({
   onDraft: () => void;
   onValidate: (id: string) => void;
 }) {
+  const canWrite = useCanWrite();
   return (
     <section className="panel guard-panel">
       <div className="panel-heading">
@@ -43,8 +46,9 @@ export function GuardPanel({
             : "Scoped memory guard"}
         </h3>
         <p>
-          Prepare the supported rule from the existing approved facts, then
-          verify its failure and healthy fixtures.
+          {canWrite
+            ? "Prepare the supported rule from the existing approved facts, then verify its failure and healthy fixtures."
+            : "Administrators can prepare this rule from the approved facts and verify its fixtures."}
         </p>
         {draft ? (
           <>
@@ -55,18 +59,20 @@ export function GuardPanel({
             <p className="muted">
               Incident reference: <code>{draft.spec.incident_id}</code>
             </p>
-            <button
-              className="button secondary full"
-              onClick={() => onValidate(draft.id)}
-              disabled={!!busy}
-            >
-              {busy === "validate" ? (
-                <LoaderCircle size={15} className="spin" />
-              ) : (
-                <FileCheck2 size={15} />
-              )}
-              Run guard fixtures
-            </button>
+            {canWrite && (
+              <button
+                className="button secondary full"
+                onClick={() => onValidate(draft.id)}
+                disabled={!!busy}
+              >
+                {busy === "validate" ? (
+                  <LoaderCircle size={15} className="spin" />
+                ) : (
+                  <FileCheck2 size={15} />
+                )}
+                Run guard fixtures
+              </button>
+            )}
             {draft.fixture_results.fixtures && (
               <div className="fixture-results">
                 {draft.fixture_results.fixtures.map((fixture) => (
@@ -82,17 +88,17 @@ export function GuardPanel({
               </div>
             )}
             {draft.fixture_results.passed && (
-              <a
+              <DownloadLink
                 className="button secondary full"
                 href={`/api/v1/guard-drafts/${draft.id}/bundle`}
-                download
+                filename={`proofops-guard-${draft.id}.zip`}
               >
                 <Download size={15} />
                 Export guard draft
-              </a>
+              </DownloadLink>
             )}
           </>
-        ) : (
+        ) : canWrite ? (
           <button
             className="button secondary full"
             onClick={onDraft}
@@ -105,7 +111,7 @@ export function GuardPanel({
             )}
             Prepare guard draft
           </button>
-        )}
+        ) : null}
         <small className="guard-notice">
           Activation requires separate source-control review and a protected CI
           check.

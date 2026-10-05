@@ -4,6 +4,7 @@ import type { Analytics, Outcome, Summary } from "../../types";
 import { ReviewList } from "./ReviewList";
 import { ReviewForm, type ReviewFormProps } from "./ReviewForm";
 import { HowItWorks } from "./HowItWorks";
+import { useCanWrite } from "../auth/AuthGate";
 
 export function ReviewsPage({
   reviews,
@@ -26,6 +27,7 @@ export function ReviewsPage({
   onOpen: (id: string) => void;
   form: ReviewFormProps;
 }) {
+  const canWrite = useCanWrite();
   const count = (value: Outcome) =>
     analytics ? (analytics.review_counts[value] ?? 0) : "Unavailable";
   const filtered = reviews.filter((item) =>
@@ -44,13 +46,15 @@ export function ReviewsPage({
             Understand the saving. Check the contract. Make the next decision.
           </p>
         </div>
-        <button
-          className="button primary"
-          onClick={() => document.getElementById("replay-choice")?.focus()}
-        >
-          <Plus size={16} />
-          New review
-        </button>
+        {canWrite && (
+          <button
+            className="button primary"
+            onClick={() => document.getElementById("replay-choice")?.focus()}
+          >
+            <Plus size={16} />
+            New review
+          </button>
+        )}
       </div>
       <div className="metric-grid four">
         <Metric
@@ -92,7 +96,7 @@ export function ReviewsPage({
           onOpen={onOpen}
         />
         <div className="review-sidebar">
-          <ReviewForm {...form} />
+          {canWrite && <ReviewForm {...form} />}
           <HowItWorks />
         </div>
       </div>

@@ -14,7 +14,9 @@ export default defineConfig({
   ],
   use: {
     baseURL: process.env.PROOFOPS_WEB_URL || "http://127.0.0.1:5173",
-    trace: "retain-on-failure",
+    // Network traces include session cookies and login bodies. Keep them off.
+    trace: "off",
+    video: "off",
     screenshot: "only-on-failure",
     ...devices["Desktop Chrome"],
     viewport: { width: 1440, height: 1050 },

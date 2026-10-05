@@ -3,6 +3,7 @@ import { Origin } from "../../components/Origin";
 import { date } from "../../lib/format";
 import { outcomes } from "../../lib/outcomes";
 import type { CoreReport, Detail } from "../../types";
+import { DownloadLink } from "../../components/DownloadLink";
 
 export function ReportHeader({
   detail,
@@ -25,14 +26,14 @@ export function ReportHeader({
           <ArrowLeft size={15} />
           All reviews
         </button>
-        <a
+        <DownloadLink
           className="button secondary small"
           href={`/api/v1/reviews/${r.review_id}/bundle`}
-          download
+          filename={`proofops-${r.review_id}.zip`}
         >
           <Download size={15} />
           Export review bundle
-        </a>
+        </DownloadLink>
       </div>
       <div className="page-heading report-heading">
         <div>

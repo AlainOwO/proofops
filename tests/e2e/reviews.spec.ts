@@ -1,14 +1,8 @@
-import {
-  expect,
-  test,
-  type Page,
-} from "../../frontend/node_modules/@playwright/test";
+import { expect, test, type Page } from "../browser-auth";
 
 async function runReplay(page: Page, scenario: string, result: string) {
   await page.goto("/#/reviews");
-  await expect(
-    page.getByText("Local backend ready", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Backend ready", { exact: true })).toBeVisible();
   await page.getByLabel("Review scenario").selectOption(scenario);
   await page.getByRole("button", { name: "Run review", exact: true }).click();
   await expect(
@@ -243,9 +237,7 @@ test("reviews are usable on a narrow viewport and unavailable data is not zero",
   page,
 }) => {
   await page.goto("/#/reviews");
-  await expect(
-    page.getByText("Local backend ready", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Backend ready", { exact: true })).toBeVisible();
   await page.screenshot({
     path: "../artifacts/screenshots/reviews.png",
     fullPage: true,
