@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -55,7 +56,7 @@ def conftest_binary() -> str:
     version = subprocess.run(
         [binary, "--version"], capture_output=True, text=True, timeout=10, check=True
     )
-    if f"Conftest: {PINNED_CONFTEST}" not in version.stdout:
+    if not re.search(r"(?m)^Conftest:\s*v?" + re.escape(PINNED_CONFTEST) + r"\s*$", version.stdout):
         raise RuntimeError(f"Conftest {PINNED_CONFTEST} is required")
     return binary
 

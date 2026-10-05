@@ -55,7 +55,7 @@ services:
     cpus: 1.0
     profiles: ["workload"]
   k6:
-    image: grafana/k6:1.2.3
+    image: grafana/k6:2.3.0
     profiles: ["tools"]
     volumes: ["./testing:/scripts:ro", "./artifacts/workload:/results"]
     working_dir: /results
