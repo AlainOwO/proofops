@@ -1,0 +1,142 @@
+# Standalone deployment: do not merge with compose.yaml (which publishes local ports).
+name: proofops-hosted
+
+x-app: &app
+  build: .
+  cpus: 1.0
+  mem_limit: 512m
+  pids_limit: 128
+  read_only: true
+  tmpfs: ["/tmp:size=128m,mode=1777"]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  networks: [database]
+
+x-runtime: &runtime
+  DATABASE_URL: postgresql+psycopg://proofops_runtime:${PROOFOPS_RUNTIME_PASSWORD:?Run scripts/configure_hosted.py}@db:5432/proofops
+  PROOFOPS_MODE: hosted
+  PROOFOPS_PUBLIC_DEMO: "true"
+  SECRET_KEY: ${SECRET_KEY:?Run scripts/configure_hosted.py}
+  SESSION_COOKIE_SECURE: "true"
+  ALLOWED_HOSTS: ${HOSTED_DOMAIN:?Set the hosted DNS name}
+  CORS_ORIGINS: https://${HOSTED_DOMAIN}
+  ARTIFACT_DIR: /app/artifacts
+  AI_MODE: "off"
+  ALLOWED_PROVIDERS: ""
+  OPENAI_API_KEY: ""
+  ANTHROPIC_API_KEY: ""
+  AWS_EC2_METADATA_DISABLED: "true"
+
+services:
+  db:
+    image: proofops-db18
+    build:
+      context: ./deploy/postgres
+      args:
+        POSTGRES_BASE: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    cpus: 1.0
+    mem_limit: 1g
+    pids_limit: 128
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: proofops
+      POSTGRES_USER: proofops_bootstrap
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/configure_hosted.py}
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    command: ["postgres", "-c", "password_encryption=scram-sha-256", "-c", "max_connections=60"]
+    volumes: ["hosted-db18:/var/lib/postgresql"]
+    networks: [database]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U proofops_bootstrap -d proofops"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  roles:
+    <<: *app
+    command: ["python", "-m", "proofops.storage.roles", "bootstrap"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://proofops_bootstrap:${POSTGRES_PASSWORD}@db:5432/proofops
+      PROOFOPS_OWNER_PASSWORD: ${PROOFOPS_OWNER_PASSWORD:?Run scripts/configure_hosted.py}
+      PROOFOPS_RUNTIME_PASSWORD: ${PROOFOPS_RUNTIME_PASSWORD}
+    depends_on:
+      db: {condition: service_healthy}
+  migrate:
+    <<: *app
+    command: ["python", "-m", "proofops.storage.roles", "migrate"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://proofops_owner:${PROOFOPS_OWNER_PASSWORD}@db:5432/proofops
+    depends_on:
+      roles: {condition: service_completed_successfully}
+  api:
+    <<: *app
+    command: ["uvicorn", "proofops.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers", "--workers", "1", "--timeout-keep-alive", "5"]
+    environment: *runtime
+    restart: unless-stopped
+    networks: [application, database]
+    volumes: ["hosted-artifacts:/app/artifacts:ro"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request; r=urllib.request.Request('http://127.0.0.1:8000/readyz', headers={'Host':os.environ['ALLOWED_HOSTS']}); urllib.request.urlopen(r, timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 6
+  worker:
+    <<: *app
+    command: ["proofops-worker"]
+    environment: *runtime
+    profiles: [worker]
+    volumes: ["hosted-artifacts:/app/artifacts:ro"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  seed:
+    <<: *app
+    command: ["proofops", "reset-demo-data", "--yes"]
+    environment: *runtime
+    profiles: [maintenance]
+    volumes: ["hosted-artifacts:/app/artifacts"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  web:
+    build: {context: ./frontend}
+    cpus: 0.5
+    mem_limit: 128m
+    pids_limit: 64
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=32m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [application]
+    depends_on:
+      api: {condition: service_healthy}
+  caddy:
+    build: {context: ./deploy/caddy}
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 64
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      HOSTED_DOMAIN: ${HOSTED_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?Set an ACME contact email}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [edge, application]
+    depends_on: [web]
+
+networks:
+  edge:
+  application: {internal: true}
+  database: {internal: true}
+volumes:
+  hosted-db18:
+  hosted-artifacts:
+  caddy-data:
+  caddy-config:

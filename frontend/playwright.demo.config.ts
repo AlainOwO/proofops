@@ -9,5 +9,5 @@ export default defineConfig({
     ["list"],
     ["json", { outputFile: "../artifacts/checks/demo-screenshots.json" }],
   ],
-  use: { ...shared.use, baseURL: "http://127.0.0.1:5173" },
+  use: shared.use,
 });

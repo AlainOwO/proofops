@@ -1,0 +1,67 @@
+{
+	email {$ACME_EMAIL}
+	admin off
+	servers {
+		max_header_size 16KB
+		timeouts {
+			read_header 5s
+			read_body 10s
+			write 30s
+			idle 30s
+		}
+	}
+}
+
+(security_headers) {
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		X-Frame-Options DENY
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		-Server
+		defer
+	}
+}
+
+http://{$HOSTED_DOMAIN} {
+	import security_headers
+	redir https://{$HOSTED_DOMAIN}{uri} 308
+}
+
+http:// {
+	import security_headers
+	respond "Unknown host." 400
+}
+
+https:// {
+	import security_headers
+	header Strict-Transport-Security "max-age=31536000"
+	respond "Unknown host." 400
+}
+
+https://{$HOSTED_DOMAIN} {
+	import security_headers
+	header Strict-Transport-Security "max-age=31536000"
+	@api path /api/* /healthz /readyz /docs /docs/* /redoc /openapi.json
+	handle @api {
+		reverse_proxy api:8000 {
+			transport http {
+				dial_timeout 2s
+				response_header_timeout 25s
+			}
+		}
+	}
+	handle {
+		reverse_proxy web:8080 {
+			transport http {
+				dial_timeout 2s
+				response_header_timeout 25s
+			}
+		}
+	}
+	handle_errors {
+		import security_headers
+		header Strict-Transport-Security "max-age=31536000"
+		respond "Service unavailable." {err.status_code}
+	}
+}
