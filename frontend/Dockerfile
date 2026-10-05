@@ -1,10 +1,19 @@
 FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN apk upgrade --no-cache && npm ci
 COPY . .
 RUN npm run build
 FROM nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+# The upstream image pins nginx and optional modules to exact vulnerable APKs.
+# This app loads none of those modules; use Alpine's patched nginx package.
+RUN apk del --no-cache nginx-module-acme nginx-module-geoip nginx-module-image-filter nginx-module-njs nginx-module-xslt \
+    && apk add --no-cache --upgrade 'nginx>=1.28.3-r6' \
+    && apk upgrade --no-cache
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+COPY nginx-main.conf /etc/nginx/nginx.conf
+USER nginx
+EXPOSE 8080
+ENTRYPOINT ["nginx"]
+CMD ["-g", "daemon off;"]
