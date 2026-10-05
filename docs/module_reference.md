@@ -88,9 +88,11 @@ FastAPI handles imports, review creation/list/detail, bundle downloads, draft/va
 
 ## UI and analytics
 
-**Files:** `frontend/src/main.tsx`, `api.ts`, `types.ts`, `styles.css`; `storage/analytics.py`.
+**Files:** `frontend/src/main.tsx` mounts the app; `App.tsx` composes routes and actions; `hooks/useWorkspace.ts` owns requests, polling and workspace/form state. `features/reviews/`, `features/review/` and `features/outcomes/` contain the three views; `components/` and `lib/` provide shared presentation, formatting and outcome labels. `api.ts`, `types.ts`, `styles.css` and backend `storage/analytics.py` retain their focused roles.
 
 React renders persisted reviews, evidence detail and outcomes. Users can compare costs/coverage/classes, inspect citations and attempt accounting, export a validated draft, detect changed-commit applicability and record a disposition. Stale responses cannot replace newly selected detail. Save success is shown only after the API succeeds; unavailable analytics stays unavailable. FOCUS ingestion preserves Decimal values, negative credits, nulls, currencies and row position; repeated file imports are idempotent. The sample is never attributed to the demo service's invoice. Tests: browser scenarios in `tests/e2e/reviews.spec.ts`, `test_focus_ingestion_is_idempotent_and_reconciles`, `test_billing_endpoint_and_mixed_currency_null_duplicate_rows`.
+
+The reviews page includes a short workflow guide and puts the replay form before history on narrow screens. Shared state panels distinguish loading, empty and unavailable data; retry controls reload saved data. Wide report tables support keyboard scrolling. `tests/e2e/ui-states.spec.ts` covers loading/error recovery, empty analytics, setup persistence and late-response protection alongside the real replay workflows.
 
 ## Workload fixture and experiment runner
 

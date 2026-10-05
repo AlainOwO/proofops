@@ -7,6 +7,7 @@
 - Extended browser coverage for all three report paths on narrow screens, 320/390/768 px reviews layouts, unavailable/empty analytics, retry polling, filter/setup persistence and stale response protection. The frontend build now includes the actual browser-test directory in TypeScript checks.
 - Assumptions: keep the existing local, single-service workflow and visual identity; use the supplied synthetic replays with recorded evaluation time and AI off. Review rules, outcomes, cost arithmetic, approved constraints and evidence requirements remain unchanged. Research files and evaluator data are outside this work; test outputs stay in ignored application artifacts.
 - Verification: 94 backend tests and 12 Chromium tests passed; native TypeScript/Vite and Docker frontend builds passed. Browser checks ran against the rebuilt local web container, with screenshots inspected on desktop and narrow layouts. Formatting and unused-symbol checks passed. No live AWS or model calls were made; the existing upstream TestClient deprecation warning remains.
+- Added a README walkthrough for valid resize, unsafe resize and incomplete evidence, with expected results and inspection steps. Updated the module reference and implementation status to document the component boundaries and this verification run; historical workload/evaluation results and PDFs were preserved.
 
 ## 0.1.0 — 2026-10-05
 

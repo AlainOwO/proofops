@@ -36,6 +36,16 @@ Open **http://127.0.0.1:5173**. Choose a replay and select **Run review**. The w
 
 Compose runs migrations before starting the API and worker. The API and worker use the `proofops` database; tests require the separate `proofops_test` database. Loopback binding and origin checks are local controls, not production authentication.
 
+## Three-scenario walkthrough
+
+Open **Reviews** at **http://127.0.0.1:5173/#/reviews** with the API and worker running. Keep the defaults: **Recorded replay time** and **Deterministic template · no AI call** under **Import or configure a review**. These scenarios use synthetic inputs and require no AWS or model API calls. Use **All reviews** between scenarios.
+
+1. **Valid resize:** choose **Valid resize · 4 GiB → 2 GiB**, then **Run review**. Expect **Ready for engineering review** (`request_review`). Inspect **The proposed change**: the 2 GiB candidate meets the fixture's 2,048 MiB approved floor. **Workload comparison** shows the compatible runs passing their contract checks. The cost difference is an illustrative estimate; the result requests engineering review and grants no deployment permission.
+2. **Unsafe resize:** choose **Below the floor · 4 GiB → 1 GiB**, then **Run review**. Expect **Revise the change** (`revise_change`). **What determines the result** explains the applicable memory-floor violation. Under **Keep the lesson**, select **Prepare guard draft**, then **Run guard fixtures** to inspect and export the tested rule. The draft remains **Not active**; revise the candidate before requesting another review.
+3. **Incomplete evidence:** choose **Missing candidate evidence**, then **Run review**. Expect **Collect more evidence** (`collect_evidence`). Inspect **Evidence coverage** and **Workload comparison** for the missing candidate artifacts. A projected cost difference does not supply workload evidence. Collect compatible candidate evidence and rerun the review.
+
+For any completed scenario, expand **Inspect cited facts and assumptions** and select **Export review bundle** to inspect the saved basis. A downloaded bundle can be reproduced with the replay command below. Historical or changed-revision notices describe current applicability separately from the saved result.
+
 ## Replay and guard commands
 
 These commands also work inside the API container:
