@@ -37,4 +37,7 @@ def test_compose_core_services_have_cpu_and_memory_limits():
     services = compose_model("compose.yaml")["services"]
     for name in ("db", "migrate", "api", "worker", "web"):
         assert 0 < float(services[name]["cpus"]) <= 1
-        assert 0 < int(services[name]["mem_limit"]) <= 1_073_741_824
+        memory = str(services[name]["mem_limit"]).lower()
+        units = {"k": 1024, "m": 1024**2, "g": 1024**3}
+        count = int(memory[:-1]) * units[memory[-1]] if memory[-1] in units else int(memory)
+        assert 0 < count <= 1_073_741_824
