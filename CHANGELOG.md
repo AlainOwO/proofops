@@ -3,7 +3,9 @@
 ## Review projection eligibility — 2026-10-05
 
 - On review detail pages, `revise_change` labels the projected compute difference “Not eligible: resolve findings first”; `collect_evidence` uses “Not eligible: evidence incomplete”. Both cards use neutral greys and a smaller projected amount, keeping the difference, percentage, baseline and candidate estimates visible. `request_review` retains its existing appearance.
+- Extended the existing three Playwright replay scenarios to check the exact estimates, percentage, eligibility label, colours and projected amount size on desktop and at 390 px. The ready scenario explicitly retains its green styling and existing desktop/mobile type sizes; imports, worker execution, evidence inspection and downloads remain covered.
 - Assumptions: eligibility copy follows the saved review outcome; it does not re-evaluate findings or current applicability. Existing number formatting, cost arithmetic, review logic, scoring, findings and backend results remain unchanged. Validation and screenshots use local synthetic replays with template explanations and no live AWS/model calls; research files and evaluator data are outside the change.
+- Verification: all 123 backend tests, the native frontend build, Docker web build and 12 Playwright e2e tests passed. Database and browser checks ran outside the sandbox with approved local service access. The existing upstream TestClient deprecation warning remains.
 
 ## Presentation-ready demo — 2026-10-05
 

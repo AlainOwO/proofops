@@ -27,17 +27,95 @@ async function expectNoPageOverflow(page: Page) {
   ).toBe(true);
 }
 
-for (const [scenario, result] of [
-  ["valid-resize", "Ready for engineering review"],
-  ["unsafe-resize", "Revise the change"],
-  ["incomplete-evidence", "Collect more evidence"],
+async function expectProjection(
+  page: Page,
+  expected: {
+    difference: string;
+    reduction: string;
+    candidate: string;
+    ineligibleReason: string | null;
+  },
+  readyFontSize: string,
+) {
+  const card = page.getByRole("region", {
+    name: "Projected compute difference",
+    exact: true,
+  });
+  const amount = card.locator(".cost-highlight > strong");
+  const percentage = card.locator(".cost-highlight > span");
+  const baseline = card.locator(".cost-comparison strong").nth(0);
+  const candidate = card.locator(".cost-comparison strong").nth(1);
+
+  await expect(amount).toHaveText(expected.difference);
+  await expect(percentage).toHaveText(expected.reduction);
+  await expect(baseline).toHaveText("$280.32");
+  await expect(candidate).toHaveText(expected.candidate);
+  for (const value of [amount, percentage, baseline, candidate]) {
+    await expect(value).toBeVisible();
+  }
+
+  if (expected.ineligibleReason) {
+    await expect(
+      card.getByText(expected.ineligibleReason, { exact: true }),
+    ).toBeVisible();
+    for (const value of [amount, percentage, baseline, candidate]) {
+      await expect(value).toHaveCSS("color", "rgb(102, 102, 102)");
+    }
+    await expect(amount).toHaveCSS("font-size", "24px");
+    await expect(amount).toHaveCSS("font-weight", "500");
+    await expect(percentage).toHaveCSS(
+      "background-color",
+      "rgb(242, 242, 242)",
+    );
+  } else {
+    await expect(card.getByText(/^Not eligible:/)).toHaveCount(0);
+    await expect(amount).toHaveCSS("color", "rgb(72, 107, 56)");
+    await expect(amount).toHaveCSS("font-size", readyFontSize);
+    await expect(amount).toHaveCSS("font-weight", "550");
+    await expect(percentage).toHaveCSS("color", "rgb(123, 148, 95)");
+    await expect(percentage).toHaveCSS(
+      "background-color",
+      "rgb(242, 246, 235)",
+    );
+    for (const value of [baseline, candidate]) {
+      await expect(value).toHaveCSS("color", "rgb(100, 123, 80)");
+    }
+  }
+}
+
+for (const scenario of [
+  {
+    id: "valid-resize",
+    result: "Ready for engineering review",
+    difference: "$140.16",
+    reduction: "50.0% estimated reduction",
+    candidate: "$140.16",
+    ineligibleReason: null,
+  },
+  {
+    id: "unsafe-resize",
+    result: "Revise the change",
+    difference: "$210.24",
+    reduction: "75.0% estimated reduction",
+    candidate: "$70.08",
+    ineligibleReason: "Not eligible: resolve findings first",
+  },
+  {
+    id: "incomplete-evidence",
+    result: "Collect more evidence",
+    difference: "$140.16",
+    reduction: "50.0% estimated reduction",
+    candidate: "$140.16",
+    ineligibleReason: "Not eligible: evidence incomplete",
+  },
 ]) {
-  test(`${scenario}: real import, worker, evidence and reproducible download`, async ({
+  test(`${scenario.id}: real review, projection eligibility and reproducible download`, async ({
     page,
   }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
-    await runReplay(page, scenario, result);
+    await runReplay(page, scenario.id, scenario.result);
+    await expectProjection(page, scenario, "36px");
     await expect(
       page.getByRole("heading", { name: "Evidence coverage" }),
     ).toBeVisible();
@@ -51,10 +129,11 @@ for (const [scenario, result] of [
       page.getByText("Task-hours: baseline", { exact: false }),
     ).toBeVisible();
     await page.screenshot({
-      path: `../artifacts/screenshots/${scenario}.png`,
+      path: `../artifacts/screenshots/${scenario.id}.png`,
       fullPage: true,
     });
     await page.setViewportSize({ width: 390, height: 844 });
+    await expectProjection(page, scenario, "32px");
     await expectNoPageOverflow(page);
     const workload = page.getByRole("region", {
       name: "Workload comparison table",
@@ -67,7 +146,7 @@ for (const [scenario, result] of [
       .poll(() => workload.evaluate((element) => element.scrollLeft))
       .toBeGreaterThan(0);
     await page.screenshot({
-      path: `../artifacts/screenshots/${scenario}-mobile.png`,
+      path: `../artifacts/screenshots/${scenario.id}-mobile.png`,
       fullPage: true,
     });
     const download = page.waitForEvent("download");
