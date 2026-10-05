@@ -2,13 +2,14 @@ import io
 import zipfile
 from contextlib import asynccontextmanager
 from datetime import datetime
+from html import escape
 from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from pydantic import Field, SecretStr, ValidationError
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -16,6 +17,13 @@ from starlette.concurrency import run_in_threadpool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from proofops.api.auth import AuthenticationBoundary
+from proofops.api.boundaries import (
+    AdmissionBoundary,
+    AdmissionController,
+    BodyBoundary,
+    OriginBoundary,
+    SecureFastAPI,
+)
 from proofops.auth import LOGIN_CSRF_TTL, AuthService
 from proofops.config import APP_ROOT, Settings, get_settings
 from proofops.domain.common import bytes_digest, canonical, digest, strict_json, utcnow
@@ -73,69 +81,6 @@ class OutcomeRequest(Record):
     )
 
 
-class RequestBoundary:
-    def __init__(self, app, *, maximum: int, origins: set[str]):
-        self.app, self.maximum, self.origins = app, maximum, origins
-
-    async def __call__(self, scope, receive, send):
-        if scope["type"] != "http":
-            await self.app(scope, receive, send)
-            return
-        headers = {key.lower(): value for key, value in scope.get("headers", [])}
-        origin = headers.get(b"origin", b"").decode("latin1")
-        if origin and origin not in self.origins:
-            await JSONResponse({"detail": "origin is not allowed"}, status_code=403)(
-                scope, receive, send
-            )
-            return
-        chunks = []
-        total = 0
-        if scope["method"] not in {"GET", "HEAD", "OPTIONS"}:
-            while True:
-                message = await receive()
-                if message["type"] == "http.disconnect":
-                    return
-                body = message.get("body", b"")
-                total += len(body)
-                maximum = (
-                    min(self.maximum, 4096)
-                    if scope["path"] == "/api/v1/auth/login"
-                    else self.maximum
-                )
-                if total > maximum:
-                    await JSONResponse(
-                        {"detail": "request body exceeds configured limit"}, status_code=413
-                    )(scope, receive, send)
-                    return
-                chunks.append(body)
-                if not message.get("more_body", False):
-                    break
-            consumed = False
-            original_receive = receive
-
-            async def replay_receive():
-                nonlocal consumed
-                if consumed:
-                    return await original_receive()
-                consumed = True
-                return {"type": "http.request", "body": b"".join(chunks), "more_body": False}
-
-            receive = replay_receive
-
-        async def safe_send(message):
-            if message["type"] == "http.response.start":
-                message.setdefault("headers", []).extend(
-                    [
-                        (b"x-content-type-options", b"nosniff"),
-                        (b"cache-control", b"no-store"),
-                        (b"referrer-policy", b"no-referrer"),
-                    ]
-                )
-            await send(message)
-
-        await self.app(scope, receive, safe_send)
-
-
 def job_summary(job: JobRow, report: ReportRow | None = None) -> dict:
     return {
         "id": job.id,
@@ -170,10 +115,21 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
             ) from None
         yield
 
-    app = FastAPI(title="ProofOps", version="0.1.0", lifespan=lifespan)
+    hosted = settings.proofops_mode == "hosted"
+    app = SecureFastAPI(
+        title="ProofOps",
+        version="0.1.0",
+        lifespan=lifespan,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None if hosted else "/openapi.json",
+    )
     app.state.settings, app.state.factory = settings, factory
     app.state.auth = auth
+    admission = AdmissionController(settings)
+    app.state.admission = admission
     origins = {item.strip() for item in settings.cors_origins.split(",") if item.strip()}
+    app.add_middleware(BodyBoundary, admission=admission)
     app.add_middleware(AuthenticationBoundary, auth=auth)
     app.add_middleware(
         CORSMiddleware,
@@ -183,11 +139,32 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
         allow_headers=["Content-Type", "Idempotency-Key", "X-CSRF-Token"],
         expose_headers=["Content-Disposition"],
     )
-    app.add_middleware(RequestBoundary, maximum=settings.max_bundle_bytes, origins=origins)
+    app.add_middleware(AdmissionBoundary, admission=admission)
+    app.add_middleware(OriginBoundary, origins=origins)
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=[item.strip() for item in settings.allowed_hosts.split(",") if item.strip()],
     )
+
+    if not hosted:
+
+        async def local_documentation(request: Request):
+            # A self-contained local reference: no CDN JavaScript, inline script
+            # or relaxed CSP. Hosted mode registers none of these routes.
+            endpoints = "".join(
+                f"<li><code>{escape(', '.join(sorted(route.methods)))} {escape(route.path)}</code></li>"
+                for route in app.routes
+                if getattr(route, "include_in_schema", False)
+            )
+            return HTMLResponse(
+                "<!doctype html><html lang='en'><meta charset='utf-8'>"
+                "<title>ProofOps API</title><h1>ProofOps API</h1>"
+                "<p><a href='/openapi.json'>OpenAPI schema</a></p>"
+                f"<ul>{endpoints}</ul></html>"
+            )
+
+        for path in ("/docs", "/docs/oauth2-redirect", "/redoc"):
+            app.add_route(path, local_documentation, methods=["GET"], include_in_schema=False)
 
     @app.exception_handler(ValidationError)
     @app.exception_handler(RequestValidationError)
@@ -332,6 +309,9 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
     async def import_bundle(request: Request):
         content_type = request.headers.get("content-type", "").split(";", 1)[0].strip()
         raw = await request.body()
+        return await run_in_threadpool(parse_and_store_bundle, content_type, raw)
+
+    def parse_and_store_bundle(content_type: str, raw: bytes):
         if content_type == "application/json":
             selection = strict_json(raw)
             if (
@@ -344,7 +324,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
                 )
             bundle = load_replay(selection["replay"])
         elif content_type in {"application/zip", "application/octet-stream"}:
-            bundle = import_zip(raw)
+            bundle = import_zip(raw, settings=settings)
         else:
             raise HTTPException(
                 415,

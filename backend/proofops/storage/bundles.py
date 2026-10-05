@@ -201,8 +201,8 @@ def load_replay(name: str) -> ReviewInput:
     return load_directory(APP_ROOT / "fixtures/replays" / name)
 
 
-def import_zip(raw: bytes) -> ReviewInput:
-    return import_files(bounded_zip(raw, INPUT_FILES | {"manifest.json"}))
+def import_zip(raw: bytes, *, settings: Settings | None = None) -> ReviewInput:
+    return import_files(bounded_zip(raw, INPUT_FILES | {"manifest.json"}, settings))
 
 
 def export_report(

@@ -27,6 +27,16 @@ class Settings(BaseSettings):
     login_window_seconds: int = Field(default=900, ge=60, le=3600)
     login_max_failures: int = Field(default=5, ge=3, le=10)
     login_max_ip_attempts: int = Field(default=60, ge=10, le=300)
+    request_body_timeout_seconds: float = Field(default=10, gt=0, le=60)
+    request_max_concurrency: int = Field(default=16, ge=1, le=128)
+    request_max_peer_concurrency: int = Field(default=8, ge=1, le=64)
+    request_max_principal_concurrency: int = Field(default=4, ge=1, le=32)
+    request_max_login_concurrency: int = Field(default=2, ge=1, le=4)
+    request_quota_window_seconds: int = Field(default=60, ge=1, le=3600)
+    request_peer_quota: int = Field(default=600, ge=1, le=10000)
+    request_principal_quota: int = Field(default=300, ge=1, le=10000)
+    request_max_identities: int = Field(default=2048, ge=1, le=10000)
+    request_max_buffered_bytes: int = Field(default=20_971_520, ge=1024, le=134_217_728)
     allowed_hosts: str = "127.0.0.1,localhost,api"
     ai_mode: Literal["off", "live"] = "off"
     openai_api_key: SecretStr = SecretStr("")

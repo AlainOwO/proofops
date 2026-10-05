@@ -7,7 +7,6 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.concurrency import run_in_threadpool
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from proofops.auth import AuthService, Principal
 
@@ -25,15 +24,25 @@ DEMO_READ_PATHS = {
 }
 
 
-class AuthenticationBoundary(BaseHTTPMiddleware):
+class AuthenticationBoundary:
     def __init__(self, app, *, auth: AuthService):
-        super().__init__(app)
-        self.auth = auth
+        self.app, self.auth = app, auth
 
-    async def dispatch(self, request: Request, call_next):
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        request = Request(scope)
+        rejection = await self.authorize(request)
+        if rejection is not None:
+            await rejection(scope, receive, send)
+            return
+        await self.app(scope, receive, send)
+
+    async def authorize(self, request: Request):
         path, method = request.url.path, request.method
         if (method, path) == ("GET", "/healthz"):
-            return await call_next(request)
+            return None
         if not self.auth.initialized:
             return JSONResponse({"detail": "Authentication is unavailable."}, status_code=503)
         if self.auth.settings.proofops_public_demo:
@@ -44,14 +53,14 @@ class AuthenticationBoundary(BaseHTTPMiddleware):
             ):
                 return JSONResponse({"detail": "Unavailable in the public demo."}, status_code=403)
             request.state.principal = Principal(None, None, "viewer", public_demo=True)
-            return await call_next(request)
+            return None
         if (method, path) in PUBLIC_ROUTES:
             if method == "POST" and not self.auth.valid_login_csrf(
                 request.cookies.get(self.auth.login_cookie_name, ""),
                 request.headers.get("X-CSRF-Token", ""),
             ):
                 return JSONResponse({"detail": "Invalid CSRF token."}, status_code=403)
-            return await call_next(request)
+            return None
         token = request.cookies.get(self.auth.cookie_name, "")
         try:
             principal = await run_in_threadpool(self.auth.authenticate, token)
@@ -69,4 +78,4 @@ class AuthenticationBoundary(BaseHTTPMiddleware):
                 supplied, principal.csrf_token or ""
             ):
                 return JSONResponse({"detail": "Invalid CSRF token."}, status_code=403)
-        return await call_next(request)
+        return None

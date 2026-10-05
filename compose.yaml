@@ -2,6 +2,8 @@ name: proofops
 services:
   db:
     image: postgres:17.6-alpine
+    cpus: 1.0
+    mem_limit: 1g
     environment:
       POSTGRES_DB: proofops
       POSTGRES_USER: proofops
@@ -15,6 +17,8 @@ services:
       retries: 30
   migrate:
     build: .
+    cpus: 1.0
+    mem_limit: 512m
     command: ["alembic", "upgrade", "head"]
     environment:
       DATABASE_URL: postgresql+psycopg://proofops:${POSTGRES_PASSWORD}@db:5432/proofops
@@ -22,6 +26,8 @@ services:
       db: {condition: service_healthy}
   api:
     build: .
+    cpus: 1.0
+    mem_limit: 512m
     command: ["uvicorn", "proofops.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers"]
     env_file: [.env]
     environment:
@@ -33,6 +39,8 @@ services:
       migrate: {condition: service_completed_successfully}
   worker:
     build: .
+    cpus: 1.0
+    mem_limit: 512m
     command: ["proofops-worker"]
     env_file: [.env]
     environment:
@@ -43,6 +51,8 @@ services:
       migrate: {condition: service_completed_successfully}
   web:
     build: {context: ./frontend}
+    cpus: 0.5
+    mem_limit: 128m
     ports: ["127.0.0.1:5173:80"]
     depends_on: [api]
   workload:
