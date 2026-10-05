@@ -16,6 +16,12 @@ export function ChangeSummary({
   floor: CoreReport["facts"][number]["value"] | undefined;
 }) {
   const cost = r.cost;
+  const ineligibleReason =
+    r.outcome === "revise_change"
+      ? "Not eligible: resolve findings first"
+      : r.outcome === "collect_evidence"
+        ? "Not eligible: evidence incomplete"
+        : null;
   return (
     <div className="report-grid">
       <section className="panel">
@@ -51,14 +57,20 @@ export function ChangeSummary({
           </div>
         </div>
       </section>
-      <section className="panel cost-panel">
+      <section
+        className={`panel cost-panel${ineligibleReason ? " ineligible" : ""}`}
+        aria-labelledby="cost-heading"
+      >
         <div className="panel-heading">
           <div>
-            <h2>Projected compute difference</h2>
+            <h2 id="cost-heading">Projected compute difference</h2>
             <p>Task CPU and memory only</p>
           </div>
           <ArrowDownRight size={20} />
         </div>
+        {ineligibleReason && (
+          <p className="cost-eligibility">{ineligibleReason}</p>
+        )}
         <div className="cost-highlight">
           <strong>{money(cost?.projected_difference, cost?.currency)}</strong>
           <span>

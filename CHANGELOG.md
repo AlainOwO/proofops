@@ -1,5 +1,10 @@
 # Changelog
 
+## Review projection eligibility — 2026-10-05
+
+- On review detail pages, `revise_change` labels the projected compute difference “Not eligible: resolve findings first”; `collect_evidence` uses “Not eligible: evidence incomplete”. Both cards use neutral greys and a smaller projected amount, keeping the difference, percentage, baseline and candidate estimates visible. `request_review` retains its existing appearance.
+- Assumptions: eligibility copy follows the saved review outcome; it does not re-evaluate findings or current applicability. Existing number formatting, cost arithmetic, review logic, scoring, findings and backend results remain unchanged. Validation and screenshots use local synthetic replays with template explanations and no live AWS/model calls; research files and evaluator data are outside the change.
+
 ## Presentation-ready demo — 2026-10-05
 
 - Added `proofops reset-demo-data` with default-no confirmation and `--yes`. It atomically replaces saved reviews and their drafts, dispositions and imported bundle records with exactly the three supplied replay scenarios. The shared review engine, recorded evidence time, template explanation and export format determine every result; the reset never invokes a model or AWS collector.

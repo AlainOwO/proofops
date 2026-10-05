@@ -1056,6 +1056,42 @@ main {
   gap: 6px;
   background: #fcfdf9;
 }
+.cost-panel.ineligible {
+  background: #fafafa;
+  border-color: #e3e3e3;
+}
+.cost-panel.ineligible h2,
+.cost-eligibility {
+  color: #454545;
+}
+.cost-eligibility {
+  margin: 0 23px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.cost-panel.ineligible .panel-heading p,
+.cost-panel.ineligible .panel-heading > svg,
+.cost-panel.ineligible .cost-highlight > strong,
+.cost-panel.ineligible .cost-highlight > span,
+.cost-panel.ineligible .cost-comparison span,
+.cost-panel.ineligible .cost-comparison strong,
+.cost-panel.ineligible .cost-comparison > svg,
+.cost-panel.ineligible .cost-caption {
+  color: #666;
+}
+.cost-panel.ineligible .cost-highlight > strong {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+}
+.cost-panel.ineligible .cost-highlight > span,
+.cost-panel.ineligible .cost-caption {
+  background: #f2f2f2;
+}
+.cost-panel.ineligible .cost-caption {
+  border-color: #e3e3e3;
+}
 .count-pill {
   font-size: 11px;
   border: 1px solid #e5eadd;
