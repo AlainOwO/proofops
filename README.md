@@ -2,11 +2,50 @@
 
 ProofOps reviews a proposed ECS Fargate cost change against a versioned operating contract. It combines a sanitized Terraform plan, dated task CPU/memory estimates, workload evidence and one scoped memory guard. Code determines the result; optional AI explains it and proposes a constrained guard draft.
 
+## Quick demo
+
+Prerequisites: Git and Docker Desktop / Docker Engine with Compose v2. These commands use a macOS/Linux shell. Initial image/package downloads need Internet access; the demo needs no AWS credentials or API keys.
+
+1. **Clone and enter the repository.**
+
+   ```sh
+   git clone https://github.com/AlainOwO/proofops.git
+   cd proofops
+   ```
+
+2. **Create the local configuration** with AI off and empty keys.
+
+   ```sh
+   test -f .env || cp .env.example .env
+   ```
+
+3. **Build and start the app.** Compose runs the database migrations.
+
+   ```sh
+   docker compose up -d --build --wait
+   ```
+
+4. **Replace saved reviews with the three completed demo results.** `--yes` confirms the reset; omit it for an interactive confirmation.
+
+   ```sh
+   docker compose exec -T api proofops reset-demo-data --yes
+   ```
+
+5. **Open [http://127.0.0.1:5173](http://127.0.0.1:5173).** Recent reviews now contains exactly three results. Select a row to inspect it, then use **All reviews** to return. No **Run review** clicks are needed for this seeded demo.
+
+   | Replay | Saved result |
+   |---|---|
+   | Valid resize · 4 GiB → 2 GiB | **Ready for engineering review** |
+   | Unsafe resize · 4 GiB → 1 GiB | **Revise the change** |
+   | Incomplete evidence | **Collect more evidence** |
+
+For another presentation, rerun step 4. The [reset shortcut and boundaries](#replay-and-guard-commands) explain confirmation, preserved data and failure handling. The [walkthrough and screenshots](#three-scenario-walkthrough) show what to inspect in each result.
+
 The local workflow works without AWS credentials or API keys. The supplied reviews use **synthetic evidence, rates and approvals**. Local Docker load measurements are separate observations; they do not establish an AWS x86_64 memory bound or realized savings. See [implementation status](IMPLEMENTATION_STATUS.md), [test results](docs/testing.md) and [limitations](docs/decisions.md).
 
 ## Start with Docker
 
-Prerequisites: Git and Docker Desktop / Docker Engine with Compose v2. Run commands from `proofops-app/`. Initial image/package downloads need Internet access. This is a separate Git repository inside the read-only research pack.
+Prerequisites: Git and Docker Desktop / Docker Engine with Compose v2. Run commands from the repository root: `proofops/` after cloning, or `proofops-app/` inside the read-only research pack. Initial image/package downloads need Internet access.
 
 macOS/Linux:
 
@@ -38,13 +77,48 @@ Compose runs migrations before starting the API and worker. The API and worker u
 
 ## Three-scenario walkthrough
 
-Open **Reviews** at **http://127.0.0.1:5173/#/reviews** with the API and worker running. Keep the defaults: **Recorded replay time** and **Deterministic template · no AI call** under **Import or configure a review**. These scenarios use synthetic inputs and require no AWS or model API calls. Use **All reviews** between scenarios.
+After the Quick demo, open **Reviews** at **http://127.0.0.1:5173/#/reviews** and select each saved row by its **Decision** badge. Use **All reviews** between scenarios. These scenarios use synthetic inputs and require no AWS or model API calls.
 
-1. **Valid resize:** choose **Valid resize · 4 GiB → 2 GiB**, then **Run review**. Expect **Ready for engineering review** (`request_review`). Inspect **The proposed change**: the 2 GiB candidate meets the fixture's 2,048 MiB approved floor. **Workload comparison** shows the compatible runs passing their contract checks. The cost difference is an illustrative estimate; the result requests engineering review and grants no deployment permission.
-2. **Unsafe resize:** choose **Below the floor · 4 GiB → 1 GiB**, then **Run review**. Expect **Revise the change** (`revise_change`). **What determines the result** explains the applicable memory-floor violation. Under **Keep the lesson**, select **Prepare guard draft**, then **Run guard fixtures** to inspect and export the tested rule. The draft remains **Not active**; revise the candidate before requesting another review.
-3. **Incomplete evidence:** choose **Missing candidate evidence**, then **Run review**. Expect **Collect more evidence** (`collect_evidence`). Inspect **Evidence coverage** and **Workload comparison** for the missing candidate artifacts. A projected cost difference does not supply workload evidence. Collect compatible candidate evidence and rerun the review.
+1. **Valid resize · 4 GiB → 2 GiB:** open **Ready for engineering review** (`request_review`). Inspect **The proposed change**: the 2 GiB candidate meets the fixture's 2,048 MiB approved floor. **Workload comparison** shows the compatible runs passing their contract checks. The cost difference is an illustrative estimate; the result requests engineering review and grants no deployment permission.
+2. **Unsafe resize · 4 GiB → 1 GiB:** open **Revise the change** (`revise_change`). **What determines the result** explains the applicable memory-floor violation. Under **Keep the lesson**, select **Prepare guard draft**, then **Run guard fixtures** to inspect and export the tested rule. The draft remains **Not active**; revise the candidate before requesting another review.
+3. **Incomplete evidence:** open **Collect more evidence** (`collect_evidence`). Inspect **Evidence coverage** and **Workload comparison** for the missing candidate artifacts. A projected cost difference does not supply workload evidence. Collect compatible candidate evidence and rerun the review.
+
+To submit another review manually, choose **Valid resize · 4 GiB → 2 GiB**, **Below the floor · 4 GiB → 1 GiB** or **Missing candidate evidence**, then **Run review** with the API and worker running. Keep **Recorded replay time** and **Deterministic template · no AI call** under **Import or configure a review**. Each submission adds a saved review; the reset shortcut restores the three-result presentation.
 
 For any completed scenario, expand **Inspect cited facts and assumptions** and select **Export review bundle** to inspect the saved basis. A downloaded bundle can be reproduced with the replay command below. Historical or changed-revision notices describe current applicability separately from the saved result.
+
+These screenshots show the three seeded synthetic results with template explanations. Expand a result to see its full page; all names, identifiers and evidence shown come from the supplied fixtures.
+
+<details>
+<summary>Valid resize — Ready for engineering review</summary>
+
+![Valid resize result: Ready for engineering review, with the candidate at the approved memory floor.](docs/screenshots/valid-resize.png)
+
+</details>
+
+<details>
+<summary>Unsafe resize — Revise the change</summary>
+
+![Unsafe resize result: Revise the change because the candidate breaches the approved memory floor.](docs/screenshots/unsafe-resize.png)
+
+</details>
+
+<details>
+<summary>Incomplete evidence — Collect more evidence</summary>
+
+![Incomplete evidence result: Collect more evidence, with missing candidate evidence called out.](docs/screenshots/incomplete-evidence.png)
+
+</details>
+
+To regenerate only these three screenshots with the existing Playwright setup, install the native frontend/browser prerequisites below, reset the demo, then run from the app root:
+
+```sh
+docker compose exec -T api proofops reset-demo-data --yes
+cd frontend
+npm run screenshots:demo
+```
+
+The capture checks that exactly three completed replays are present, their input hashes match the supplied fixtures, and their explanations use template mode; it reads the saved results and writes `docs/screenshots/` plus ignored Playwright check artifacts. It does not submit more reviews. Run it after e2e tests, which intentionally create additional reviews.
 
 ## Replay and guard commands
 
