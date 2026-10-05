@@ -1,0 +1,274 @@
+[
+  {
+    "id": "known-failure",
+    "origin": "synthetic_fixture",
+    "input": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "reports-api",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+      "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+      "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+      "non_resize_config_hash": "5b7ad7b8a6cfb786c876ff0fb453e5657fc24be43ac08629f96c042d063616b1",
+      "memory_mib": 1024,
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reference_epoch": 1791201600.0
+    },
+    "expected": "deny"
+  },
+  {
+    "id": "repaired",
+    "origin": "synthetic_fixture",
+    "input": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "reports-api",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+      "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+      "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+      "non_resize_config_hash": "5b7ad7b8a6cfb786c876ff0fb453e5657fc24be43ac08629f96c042d063616b1",
+      "memory_mib": 4096,
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reference_epoch": 1791201600.0
+    },
+    "expected": "pass"
+  },
+  {
+    "id": "exact-bound",
+    "origin": "synthetic_fixture",
+    "input": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "reports-api",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+      "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+      "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+      "non_resize_config_hash": "5b7ad7b8a6cfb786c876ff0fb453e5657fc24be43ac08629f96c042d063616b1",
+      "memory_mib": 2048,
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reference_epoch": 1791201600.0
+    },
+    "expected": "pass"
+  },
+  {
+    "id": "larger",
+    "origin": "synthetic_fixture",
+    "input": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "reports-api",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+      "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+      "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+      "non_resize_config_hash": "5b7ad7b8a6cfb786c876ff0fb453e5657fc24be43ac08629f96c042d063616b1",
+      "memory_mib": 8192,
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reference_epoch": 1791201600.0
+    },
+    "expected": "pass"
+  },
+  {
+    "id": "unrelated",
+    "origin": "synthetic_fixture",
+    "input": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "another-service",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+      "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+      "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+      "non_resize_config_hash": "5b7ad7b8a6cfb786c876ff0fb453e5657fc24be43ac08629f96c042d063616b1",
+      "memory_mib": 1024,
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reference_epoch": 1791201600.0
+    },
+    "expected": "pass"
+  },
+  {
+    "id": "unknown",
+    "origin": "synthetic_fixture",
+    "input": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "reports-api",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+      "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+      "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+      "non_resize_config_hash": "5b7ad7b8a6cfb786c876ff0fb453e5657fc24be43ac08629f96c042d063616b1",
+      "memory_mib": null,
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reference_epoch": 1791201600.0
+    },
+    "expected": "unresolved"
+  },
+  {
+    "id": "changed-applicability",
+    "origin": "synthetic_fixture",
+    "input": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "reports-api",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "image_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+      "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+      "non_resize_config_hash": "5b7ad7b8a6cfb786c876ff0fb453e5657fc24be43ac08629f96c042d063616b1",
+      "memory_mib": 1024,
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reference_epoch": 1791201600.0
+    },
+    "expected": "unresolved"
+  },
+  {
+    "id": "valid-exception",
+    "origin": "synthetic_fixture",
+    "input": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "reports-api",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+      "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+      "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+      "non_resize_config_hash": "5b7ad7b8a6cfb786c876ff0fb453e5657fc24be43ac08629f96c042d063616b1",
+      "memory_mib": 1024,
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reference_epoch": 1791201600.0
+    },
+    "expected": "pass",
+    "fixture_exception": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "reports-api",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "guard_revision": 1,
+      "expires_epoch": 1791205200.0
+    }
+  },
+  {
+    "id": "expired-exception",
+    "origin": "synthetic_fixture",
+    "input": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "reports-api",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+      "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+      "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+      "non_resize_config_hash": "5b7ad7b8a6cfb786c876ff0fb453e5657fc24be43ac08629f96c042d063616b1",
+      "memory_mib": 1024,
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reference_epoch": 1791201600.0
+    },
+    "expected": "deny",
+    "fixture_exception": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "reports-api",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "guard_revision": 1,
+      "expires_epoch": 1791201600.0
+    }
+  },
+  {
+    "id": "wrong-scope-exception",
+    "origin": "synthetic_fixture",
+    "input": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "reports-api",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
+      "profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
+      "dependency_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
+      "non_resize_config_hash": "5b7ad7b8a6cfb786c876ff0fb453e5657fc24be43ac08629f96c042d063616b1",
+      "memory_mib": 1024,
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reference_epoch": 1791201600.0
+    },
+    "expected": "deny",
+    "fixture_exception": {
+      "scope": {
+        "schema_version": 1,
+        "account_id": "111122223333",
+        "region": "ap-south-1",
+        "cluster": "proofops-demo",
+        "service": "another-service",
+        "terraform_address": "aws_ecs_task_definition.reports",
+        "environment": "isolated-demo"
+      },
+      "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "guard_revision": 1,
+      "expires_epoch": 1791205200.0
+    }
+  }
+]

@@ -85,6 +85,9 @@ class JobRow(Base):
     )
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=identifier)
     bundle_id: Mapped[str] = mapped_column(ForeignKey("bundles.id"), index=True)
+    trusted_revision_hash: Mapped[str] = mapped_column(
+        ForeignKey("guard_revisions.id", name="fk_jobs_trusted_revision")
+    )
     scope: Mapped[str] = mapped_column(String(200), index=True)
     idempotency_key: Mapped[str] = mapped_column(String(128))
     request_hash: Mapped[str] = mapped_column(String(64))

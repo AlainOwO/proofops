@@ -122,7 +122,22 @@ def import_files(files: dict[str, bytes]) -> ReviewInput:
         clean["metadata"] = {
             key: redact_text(value) if isinstance(value, str) else value
             for key, value in raw.get("metadata", {}).items()
-            if key in {"request_id", "query_status", "observed_count", "reason", "namespace"}
+            if key
+            in {
+                "request_id",
+                "query_status",
+                "observed_count",
+                "reason",
+                "namespace",
+                "cpu_units",
+                "memory_mib",
+                "image_digest",
+                "task_definition_arn",
+                "architecture",
+                "os",
+                "requires_fargate",
+                "task_population_complete",
+            }
         }
         clean["redaction_state"] = (
             "redacted" if clean["metadata"] != raw.get("metadata", {}) else "allowlisted"

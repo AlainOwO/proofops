@@ -25,7 +25,12 @@ def review(
     scoped = change.service_map.scope == contract.scope
     applicable = scoped and applicability(bundle, trusted)
 
-    def add(code: str, severity: Literal["violation", "missing", "info", "unsupported"], message: str, ids: list[str] | None = None) -> None:
+    def add(
+        code: str,
+        severity: Literal["violation", "missing", "info", "unsupported"],
+        message: str,
+        ids: list[str] | None = None,
+    ) -> None:
         findings.append(Finding(code=code, severity=severity, message=message, fact_ids=ids or []))
 
     for code in change.normalization_findings:
@@ -137,13 +142,28 @@ def review(
                 if age > 0
                 else "unknown"
             )
+            revision_matches = item.resource_revision == change.service_map.candidate_commit
+            if item.source == "aws_ecs":
+                baseline = change.before
+                revision_matches = bool(
+                    baseline
+                    and baseline.task_definition_arn
+                    and item.resource_revision == baseline.task_definition_arn
+                    and item.metadata.get("cpu_units") == baseline.cpu_units
+                    and item.metadata.get("memory_mib") == baseline.memory_mib
+                    and item.metadata.get("image_digest") == baseline.image_digest
+                    and item.metadata.get("architecture") == baseline.architecture
+                    and item.metadata.get("os") == baseline.os
+                    and item.metadata.get("requires_fargate") is True
+                    and item.metadata.get("task_population_complete") is True
+                )
             complete = (
                 item.collection_status == "complete"
                 and item.sample_count is not None
                 and item.sample_count > 0
                 and freshness == "fresh"
                 and item.collected_at <= reference
-                and item.resource_revision == change.service_map.candidate_commit
+                and revision_matches
                 and item.population == "mapped_service"
                 and item.units == "records"
             )

@@ -17,6 +17,10 @@ def compare_workloads(
     warmups = {run.warmup_policy for run in bundle.workload_runs}
     for run in bundle.workload_runs:
         role_config = bundle.change.before if run.role == "baseline" else bundle.change.after
+        supported_platforms = {
+            "X86_64": {"linux/amd64", "linux/x86_64", "synthetic-linux-x86_64"},
+            "ARM64": {"linux/arm64", "synthetic-linux-arm64"},
+        }
         age = (reference - run.ended_at).total_seconds()
         compatible = bool(
             role_config
@@ -29,6 +33,7 @@ def compare_workloads(
             == contract.applicability.non_resize_config_hash
             and run.profile_hash == contract.applicability.workload_profile_hash
             and run.dependency_hash == contract.applicability.dependency_state_hash
+            and run.platform in supported_platforms.get(role_config.architecture or "", set())
             and len(platforms) == 1
             and len(warmups) == 1
         )
@@ -94,7 +99,10 @@ def compare_workloads(
                 violated.append("dropped iterations")
             if run.restarts > requirements.max_restarts:
                 violated.append("restarts")
-            if sufficient:
+            # A failure can reduce the correct count below the minimum. Once the
+            # completed population is large enough, that known SLO breach must
+            # not be hidden by the separate sufficiency check.
+            if run.completed >= requirements.min_correct_requests_per_run:
                 if (
                     run.p95_latency_ms is not None
                     and run.p95_latency_ms >= requirements.max_p95_latency_ms

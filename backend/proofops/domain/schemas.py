@@ -104,6 +104,7 @@ class TaskConfiguration(Record):
     os: str | None
     architecture: str | None
     image_digest: str | None
+    task_definition_arn: str | None = None
     config_hash: Hash
     non_resize_config_hash: Hash
 

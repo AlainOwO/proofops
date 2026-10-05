@@ -1,0 +1,20 @@
+[
+  {
+    "tool": "conftest",
+    "version": "0.71.0",
+    "platform": "Darwin",
+    "architecture": "arm64",
+    "source_url": "https://github.com/open-policy-agent/conftest/releases/download/v0.71.0/conftest_0.71.0_Darwin_arm64.tar.gz",
+    "archive_sha256": "78051b6ef0422082ba237f0df10a636737878941927880a68893469663b9e724",
+    "binary_sha256": "b2276d9eada2841675c049d1e1f084e7986fc3b28b58cbe93a7a82ba0d8a8503"
+  },
+  {
+    "tool": "k6",
+    "version": "2.3.0",
+    "platform": "Darwin",
+    "architecture": "arm64",
+    "source_url": "https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-macos-arm64.zip",
+    "archive_sha256": "b2417a3038edc5fe81dc178a889237724b595c5c9cfed875822008e46e862c7d",
+    "binary_sha256": "efb8282e24ffe18f54ce3679eaa71d72e0645bbb97b14e2a05cc8b192abf48e3"
+  }
+]

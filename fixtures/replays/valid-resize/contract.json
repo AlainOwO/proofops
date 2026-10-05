@@ -17,7 +17,7 @@
     "image_digest": "sha256:d4ca6660c7016225dd14d57ef8dacddd9a8d574d626096ab3e6f17393cff328c",
     "workload_profile_hash": "2ea79144b70db5909fdd7bc8659a815b469cb98af75efbb0b89c5061ff0d2c65",
     "dependency_state_hash": "27f92a8c0571dd1544dbac092789535dddcf8be4ec265d53b2cd0e5055c19737",
-    "non_resize_config_hash": "860a8d031ebd9e5335c8eef9137b520eaddcf40b987a0fa57ce1b5062b484a4d"
+    "non_resize_config_hash": "5b7ad7b8a6cfb786c876ff0fb453e5657fc24be43ac08629f96c042d063616b1"
   },
   "minimum_task_memory_mib": 2048,
   "approval_reference": "SYNTHETIC-APPROVAL-001",

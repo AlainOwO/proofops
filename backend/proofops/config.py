@@ -46,13 +46,21 @@ class Settings(BaseSettings):
         resolved = value.resolve()
         if not resolved.is_relative_to(APP_ROOT.resolve()) or resolved == APP_ROOT.resolve():
             raise ValueError("artifact_dir must be a dedicated directory inside the application")
-        if any(
-            part in {"evaluation", "tests", ".git", "backend", "contracts", "policies"}
+        if not resolved.is_relative_to(APP_ROOT / "artifacts") or any(
+            part in {"evaluation", "evaluator_only"}
             for part in resolved.relative_to(APP_ROOT).parts
         ):
             raise ValueError(
                 "artifact_dir cannot overlap application code, trust or evaluator data"
             )
+        return resolved
+
+    @field_validator("model_prices_path")
+    @classmethod
+    def owned_prices(cls, value: Path) -> Path:
+        resolved = value.resolve()
+        if not resolved.is_relative_to(APP_ROOT / "config"):
+            raise ValueError("model_prices_path must be inside the application's config directory")
         return resolved
 
     @property

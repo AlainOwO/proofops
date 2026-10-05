@@ -5,10 +5,10 @@
   "files": {
     "plan.json": "a91aa134ef6dabd5fec3a6f4af511362221540376febe4daed868b80390928eb",
     "service-map.json": "4a249db100835ca07d652c9bfc5e75ebc01cf90a772dc7d60333347a5d876373",
-    "contract.json": "cea3a57234928af7350cc65fe6f7fed78030b12cd555abc2c44ce7f7a4839123",
+    "contract.json": "9f8fa9cdd03a7cb0c973f605a4c96ac6b9d8f5fc148df61b7400478107bb3092",
     "rates.json": "eb5a5b6797dfbae059902759cadd59e3f3d647419e8d3ed2da7a3bbeb3880fa7",
     "usage.json": "8415096cac9c1e4f2ae3b9bf384752bc88d0e61772f3d14cd0e452fc487cf487",
     "evidence.json": "ee6a4659dcaf3eb246230507b14d2022ef88dc948ea821ae1b47a196bc3b1063",
-    "workloads.json": "340a26c18d4f281e86ab3a7125e5b71840e6339e795b0ddd685d060c673bb68a"
+    "workloads.json": "de1d799014dc7e0dfc5332b3a01c5a4c2eea12cf37cad28d4aa20f44f4d1c076"
   }
 }

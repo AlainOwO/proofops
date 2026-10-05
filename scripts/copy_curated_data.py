@@ -1,4 +1,5 @@
 """Copy a fixed allowlist of attributed research fixtures; never touch evaluator data."""
+
 import shutil
 from pathlib import Path
 
@@ -16,4 +17,6 @@ for source, target in FILES.items():
     destination = ROOT / target
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(RESEARCH / source, destination)
-print(f"Copied {len(FILES)} fixed, attributed development/billing fixtures; evaluator files excluded.")
+print(
+    f"Copied {len(FILES)} fixed, attributed development/billing fixtures; evaluator files excluded."
+)

@@ -1,4 +1,5 @@
 """Read-only checksum audit of the research pack; stores its manifest in the app."""
+
 import argparse
 import hashlib
 import json
@@ -13,7 +14,11 @@ MANIFEST = ROOT / "docs/research_checksums.json"
 def hashes():
     records = {}
     for parent, directories, files in os.walk(RESEARCH):
-        directories[:] = [name for name in directories if name not in {"proofops-app", ".git", ".agents", ".codex", ".aws"}]
+        directories[:] = [
+            name
+            for name in directories
+            if name not in {"proofops-app", ".git", ".agents", ".codex", ".aws"}
+        ]
         for name in files:
             path = Path(parent) / name
             if path.is_symlink():
@@ -34,5 +39,13 @@ if args.record:
 else:
     expected = json.loads(MANIFEST.read_text())
     changed = [name for name, checksum in expected.items() if current.get(name) != checksum]
-    print(json.dumps({"checked": len(expected), "changed_or_missing": changed, "new_research_files": sorted(set(current) - set(expected))}))
+    print(
+        json.dumps(
+            {
+                "checked": len(expected),
+                "changed_or_missing": changed,
+                "new_research_files": sorted(set(current) - set(expected)),
+            }
+        )
+    )
     raise SystemExit(bool(changed))

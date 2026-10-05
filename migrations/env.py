@@ -1,5 +1,4 @@
 from alembic import context
-
 from proofops.config import get_settings
 from proofops.storage.database import Base, make_engine
 

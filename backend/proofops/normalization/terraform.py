@@ -58,12 +58,19 @@ def task_config(raw: dict[str, Any] | None, unavailable: list[str]) -> TaskConfi
         return None
     if not isinstance(raw, dict):
         raise ValueError("task configuration must be an object or null")
-    other = {key: value for key, value in raw.items() if key not in {"cpu", "memory"}}
+    # Provider-computed revision identifiers change on every resize; they are
+    # identity references, not workload configuration differences.
+    semantic = {
+        key: value
+        for key, value in raw.items()
+        if key not in {"id", "arn", "arn_without_revision", "revision", "tags_all"}
+    }
     image = None
     containers = raw.get("container_definitions")
     if not blocked(unavailable, "container_definitions"):
         try:
             parsed = strict_json(containers) if isinstance(containers, str) else containers
+            semantic["container_definitions"] = parsed
             if isinstance(parsed, list) and len(parsed) == 1 and isinstance(parsed[0], dict):
                 value = parsed[0].get("image", "")
                 if isinstance(value, str) and re.search(r"@sha256:[a-f0-9]{64}$", value):
@@ -73,6 +80,11 @@ def task_config(raw: dict[str, Any] | None, unavailable: list[str]) -> TaskConfi
     platform = raw.get("runtime_platform", [])
     platform = platform[0] if isinstance(platform, list) and len(platform) == 1 else platform
     platform = platform if isinstance(platform, dict) else {}
+    other = {key: value for key, value in semantic.items() if key not in {"cpu", "memory"}}
+    arn = raw.get("arn")
+    valid_arn = isinstance(arn, str) and re.fullmatch(
+        r"arn:aws:ecs:[a-z0-9-]+:\d{12}:task-definition/[A-Za-z0-9_-]+:\d+", arn
+    )
     return TaskConfiguration(
         cpu_units=None if blocked(unavailable, "cpu") else allocation(raw.get("cpu")),
         memory_mib=None if blocked(unavailable, "memory") else allocation(raw.get("memory")),
@@ -83,7 +95,8 @@ def task_config(raw: dict[str, Any] | None, unavailable: list[str]) -> TaskConfi
         if blocked(unavailable, "runtime_platform")
         else platform.get("cpu_architecture"),
         image_digest=image,
-        config_hash=digest(raw),
+        task_definition_arn=arn if valid_arn and not blocked(unavailable, "arn") else None,
+        config_hash=digest(semantic),
         non_resize_config_hash=digest(other),
     )
 
