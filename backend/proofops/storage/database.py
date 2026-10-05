@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -32,6 +33,47 @@ def identifier() -> str:
 
 class Base(DeclarativeBase):
     pass
+
+
+class UserRow(Base):
+    __tablename__ = "auth_users"
+    __table_args__ = (CheckConstraint("role IN ('admin', 'viewer')", name="ck_auth_user_role"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=identifier)
+    username: Mapped[str] = mapped_column(String(64), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(256))
+    role: Mapped[str] = mapped_column(String(16))
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    password_policy_version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AuthSessionRow(Base):
+    __tablename__ = "auth_sessions"
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("auth_users.id", ondelete="CASCADE"), index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class LoginThrottleRow(Base):
+    __tablename__ = "auth_login_throttles"
+    key_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    blocked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class DemoReviewRow(Base):
+    __tablename__ = "public_demo_reviews"
+    review_id: Mapped[str] = mapped_column(
+        ForeignKey("review_reports.id", ondelete="CASCADE"), primary_key=True
+    )
+    scenario: Mapped[str] = mapped_column(String(40), unique=True)
+    core_hash: Mapped[str] = mapped_column(String(64))
+    explanation_hash: Mapped[str] = mapped_column(String(64))
+    artifact_id: Mapped[str] = mapped_column(ForeignKey("artifact_manifests.id"))
 
 
 class ContractRow(Base):

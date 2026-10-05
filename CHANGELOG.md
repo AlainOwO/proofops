@@ -1,5 +1,13 @@
 # Changelog
 
+## Workspace authentication and authorization — 2026-10-06
+
+- Added Argon2id user credentials, revocable expiring server sessions, login/logout, persistent account/peer login limits, and a default-deny API authentication boundary. Every write requires an admin and CSRF validation, except that viewers may log out of their own session. Health and the CSRF-protected login flow are the only public routes in ordinary mode; readiness and API documentation require a session.
+- Added CLI user creation, password rotation and disabling, with optional environment bootstrap. There are no default user passwords. API startup requires a strong `SECRET_KEY`; hosted mode also requires a strong active admin, Secure cookies and explicit HTTPS origins/hosts. Session cookies are HttpOnly, SameSite=Lax, host-only and gain the `__Host-` prefix when Secure.
+- Public demo mode is an explicit exception: anonymous viewers can read only the three unchanged results marked by the demo reset. Imports cannot publish themselves by claiming a synthetic origin. All HTTP writes return 403, including login/logout; workspace billing, dispositions, guard drafts and model accounting are withheld.
+- Assumptions: one shared workspace, with all authenticated users able to read its reviews and results; host/CLI operators remain trusted database administrators. Admin access permits advisory operations, not deployment or policy activation. Existing review logic, scoring, findings, fixture/evaluator data and research files are unchanged. Reset preserves users and sessions. Anonymous demo access requires reseeding after this migration.
+- Backend verification: all 307 unit, policy and integration tests passed against local PostgreSQL with approved access, including every route/method for anonymous, viewer and admin, all write CSRF checks, session revocation, concurrent throttling and demo isolation. Backend typing and lint checks passed; the existing upstream TestClient deprecation warning remains.
+
 ## Review projection eligibility — 2026-10-05
 
 - On review detail pages, `revise_change` labels the projected compute difference “Not eligible: resolve findings first”; `collect_evidence` uses “Not eligible: evidence incomplete”. Both cards use neutral greys and a smaller projected amount, keeping the difference, percentage, baseline and candidate estimates visible. `request_review` retains its existing appearance.

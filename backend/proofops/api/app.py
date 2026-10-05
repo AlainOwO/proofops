@@ -1,5 +1,6 @@
 import io
 import zipfile
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
@@ -8,11 +9,14 @@ from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
-from pydantic import Field, ValidationError
+from pydantic import Field, SecretStr, ValidationError
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import SQLAlchemyError
+from starlette.concurrency import run_in_threadpool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from proofops.api.auth import AuthenticationBoundary
+from proofops.auth import LOGIN_CSRF_TTL, AuthService
 from proofops.config import APP_ROOT, Settings, get_settings
 from proofops.domain.common import bytes_digest, canonical, digest, strict_json, utcnow
 from proofops.domain.schemas import Label, Origin, Record, ReviewReport
@@ -33,7 +37,17 @@ from proofops.storage.database import (
     ReportRow,
     session_factory,
 )
+from proofops.storage.demo import public_demo_analytics, public_demo_reports, reset_demo_data
 from proofops.storage.repository import IdempotencyConflict, create_job, store_bundle
+
+
+class LoginRequest(Record):
+    username: Annotated[str, Field(min_length=1, max_length=128)]
+    password: Annotated[SecretStr, Field(min_length=1, max_length=128)]
+
+
+class DemoResetRequest(Record):
+    confirm: Literal[True]
 
 
 class ReviewRequest(Record):
@@ -76,14 +90,19 @@ class RequestBoundary:
             return
         chunks = []
         total = 0
-        if scope["method"] in {"POST", "PUT", "PATCH"}:
+        if scope["method"] not in {"GET", "HEAD", "OPTIONS"}:
             while True:
                 message = await receive()
                 if message["type"] == "http.disconnect":
                     return
                 body = message.get("body", b"")
                 total += len(body)
-                if total > self.maximum:
+                maximum = (
+                    min(self.maximum, 4096)
+                    if scope["path"] == "/api/v1/auth/login"
+                    else self.maximum
+                )
+                if total > maximum:
                     await JSONResponse(
                         {"detail": "request body exceeds configured limit"}, status_code=413
                     )(scope, receive, send)
@@ -139,19 +158,35 @@ def job_summary(job: JobRow, report: ReportRow | None = None) -> dict:
 def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
     settings = settings or get_settings()
     factory = factory or session_factory(settings.database_url)
-    app = FastAPI(title="ProofOps", version="0.1.0")
+    auth = AuthService(settings, factory)
+
+    @asynccontextmanager
+    async def lifespan(app):
+        try:
+            await run_in_threadpool(auth.initialize)
+        except SQLAlchemyError:
+            raise RuntimeError(
+                "Authentication storage is unavailable; run migrations before startup."
+            ) from None
+        yield
+
+    app = FastAPI(title="ProofOps", version="0.1.0", lifespan=lifespan)
     app.state.settings, app.state.factory = settings, factory
+    app.state.auth = auth
     origins = {item.strip() for item in settings.cors_origins.split(",") if item.strip()}
+    app.add_middleware(AuthenticationBoundary, auth=auth)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=sorted(origins),
-        allow_credentials=False,
+        allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Content-Type", "Idempotency-Key"],
+        allow_headers=["Content-Type", "Idempotency-Key", "X-CSRF-Token"],
+        expose_headers=["Content-Disposition"],
     )
     app.add_middleware(RequestBoundary, maximum=settings.max_bundle_bytes, origins=origins)
     app.add_middleware(
-        TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver", "api"]
+        TrustedHostMiddleware,
+        allowed_hosts=[item.strip() for item in settings.allowed_hosts.split(",") if item.strip()],
     )
 
     @app.exception_handler(ValidationError)
@@ -187,6 +222,80 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
     def health():
         return {"status": "ok"}
 
+    @app.get("/api/v1/auth/login")
+    def login_challenge():
+        if settings.proofops_public_demo:
+            return {"public_demo": True, "csrf_token": None}
+        cookie, csrf_token = auth.login_challenge()
+        response = JSONResponse({"public_demo": False, "csrf_token": csrf_token})
+        response.set_cookie(
+            auth.login_cookie_name,
+            cookie,
+            max_age=LOGIN_CSRF_TTL,
+            httponly=True,
+            secure=settings.session_cookie_secure,
+            samesite="lax",
+            path="/",
+        )
+        return response
+
+    @app.post("/api/v1/auth/login")
+    def login(body: LoginRequest, request: Request):
+        token, limited = auth.login(
+            body.username,
+            body.password.get_secret_value(),
+            request.client.host if request.client else "unknown",
+        )
+        if limited:
+            return JSONResponse(
+                {"detail": "Unable to sign in. Try again later."},
+                status_code=429,
+                headers={"Retry-After": str(settings.login_window_seconds)},
+            )
+        if token is None:
+            raise HTTPException(401, "Invalid username or password.")
+        previous = request.cookies.get(auth.cookie_name)
+        if previous:
+            auth.logout(previous)
+        principal = auth.authenticate(token)
+        assert principal is not None
+        response = JSONResponse(principal.public())
+        response.set_cookie(
+            auth.cookie_name,
+            token,
+            max_age=settings.session_ttl_seconds,
+            expires=principal.expires_at,
+            httponly=True,
+            secure=settings.session_cookie_secure,
+            samesite="lax",
+            path="/",
+        )
+        response.delete_cookie(
+            auth.login_cookie_name,
+            path="/",
+            secure=settings.session_cookie_secure,
+            httponly=True,
+            samesite="lax",
+        )
+        return response
+
+    @app.get("/api/v1/auth/session")
+    def session_info(request: Request):
+        return request.state.principal.public()
+
+    @app.post("/api/v1/auth/logout")
+    def logout(request: Request):
+        auth.logout(request.cookies.get(auth.cookie_name, ""))
+        response = JSONResponse({"logged_out": True})
+        response.delete_cookie(
+            auth.cookie_name,
+            path="/",
+            secure=settings.session_cookie_secure,
+            httponly=True,
+            samesite="lax",
+        )
+        return response
+
     @app.get("/readyz")
     def ready():
         try:
@@ -194,7 +303,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
                 version = session.execute(
                     text("SELECT version_num FROM alembic_version")
                 ).scalar_one()
-                if version != "38268b7c5d67":
+                if version != "c8429d7a6e10":
                     return JSONResponse(
                         {"status": "not_ready", "reason": "migrations required"}, status_code=503
                     )
@@ -289,6 +398,17 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
         offset: Annotated[int, Query(ge=0, le=10000)] = 0,
     ):
         with factory() as session:
+            if settings.proofops_public_demo:
+                visible = public_demo_reports(session)
+                return {
+                    "items": [
+                        job_summary(job, report)
+                        for _, job, report in visible[offset : offset + limit]
+                    ],
+                    "total": len(visible),
+                    "limit": limit,
+                    "offset": offset,
+                }
             rows = session.execute(
                 select(JobRow, ReportRow)
                 .outerjoin(ReportRow, ReportRow.id == JobRow.id)
@@ -310,6 +430,10 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
         candidate_commit: Annotated[str | None, Query(pattern=r"^[a-f0-9]{40,64}$")] = None,
     ):
         with factory() as session:
+            if settings.proofops_public_demo and not any(
+                marker.review_id == str(review_id) for marker, _, _ in public_demo_reports(session)
+            ):
+                raise HTTPException(404, "review not found")
             job = session.get(JobRow, str(review_id))
             if job is None:
                 raise HTTPException(404, "review not found")
@@ -347,23 +471,40 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
                     .scalars()
                     .all()
                 )
-                result["guard_drafts"] = [
-                    {
-                        "id": draft.id,
-                        "state": draft.state,
-                        "spec": draft.spec,
-                        "fixture_results": draft.fixture_results,
-                    }
-                    for draft in drafts
-                ]
+                result["guard_drafts"] = (
+                    []
+                    if settings.proofops_public_demo
+                    else [
+                        {
+                            "id": draft.id,
+                            "state": draft.state,
+                            "spec": draft.spec,
+                            "fixture_results": draft.fixture_results,
+                        }
+                        for draft in drafts
+                    ]
+                )
             return result
 
     @app.get("/api/v1/reviews/{review_id}/bundle")
     def download_bundle(review_id: UUID):
         with factory() as session:
-            artifact = session.execute(
-                select(ArtifactRow).where(ArtifactRow.review_id == str(review_id))
-            ).scalar_one_or_none()
+            if settings.proofops_public_demo:
+                marker = next(
+                    (
+                        marker
+                        for marker, _, _ in public_demo_reports(session)
+                        if marker.review_id == str(review_id)
+                    ),
+                    None,
+                )
+                if marker is None:
+                    raise HTTPException(404, "completed report bundle not found")
+                artifact = session.get(ArtifactRow, marker.artifact_id)
+            else:
+                artifact = session.execute(
+                    select(ArtifactRow).where(ArtifactRow.review_id == str(review_id))
+                ).scalar_one_or_none()
             if artifact is None:
                 raise HTTPException(404, "completed report bundle not found")
             raw = get_artifact(settings.artifact_dir, artifact.id)
@@ -374,7 +515,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
             )
 
     @app.post("/api/v1/reviews/{review_id}/guard-drafts", status_code=201)
-    def create_guard_draft(review_id: UUID, body: GuardRequest):
+    def create_guard_draft(review_id: UUID, body: GuardRequest, request: Request):
         with factory() as session:
             report = session.get(ReportRow, str(review_id))
             if report is None:
@@ -406,6 +547,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
             session.add(
                 AuditRow(
                     scope=scope,
+                    actor=request.state.principal.user_id,
                     kind="guard_draft_created",
                     data={
                         "draft_id": draft.id,
@@ -440,7 +582,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
             return draft, trusted, report.scope
 
     @app.post("/api/v1/guard-drafts/{draft_id}/validate")
-    def validate_guard_draft(draft_id: UUID):
+    def validate_guard_draft(draft_id: UUID, request: Request):
         original, trusted, scope = draft_context(draft_id)
         try:
             result = fixture_suite(trusted)
@@ -466,6 +608,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
             session.add(
                 AuditRow(
                     scope=scope,
+                    actor=request.state.principal.user_id,
                     kind="guard_draft_validated",
                     data={"draft_id": draft.id, "passed": result["passed"]},
                 )
@@ -523,7 +666,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
         )
 
     @app.post("/api/v1/reviews/{review_id}/outcomes", status_code=201)
-    def record_outcome(review_id: UUID, body: OutcomeRequest):
+    def record_outcome(review_id: UUID, body: OutcomeRequest, request: Request):
         with factory.begin() as session:
             report = session.get(ReportRow, str(review_id))
             if report is None:
@@ -540,7 +683,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
                 )
             value = body.model_dump(mode="json")
             value["reason"] = redact_text(body.reason)
-            value["actor"] = "local-demo-operator"
+            value["actor"] = request.state.principal.user_id
             value["verification"] = "operator_reported"
             outcome = OutcomeRow(review_id=str(review_id), scope=report.scope, data=value)
             session.add(outcome)
@@ -548,6 +691,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
             session.add(
                 AuditRow(
                     scope=report.scope,
+                    actor=request.state.principal.user_id,
                     kind="outcome_recorded",
                     data={"outcome_id": outcome.id, "review_id": str(review_id)},
                 )
@@ -557,6 +701,8 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
     @app.get("/api/v1/analytics")
     def analytics():
         with factory() as session:
+            if settings.proofops_public_demo:
+                return public_demo_analytics(session)
             return {**review_analytics(session), "billing": billing_analytics(session)}
 
     @app.post("/api/v1/billing/import-sample", status_code=201)
@@ -564,6 +710,10 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
         raw = (APP_ROOT / "fixtures/billing/focus_sample.csv").read_bytes()
         with factory.begin() as session:
             return ingest_costs(session, raw)
+
+    @app.post("/api/v1/admin/reset-demo-data")
+    def reset_demo(body: DemoResetRequest):
+        return reset_demo_data(settings=settings, factory=factory)
 
     return app
 

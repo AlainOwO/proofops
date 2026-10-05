@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from proofops.config import APP_ROOT, Settings, get_settings
-from proofops.domain.common import digest, utcnow
+from proofops.domain.common import digest, strict_json, utcnow
 from proofops.domain.engine import review
 from proofops.models.explanations import template_explanation
 from proofops.policies.guards import load_trusted
@@ -20,6 +20,7 @@ from proofops.storage.database import (
     AuditRow,
     BundleRow,
     ChangeRow,
+    DemoReviewRow,
     EvidenceRow,
     GuardDraftRow,
     JobRow,
@@ -107,6 +108,7 @@ def reset_demo_data(
                 .values(review_id=None)
             )
             for model in (
+                DemoReviewRow,
                 GuardDraftRow,
                 OutcomeRow,
                 ArtifactRow,
@@ -146,6 +148,16 @@ def reset_demo_data(
                         manifest={"hash": artifact_hash, "bytes": len(archive), "sanitized": True},
                     )
                 )
+                session.flush()
+                session.add(
+                    DemoReviewRow(
+                        review_id=job.id,
+                        scenario=name,
+                        core_hash=core_hash,
+                        explanation_hash=digest(explanation),
+                        artifact_id=artifact_hash,
+                    )
+                )
                 session.add(
                     AuditRow(
                         scope=job.scope,
@@ -168,3 +180,73 @@ def reset_demo_data(
             "Check the local database and migrations, and let active requests finish before retrying."
         ) from exc
     return {"deleted_reviews": deleted, "reviews": results}
+
+
+def public_demo_reports(session):
+    """Only explicitly seeded, unchanged fixture results can be served anonymously.
+
+    An ordinary imported review cannot publish itself by claiming a synthetic
+    origin. Existing billing, drafts, dispositions and model accounting stay private.
+    """
+    rows = session.execute(
+        select(DemoReviewRow, JobRow, ReportRow)
+        .join(JobRow, JobRow.id == DemoReviewRow.review_id)
+        .join(ReportRow, ReportRow.id == DemoReviewRow.review_id)
+        .order_by(JobRow.created_at.desc())
+    ).all()
+    visible = []
+    for marker, job, report in rows:
+        if marker.scenario not in DEMO_REPLAYS:
+            continue
+        manifest = strict_json(
+            (APP_ROOT / "fixtures/replays" / marker.scenario / "manifest.json").read_bytes()
+        )
+        if (
+            job.state == "completed"
+            and job.mode == "replay"
+            and job.ai_preference == "off"
+            and report.core.get("origin") == "synthetic_fixture"
+            and report.core.get("input_hashes") == manifest["files"]
+            and report.explanation.get("status") == "template"
+            and digest(report.core) == marker.core_hash
+            and digest(report.explanation) == marker.explanation_hash
+        ):
+            visible.append((marker, job, report))
+    return visible
+
+
+def public_demo_analytics(session) -> dict:
+    reports = [report for _, _, report in public_demo_reports(session)]
+    counts = {
+        outcome: sum(report.outcome == outcome for report in reports)
+        for outcome in {report.outcome for report in reports}
+    }
+    return {
+        "review_counts": counts,
+        "review_count": len(reports),
+        "projected_comparisons": [
+            {
+                "review_id": report.id,
+                "origin": report.core["origin"],
+                "outcome": report.outcome,
+                "cost": report.core.get("cost"),
+                "evaluated_at": report.core["evaluation_reference_time"],
+            }
+            for report in reports
+        ],
+        "observed_outcomes": [],
+        "model": {
+            "attempts": 0,
+            "actual_usd": "0",
+            "pending_reserved_usd": "0",
+            "p50_seconds": None,
+            "p95_seconds": None,
+            "basis": "Seeded template results only; no model calls in the public demo.",
+        },
+        "billing": {
+            "totals": [],
+            "groups": [],
+            "note": "Workspace billing is not part of the public demo.",
+        },
+        "bounds": "Only explicitly seeded synthetic reviews are public. Projections are separate alternatives, not realized savings.",
+    }

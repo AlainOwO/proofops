@@ -9,10 +9,21 @@ APP_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", hide_input_in_errors=True)
 
-    database_url: str = "postgresql+psycopg://proofops:proofops_local@127.0.0.1:55432/proofops"
+    database_url: str = "postgresql+psycopg://proofops@127.0.0.1:55432/proofops"
     artifact_dir: Path = APP_ROOT / "artifacts"
+    proofops_mode: Literal["local", "hosted"] = "local"
+    proofops_public_demo: bool = False
+    secret_key: SecretStr = SecretStr("")
+    proofops_admin_username: str = ""
+    proofops_admin_password: SecretStr = SecretStr("")
+    session_cookie_secure: bool = True
+    session_ttl_seconds: int = Field(default=28_800, ge=60, le=86_400)
+    login_window_seconds: int = Field(default=900, ge=60, le=3600)
+    login_max_failures: int = Field(default=5, ge=3, le=10)
+    login_max_ip_attempts: int = Field(default=60, ge=10, le=300)
+    allowed_hosts: str = "127.0.0.1,localhost,api"
     ai_mode: Literal["off", "live"] = "off"
     openai_api_key: SecretStr = SecretStr("")
     anthropic_api_key: SecretStr = SecretStr("")

@@ -26,7 +26,9 @@ def postgres_factory():
 
     url = os.getenv(
         "TEST_DATABASE_URL",
-        "postgresql+psycopg://proofops:proofops_local@127.0.0.1:55432/proofops_test",
+        make_url(get_settings().database_url)
+        .set(database="proofops_test")
+        .render_as_string(hide_password=False),
     )
     if make_url(url).database != "proofops_test":
         pytest.fail("Integration tests may only use the dedicated proofops_test database")
@@ -50,3 +52,50 @@ def db(postgres_factory):
     with postgres_factory.begin() as session:
         session.execute(text("TRUNCATE TABLE " + names + " RESTART IDENTITY CASCADE"))
     return postgres_factory
+
+
+@pytest.fixture
+def auth_settings(db):
+    import secrets
+    from uuid import uuid4
+
+    from proofops.config import APP_ROOT, Settings
+
+    return Settings(
+        _env_file=None,
+        database_url=db.kw["bind"].url.render_as_string(hide_password=False),
+        artifact_dir=APP_ROOT / "artifacts/auth-tests" / uuid4().hex,
+        secret_key=secrets.token_urlsafe(48),
+        session_cookie_secure=False,
+        allowed_hosts="testserver,127.0.0.1,localhost",
+        cors_origins="http://testserver,http://127.0.0.1:5173",
+        proofops_admin_username="",
+        proofops_admin_password="",
+        ai_mode="off",
+    )
+
+
+@pytest.fixture
+def login_user(db):
+    import secrets
+
+    from proofops.auth import create_user
+
+    def login(api, role="admin", *, username=None, password=None, create=True):
+        username = username or f"{role}-{secrets.token_hex(4)}"
+        password = password or secrets.token_urlsafe(32)
+        if create:
+            create_user(db, username, password, role)
+        api.headers["Origin"] = str(api.base_url).rstrip("/")
+        challenge = api.get("/api/v1/auth/login")
+        assert challenge.status_code == 200
+        response = api.post(
+            "/api/v1/auth/login",
+            json={"username": username, "password": password},
+            headers={"X-CSRF-Token": challenge.json()["csrf_token"]},
+        )
+        assert response.status_code == 200
+        api.headers["X-CSRF-Token"] = response.json()["csrf_token"]
+        return username, password, response
+
+    return login

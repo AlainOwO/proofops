@@ -1,10 +1,12 @@
 import argparse
+import getpass
 import json
 import subprocess
 import sys
 from pathlib import Path
 
 from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 from proofops.config import APP_ROOT, get_settings
 from proofops.domain.common import bytes_digest, canonical, strict_json
@@ -36,6 +38,21 @@ def owned_path(path: Path, *, output=False) -> Path:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="proofops")
     commands = parser.add_subparsers(dest="command", required=True)
+    users_parser = commands.add_parser(
+        "users", help="Host-operator account setup; passwords are never command arguments"
+    )
+    users_commands = users_parser.add_subparsers(dest="users_command", required=True)
+    for name in ("create", "set-password", "disable"):
+        user_parser = users_commands.add_parser(name)
+        user_parser.add_argument("--username", required=True)
+        if name == "create":
+            user_parser.add_argument("--role", choices=["admin", "viewer"], required=True)
+        if name != "disable":
+            user_parser.add_argument(
+                "--password-stdin",
+                action="store_true",
+                help="Read one password from standard input instead of prompting",
+            )
     review_parser = commands.add_parser(
         "review", help="Review a sanitized input bundle with the shared deterministic engine"
     )
@@ -96,7 +113,32 @@ def main(argv: list[str] | None = None) -> int:
     evaluate_parser.add_argument("--output", type=Path, default=APP_ROOT / "artifacts/evaluation")
     args = parser.parse_args(argv)
     try:
-        if args.command == "review":
+        if args.command == "users":
+            from proofops.auth import create_user, update_user
+            from proofops.storage.database import session_factory
+
+            password = None
+            if args.users_command != "disable":
+                if args.password_stdin:
+                    password = sys.stdin.readline(1024).rstrip("\r\n")
+                else:
+                    password = getpass.getpass("Password: ")
+                    if password != getpass.getpass("Confirm password: "):
+                        raise ValueError("Passwords did not match.")
+            if args.users_command == "create":
+                assert password is not None
+                create_user(session_factory(), args.username, password, args.role)
+                print("User created.")
+            else:
+                update_user(
+                    session_factory(),
+                    args.username,
+                    password=password,
+                    disable=args.users_command == "disable",
+                )
+                print("User updated; existing sessions revoked.")
+            code = 0
+        elif args.command == "review":
             bundle = load_directory(args.bundle)
             trusted = load_trusted(args.trusted_policy)
             if args.trusted_map:
@@ -271,6 +313,16 @@ def main(argv: list[str] | None = None) -> int:
                         {"loc": list(item["loc"]), "message": item["msg"], "type": item["type"]}
                         for item in exc.errors()
                     ],
+                }
+            )
+        )
+        code = 1
+    except SQLAlchemyError:
+        print(
+            json.dumps(
+                {
+                    "error": "database_unavailable",
+                    "detail": "Check database configuration and migrations.",
                 }
             )
         )

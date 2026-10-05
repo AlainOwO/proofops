@@ -38,13 +38,19 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
-def demo_settings(db, monkeypatch):
+def demo_settings(db, monkeypatch, auth_settings):
     settings = Settings(
         _env_file=None,
         database_url=db.kw["bind"].url.render_as_string(hide_password=False),
         artifact_dir=APP_ROOT / "artifacts/demo-reset-tests" / uuid4().hex,
         # Even a live preference in local configuration must never invoke a model.
         ai_mode="live",
+        secret_key=auth_settings.secret_key,
+        allowed_hosts=auth_settings.allowed_hosts,
+        cors_origins=auth_settings.cors_origins,
+        session_cookie_secure=False,
+        proofops_admin_username="",
+        proofops_admin_password="",
     )
     monkeypatch.setattr(demo, "get_settings", lambda: settings)
     monkeypatch.setattr(demo, "session_factory", lambda _: db)
@@ -154,10 +160,11 @@ def test_reset_cleans_linked_data_and_preserves_accounting_and_files(
 
 
 def test_seeded_reports_are_exact_engine_results_downloadable_and_repeatable(
-    db, demo_settings, trusted
+    db, demo_settings, trusted, login_user
 ):
     previous_ids = set()
     with TestClient(create_app(demo_settings, factory=db)) as api:
+        login_user(api)
         for deleted in (0, 3):
             result = demo.reset_demo_data()
             assert result["deleted_reviews"] == deleted

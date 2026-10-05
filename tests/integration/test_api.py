@@ -3,7 +3,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from proofops.api.app import create_app
-from proofops.config import APP_ROOT, Settings
+from proofops.config import APP_ROOT
 from proofops.storage.analytics import billing_analytics, ingest_costs
 from proofops.storage.bundles import replay_export
 from proofops.workers.runner import run_once
@@ -12,9 +12,10 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
-def client(db):
-    settings = Settings(artifact_dir=APP_ROOT / "artifacts/tests", ai_mode="off")
+def client(db, auth_settings, login_user):
+    settings = auth_settings
     with TestClient(create_app(settings, factory=db)) as client:
+        login_user(client)
         yield client, settings
 
 
