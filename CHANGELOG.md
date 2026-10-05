@@ -1,5 +1,12 @@
 # Changelog
 
+## Presentation-ready demo — 2026-10-05
+
+- Added `proofops reset-demo-data` with default-no confirmation and `--yes`. It atomically replaces saved reviews and their drafts, dispositions and imported bundle records with exactly the three supplied replay scenarios. The shared review engine, recorded evidence time, template explanation and export format determine every result; the reset never invokes a model or AWS collector.
+- Limited reset to the local application/test PostgreSQL databases and explicit review tables, with concurrency checks and rollback on failure. Preserved billing, trusted contracts/revisions, budgets, reservations, ledgers, caches, audit history and pre-existing files. Model attempts linked to deleted reviews retain their accounting with only the review foreign key detached; unrelated attempts are unchanged. No evaluation, research or evaluator directories are read or cleared by reset.
+- Assumptions: this remains a local, single-service demo using the existing synthetic fixtures and approved policy. Reset removes all saved reviews, including failed/queued jobs and manually imported review inputs; let running reviews finish first. Export archives remain on disk, including any created before a failed database transaction. No review rules, outcomes, costs, fixtures or research files change.
+- Added 29 reset tests covering confirmation/EOF/interruption, protected database/path boundaries, linked-record cleanup, accounting/file preservation, repeated reset, exact engine-result parity, downloadable replay, running/concurrent jobs and rollback. All 29 passed against the dedicated PostgreSQL test database; the existing upstream TestClient deprecation warning remains.
+
 ## UI polish — 2026-10-05
 
 - Split the frontend entry point into an app shell, reviews/report/outcomes components, a workspace hook, and shared presentation helpers. The extraction preserves markup, API requests, hash routes, polling, form state and displayed review results.

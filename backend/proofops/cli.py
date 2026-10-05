@@ -61,6 +61,10 @@ def main(argv: list[str] | None = None) -> int:
         "replay", help="Reproduce a saved report at its recorded time without model calls"
     )
     replay_parser.add_argument("bundle", type=Path)
+    reset_parser = commands.add_parser(
+        "reset-demo-data", help="Delete saved local reviews and seed exactly three AI-off replays"
+    )
+    reset_parser.add_argument("--yes", action="store_true", help="Skip the confirmation prompt")
     guards_parser = commands.add_parser(
         "guards", help="Guard-only fixtures; does not assess performance or cost"
     )
@@ -156,6 +160,31 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
             code = 0 if matches else 1
+        elif args.command == "reset-demo-data":
+            if not args.yes:
+                print(
+                    "This deletes all saved local reviews, guard drafts, dispositions and "
+                    "imported inputs. Billing, policies, AI accounting and files on disk "
+                    "(including evaluation and research data) are preserved."
+                )
+                try:
+                    confirmed = input("Replace them with exactly 3 AI-off demo replays? [y/N] ")
+                except (EOFError, KeyboardInterrupt):
+                    confirmed = ""
+                if confirmed.strip().lower() not in {"y", "yes"}:
+                    print("Demo reset cancelled; no data changed.")
+                    return 1
+            from proofops.storage.demo import reset_demo_data
+
+            result = reset_demo_data()
+            print(
+                f"Removed {result['deleted_reviews']} saved reviews; "
+                "created exactly 3 completed replay results (AI off)."
+            )
+            for item in result["reviews"]:
+                print(f"  {item['scenario']}: {item['outcome']}")
+            print("Open http://127.0.0.1:5173/#/reviews")
+            code = 0
         elif args.command == "guards":
             result = fixture_suite(
                 load_trusted(owned_path(args.policy_dir) / "reports-demo.json"),

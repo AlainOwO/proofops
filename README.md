@@ -48,6 +48,16 @@ For any completed scenario, expand **Inspect cited facts and assumptions** and s
 
 ## Replay and guard commands
 
+Reset shortcut (API container running):
+
+```sh
+docker compose exec api proofops reset-demo-data
+```
+
+Confirm with `y` or `yes`; an empty answer, refusal or closed input cancels with exit 1. For an unattended reset, use `docker compose exec -T api proofops reset-demo-data --yes`. Native equivalent: `.venv/bin/proofops reset-demo-data`.
+
+Reset replaces all saved reviews, guard drafts, dispositions and imported bundle records with exactly three **completed**, AI-off replays at their recorded times. It does not need the worker. It only accepts the local `proofops` database (or `proofops_test` for tests), refuses while a review is running, and rolls back database changes if seeding fails. Billing, trusted contracts/policies, model accounting/cache, audit history and existing files/exports are preserved. Evaluation, research and evaluator data are outside the reset; no directories are cleared.
+
 These commands also work inside the API container:
 
 ```sh
