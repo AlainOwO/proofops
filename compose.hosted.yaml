@@ -26,6 +26,8 @@ x-runtime: &runtime
   OPENAI_API_KEY: ""
   ANTHROPIC_API_KEY: ""
   AWS_EC2_METADATA_DISABLED: "true"
+  SEARCH_PROVIDER: "off"
+  SEARCH_API_KEY: ""
 
 services:
   db:

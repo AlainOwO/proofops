@@ -63,6 +63,12 @@ class Settings(BaseSettings):
     aws_lookback_seconds: int = Field(default=3600, ge=60, le=86400)
     aws_max_calls: int = Field(default=12, ge=1, le=30)
     aws_evidence_cache_ttl_seconds: int = Field(default=60, ge=0, le=3600)
+    search_provider: Literal["off", "google"] = "off"
+    search_api_key: SecretStr = SecretStr("")
+    search_engine_id: str = Field(default="", max_length=256, repr=False)
+    search_timeout_seconds: float = Field(default=5, gt=0, le=20)
+    search_max_results: int = Field(default=5, ge=1, le=10)
+    search_cache_ttl_seconds: int = Field(default=300, ge=0, le=3600)
     job_lease_seconds: int = Field(default=120, ge=30, le=600)
     job_timeout_seconds: int = Field(default=180, ge=30, le=600)
     cors_origins: str = "http://127.0.0.1:5173,http://localhost:5173"

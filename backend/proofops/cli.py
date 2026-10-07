@@ -1,6 +1,7 @@
 import argparse
 import getpass
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -9,9 +10,9 @@ from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from proofops.config import APP_ROOT, get_settings
-from proofops.domain.common import bytes_digest, canonical, strict_json
+from proofops.domain.common import canonical, strict_json
 from proofops.domain.engine import review
-from proofops.domain.schemas import RateCard, ServiceMap
+from proofops.domain.schemas import ServiceMap
 from proofops.domain.summaries import markdown_summary
 from proofops.models.explanations import template_explanation
 from proofops.policies.fixtures import fixture_suite
@@ -103,6 +104,13 @@ def main(argv: list[str] | None = None) -> int:
     collect_parser.add_argument(
         "--output", type=Path, default=APP_ROOT / "artifacts/aws-collection.json"
     )
+    research_parser = commands.add_parser(
+        "research", help="Optional untrusted public research; never used for approval"
+    )
+    research_parser.add_argument("--query", required=True)
+    research_parser.add_argument(
+        "--output", type=Path, default=APP_ROOT / "artifacts/research.json"
+    )
     evaluate_parser = commands.add_parser(
         "evaluate", help="Explicit evaluator-only entry point; never used by API or worker"
     )
@@ -155,14 +163,15 @@ def main(argv: list[str] | None = None) -> int:
                     )
             rate_card_path = args.rate_card or get_settings().rate_card_path
             if rate_card_path:
-                with owned_path(rate_card_path).open("rb") as stream:
-                    raw = stream.read(1_048_577)
-                if len(raw) > 1_048_576:
-                    raise ValueError("rate card exceeds size bound")
-                bundle.rates = RateCard.model_validate(strict_json(raw))
+                from proofops.tools.interfaces import PricingProvider
+                from proofops.tools.pricing import FileRateCardProvider
+
+                pricing: PricingProvider = FileRateCardProvider(owned_path(rate_card_path))
+                snapshot = pricing.load()
+                bundle.rates = snapshot.rates
                 bundle.input_hashes = {
                     **bundle.input_hashes,
-                    "configured-rates.json": bytes_digest(raw),
+                    "configured-rates.json": snapshot.content_hash,
                 }
             report = review(bundle, trusted)
             explanation = template_explanation(report)
@@ -250,9 +259,11 @@ def main(argv: list[str] | None = None) -> int:
             code = 0
         elif args.command == "collect":
             from proofops.collectors.aws import AWSCollector, ReplayCollector
+            from proofops.tools.interfaces import EvidenceProvider
 
             settings = get_settings()
             scope = load_trusted().contract.scope
+            collector: EvidenceProvider
             if args.mode == "live":
                 if (
                     settings.aws_account_id,
@@ -263,14 +274,15 @@ def main(argv: list[str] | None = None) -> int:
                     raise ValueError(
                         "AWS configuration must match the separately reviewed service scope"
                     )
-                result = AWSCollector.from_settings(settings).collect(scope)
+                collector = AWSCollector.from_settings(settings)
             else:
                 if not args.recording:
                     raise ValueError("collector replay requires --recording")
                 path = owned_path(args.recording)
                 if path.stat().st_size > 1_048_576:
                     raise ValueError("collector recording exceeds size bound")
-                result = ReplayCollector(strict_json(path.read_bytes())).collect(scope)
+                collector = ReplayCollector(strict_json(path.read_bytes()))
+            result = collector.collect(scope)
             target = owned_path(args.output, output=True)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(canonical(result))
@@ -287,6 +299,27 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
             code = 0
+        elif args.command == "research":
+            from proofops.tools.research import ResearchTool
+
+            target = owned_path(args.output, output=True)
+            target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            # Reserve a private, new artifact before any external request. An
+            # existing file/symlink is never overwritten, and sources stay off stdout.
+            descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(descriptor, "wb") as stream:
+                research_result = ResearchTool.from_settings(get_settings()).search(args.query)
+                stream.write(canonical(research_result))
+            print(
+                json.dumps(
+                    {
+                        "status": research_result.status,
+                        "sources": len(research_result.sources),
+                        "cache": research_result.cache_state,
+                    }
+                )
+            )
+            code = 1 if research_result.status in {"unavailable", "not_configured"} else 0
         else:
             # Only this explicitly invoked evaluation command can load evaluator
             # files. The API, worker and model context have no such capability.

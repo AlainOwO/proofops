@@ -93,6 +93,25 @@ attempt, workload and container bounds already exist and should be preserved.
   removes only disposable tool observations and the new indexes. Large databases
   need a maintenance window for ordinary index creation.
 
+### Optional tools and public research
+
+- Files: `tools/interfaces.py`, `tools/pricing.py`, `tools/research.py`, `cli.py`,
+  `config.py`, `.env.example`, hosted Compose files, `docs/tools.md`, README and
+  research/cache/CLI regression tests.
+- Added provider protocols around existing normalized evidence and dated rates.
+  The CLI rate override uses a bounded, hashed snapshot; all Decimal calculations,
+  source/coverage assumptions and cost distinctions remain in the existing engine.
+- Added an explicit `proofops research` CLI command with a provider-neutral search
+  protocol and optional Google adapter. It is disabled by default, uses a fixed
+  HTTPS endpoint, total async deadline, bounded result/body sizes, private output,
+  source attribution and the existing small observation cache. Provider errors
+  expose fixed codes only; result URLs are never fetched. Reflected configured
+  credentials are rejected.
+- Expected impact: repeated identical research can reuse cached results. Research
+  remains untrusted context in a separate artifact, never an approval input or
+  model/tool instruction. Hosted research stays explicitly off; no API route,
+  service, frontend dependency or egress network is added.
+
 Redis is not justified at this scale: PostgreSQL already coordinates durable jobs,
 idempotency, budgets and authentication. No new queue framework, service or
 monitoring stack is planned. Resource allocations will not be lowered.
@@ -146,6 +165,10 @@ runtime-role, AI-cache and AWS contract checks passed **94 tests** in 25.52 seco
 cache provenance must fit the existing flat, twelve-field evidence metadata
 schema; the adapter was corrected without loosening that schema or its tests.
 Ruff and mypy passed.
+
+Research/provider/cache/CLI/deployment/context checks passed **44 tests** using
+mocked HTTP (`artifacts/optimization/research.xml`); no external search was run.
+Ruff and mypy passed, including all new provider interfaces.
 
 ## Performance
 

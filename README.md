@@ -171,6 +171,14 @@ Output includes `report.json`, `explanation.json`, `summary.md` and `review.zip`
 
 ## Native development and testing
 
+Optional runtime controls are documented in [operations](docs/operations.md).
+Accepted AI output caching is configurable; [AWS observation caching](docs/aws.md)
+retains original evidence timestamps. The [optional research tool](docs/tools.md)
+is disabled by default and available only through an explicit CLI command. It
+does not affect review outcomes or the existing UI. Both hosted stacks keep AI
+and research off. See [CHANGES.md](CHANGES.md) for the current optimization pass,
+verification and measurement limits.
+
 Use Python 3.12, uv 0.12.23, Node 22 LTS and Docker for PostgreSQL. The host build was verified on macOS ARM64; Docker supplies Linux containers. PowerShell instructions are provided but were not executed on this host.
 
 macOS/Linux (a Python 3 interpreter is enough to bootstrap uv):

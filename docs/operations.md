@@ -254,6 +254,8 @@ Full mode additionally exposes imports, persistent jobs/artifacts, guard validat
 | AWS_PROFILE / AWS_CLUSTER / AWS_SERVICE / AWS_LOG_GROUP | Optional normal credential-chain profile and exact collection scope. |
 | AWS_LOOKBACK_SECONDS / AWS_MAX_CALLS | Default 3600-second lookback and 12 calls; code also caps pages, results and time. |
 | AWS_EVIDENCE_CACHE_TTL_SECONDS | 60 seconds by default; 0 disables reuse, maximum 3,600. Original collection/observation times and contract freshness checks are preserved; every hit verifies STS identity. |
+| SEARCH_PROVIDER / SEARCH_API_KEY / SEARCH_ENGINE_ID | Optional operator research: `off` and empty credentials by default; `google` requires both private values. Supplied hosted stacks keep it off. See [tools](tools.md). |
+| SEARCH_TIMEOUT_SECONDS / SEARCH_MAX_RESULTS / SEARCH_CACHE_TTL_SECONDS | Total provider deadline 5 seconds (at most 20), five results (1–10), cache TTL 300 seconds (0 disables, maximum 3,600). |
 | CORS_ORIGINS | Exact trusted web origins, local by default. Unknown origins are rejected; credentialed CORS never accepts wildcards. Hosted mode requires HTTPS. |
 | JOB_LEASE_SECONDS / JOB_TIMEOUT_SECONDS | Default 120-second lease, 180-second total job deadline. |
 | MAX_BUNDLE_BYTES / MAX_ARTIFACT_BYTES / MAX_BUNDLE_FILES | Default 5 MiB total, 1 MiB per JSON artifact, 24 ZIP entries. |

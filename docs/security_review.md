@@ -200,6 +200,19 @@ dispatch while preserving uncertain-charge accounting. These locks can retain a
 connection during the existing bounded provider timeout, so the worker/pool limits
 still matter. No provider tools or deployment authority are added.
 
+Optional research adds an explicit host-operator egress capability when configured
+outside the supplied offline hosted stacks. Its Google adapter has a fixed HTTPS
+endpoint, no redirects/environment proxies or result-URL fetching, an absolute
+async deadline, 256 KiB response cap and typed result/count bounds. Credentials
+stay in server configuration/request headers, are absent from query URLs, and
+reflected configured keys are rejected. Provider exceptions/bodies are not logged
+or returned. Attributed snippets/content remain untrusted plain text in a private
+artifact/cache: they are not HTML, commands, model instructions, policies or
+approval evidence. The API/worker/engine do not invoke search. Public/full Compose
+explicitly disables research and retains internal-only runtime networks. Future
+custom providers or content fetchers need their own egress/provenance review;
+the protocol is not permission to execute external instructions.
+
 Deploy with the standalone [Hosted public demo runbook](operations.md#hosted-public-demo), optionally adding the separate [gated full workspace](operations.md#hosted-full-mode-beside-the-public-demo). Never combine either with local Compose or change the public flag to offer writes. Run the owner migration through `2a0c9f4b7e61`, create strong accounts through the operator CLI, seed the appropriate synthetic workspace, and verify only the shared Caddy publishes 80/443. The isolated tests do not constitute a public deployment; the existing local stack was preserved. Rotate the historical credential independently in every other deployment that reused it.
 
 Open work includes SR-05 writable-login availability/recovery, SR-08 external audit storage/retention, SR-10 residual findings and recurring advisory checks, remaining SR-12 hardening, SR-13 advisory-prose semantics and SR-14 optional IAM scope. The demo's disabled writes/login, internal runtime networks, read-only mounts and restricted roles narrow its exposure; they do not erase the remaining image vulnerabilities or provide tenant isolation and production operations.
