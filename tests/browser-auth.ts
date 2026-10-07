@@ -69,6 +69,8 @@ export const test = base.extend<{}, { authenticatedState: StorageState }>({
     async ({ playwright }, use, info) => {
       const request = await playwright.request.newContext({
         baseURL: info.project.use.baseURL,
+        httpCredentials: info.project.use.httpCredentials,
+        ignoreHTTPSErrors: info.project.use.ignoreHTTPSErrors,
       });
       await loginApi(request);
       await use(await request.storageState());

@@ -76,6 +76,52 @@ Container tests use fresh labelled containers with no network, verify PostgreSQL
 
 These checks verify local TLS behavior, not public DNS, ACME issuance or internet load resistance. Run both filtered and unfiltered Trivy scans as shown in [the security review](security_review.md#hosted-demo-image-scan), record the actual image IDs/advisory timestamp, and retain unresolved findings. Do not treat a zero `--ignore-unfixed` count as a clean scan or publish the private artifacts directory.
 
+## Two-stack hosted checks
+
+Use this variant to test the public and full deployments together. It reuses the reserved `proofops-hosted-check` public project, adds `proofops-hosted-full-check`, and runs **all** the existing container/public HTTPS tests plus the full-mode checks. Do not run it concurrently with the single-host checks or reuse those names for a real workspace. Begin with both reserved projects and their volumes absent. It requires the cached images built above, Node/Chromium and the frozen Python/frontend test dependencies.
+
+```sh
+python3 -m scripts.prepare_hosted_full_checks
+public_full_check() {
+  docker compose --env-file artifacts/hosted-full/private/.env.hosted \
+    --env-file artifacts/hosted-full/private/.env.hosted-full \
+    -p proofops-hosted-check -f compose.hosted.yaml -f compose.hosted-gateway.yaml \
+    -f artifacts/hosted-full/private/images-public.json \
+    -f artifacts/hosted-full/private/gateway.yaml "$@"
+}
+full_check() {
+  docker compose --env-file artifacts/hosted-full/private/.env.hosted-full \
+    -p proofops-hosted-full-check -f compose.hosted-full.yaml \
+    -f artifacts/hosted-full/private/images-full.json \
+    -f artifacts/hosted-full/private/full.yaml "$@"
+}
+full_check up -d --no-build --pull never db
+full_check run --rm migrate
+public_full_check up -d --no-build --pull never db
+public_full_check run --rm migrate
+python3 -m scripts.prepare_hosted_full_checks --create-users
+full_check run --rm --no-deps seed
+public_full_check run --rm --no-deps seed
+full_check up -d --wait --no-build --pull never
+public_full_check up -d --wait --no-build --pull never
+public_full_check cp caddy:/data/caddy/pki/authorities/local/root.crt \
+  artifacts/hosted-full/private/root.crt
+.venv/bin/pytest tests/containers tests/hosted tests/hosted_full -q --tb=short \
+  --junitxml=artifacts/hosted-full/containers-https.xml
+.venv/bin/python -m scripts.run_hosted_full_browser_checks
+public_full_check --profile worker --profile maintenance down --volumes --remove-orphans
+full_check --profile maintenance down --volumes --remove-orphans
+```
+
+Preparation generates independent mode-0600 env files and synthetic account credentials under the ignored, mode-0700 `artifacts/hosted-full/private/` directory, preserving them on reruns. It briefly invokes the cached, network-disabled Caddy hasher; it does not start either application. `--create-users` creates the public bootstrap admin and full admin/viewer through `--password-stdin` after migrations, without credential arguments or stdout. It refuses duplicate accounts instead of changing their passwords. The root deployment env files and local workspace are not used.
+
+The only host publications are Caddy's loopback 15080/15443. Full-mode HTTPS clients verify the copied internal test CA and force both hostnames to loopback with proxies disabled. The original public suite retains its assertions, including stopped-upstream recovery. New checks cover every full-host path/method's Basic challenge, incorrect credentials, the independent application login, Secure cookies, CSRF and viewer rejection, full worker completion, cross-stack data/session separation, actual container ports/networks/volumes and restricted database roles. A separate synthetic account proves five failures still lock out the correct password despite forged forwarded IPs; no limiter is disabled or raised.
+
+The browser runner executes the original 20 Chromium tests through the full HTTPS hostname plus two shared-gateway tests. Its config adds gateway credentials only for the full origin. Explicitly anonymous test contexts clear inherited credentials. A Node DNS preload and Chromium resolver rules keep both names on loopback without editing host DNS. Browser TLS ignores the disposable issuer's trust error; the Python full-host checks verify that issuer. Traces/videos stay off and sessions stay in memory. The runner redacts raw and encoded credentials from console output and `artifacts/hosted-full/browser.txt`. Account JSON is private; do not upload the entire artifact directory.
+
+The final cleanup removes only these disposable projects, with the Caddy project first so it releases the full application's network. The normal backend command still runs the complete unit/policy/PostgreSQL suite, including private setup and both effective Compose models. These tests do not exercise public ACME, internet DoS resistance, MFA, backup decryption or a disaster-recovery rehearsal.
+
+
 ## T01–T24 acceptance matrix
 
 For a focused Python row, run `.venv/bin/pytest <path>::<test_name> -q`. All listed Python tests also belong to the full backend command above and its JUnit artifact. The common input root is `fixtures/replays/`; policy cases derive from the trusted fixture specification, and negative semantic labels live only under `evaluation/evaluator_only/`.

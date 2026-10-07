@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import re
@@ -8,7 +9,7 @@ import subprocess
 
 import pytest
 
-from scripts import configure_hosted
+from scripts import configure_hosted, run_hosted_full_browser_checks
 
 
 def private_assert(condition, message="Private credential invariant failed"):
@@ -286,3 +287,23 @@ def test_combined_compose_environment_preserves_bcrypt_and_separates_runtime_sec
                 for service in services.values()
             )
         )
+
+
+def test_browser_output_redacts_raw_and_encoded_credentials(tmp_path, monkeypatch, offline_bcrypt):
+    monkeypatch.setattr(configure_hosted, "ROOT", tmp_path)
+    monkeypatch.setattr(run_hosted_full_browser_checks, "PRIVATE", tmp_path)
+    configure_hosted.configure_full("demo.example.com", "full.example.com", "operator@example.com")
+    full = configure_hosted.read_private(tmp_path / ".env.hosted-full")
+    application_password = secrets.token_urlsafe(48)
+    configure_hosted.write_private(
+        tmp_path / ".env.users", {"FULL_ADMIN_PASSWORD": application_password}
+    )
+    encoded = base64.b64encode(
+        (full["FULL_BASIC_AUTH_USER"] + ":" + full["FULL_BASIC_AUTH_PASSWORD"]).encode()
+    ).decode()
+    sensitive = [application_password, encoded, *full.values()]
+    output = run_hosted_full_browser_checks.redact_output(
+        "prefix " + " ".join(sensitive) + " suffix"
+    )
+    private_assert(all(value not in output for value in sensitive))
+    assert output.startswith("prefix ") and output.endswith(" suffix")
