@@ -5,13 +5,12 @@ import os
 import re
 
 import psycopg
-from alembic import command
-from alembic.config import Config
 from psycopg import sql
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
 
-from proofops.config import APP_ROOT, Settings, get_settings
+from proofops.config import Settings, get_settings
+from proofops.storage.migrate import MigrationError, upgrade_database
 
 OWNER_ROLE = "proofops_owner"
 RUNTIME_ROLE = "proofops_runtime"
@@ -155,11 +154,9 @@ def main() -> None:
         else:
             if make_url(settings.database_url).username != OWNER_ROLE:
                 raise ValueError("Hosted migrations require the dedicated owner role.")
-            config = Config(str(APP_ROOT / "alembic.ini"))
-            config.set_main_option("script_location", str(APP_ROOT / "migrations"))
-            command.upgrade(config, "head")
-            with _connect(settings) as connection:
-                grant_runtime(connection)
+            upgrade_database(settings.database_url, os.environ["API_DATABASE_URL"], hosted=True)
+    except MigrationError as exc:
+        raise SystemExit(str(exc)) from None
     except Exception:
         # Connection/DDL errors may contain credentials or verifiers; never echo them.
         raise SystemExit(

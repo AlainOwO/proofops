@@ -1,4 +1,12 @@
 name: proofops
+
+# One tag for every backend service: rebuilding api also updates migrate/worker.
+x-backend: &backend
+  image: ${COMPOSE_PROJECT_NAME:-proofops}-backend
+  build: .
+
+x-database-url: &database-url postgresql+psycopg://proofops:${POSTGRES_PASSWORD}@db:5432/proofops
+
 services:
   db:
     image: proofops-db17
@@ -17,35 +25,36 @@ services:
       timeout: 3s
       retries: 30
   migrate:
-    build: .
+    <<: *backend
     cpus: 1.0
     mem_limit: 512m
-    command: ["alembic", "upgrade", "head"]
+    command: ["python", "-m", "proofops.storage.migrate"]
     environment:
-      DATABASE_URL: postgresql+psycopg://proofops:${POSTGRES_PASSWORD}@db:5432/proofops
+      DATABASE_URL: *database-url
+      API_DATABASE_URL: *database-url
     depends_on:
       db: {condition: service_healthy}
   api:
-    build: .
+    <<: *backend
     cpus: 1.0
     mem_limit: 512m
     command: ["uvicorn", "proofops.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers"]
     env_file: [.env]
     environment:
-      DATABASE_URL: postgresql+psycopg://proofops:${POSTGRES_PASSWORD}@db:5432/proofops
+      DATABASE_URL: *database-url
       ARTIFACT_DIR: /app/artifacts
     ports: ["127.0.0.1:8000:8000"]
     volumes: ["proofops-artifacts:/app/artifacts"]
     depends_on:
       migrate: {condition: service_completed_successfully}
   worker:
-    build: .
+    <<: *backend
     cpus: 1.0
     mem_limit: 512m
     command: ["proofops-worker"]
     env_file: [.env]
     environment:
-      DATABASE_URL: postgresql+psycopg://proofops:${POSTGRES_PASSWORD}@db:5432/proofops
+      DATABASE_URL: *database-url
       ARTIFACT_DIR: /app/artifacts
     volumes: ["proofops-artifacts:/app/artifacts"]
     depends_on:

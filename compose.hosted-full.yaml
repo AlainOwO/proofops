@@ -3,6 +3,7 @@
 name: proofops-hosted-full
 
 x-app: &app
+  image: ${COMPOSE_PROJECT_NAME:-proofops-hosted-full}-backend
   build: .
   cpus: 1.0
   mem_limit: 512m
@@ -14,7 +15,7 @@ x-app: &app
   networks: [database]
 
 x-runtime: &runtime
-  DATABASE_URL: postgresql+psycopg://proofops_runtime:${FULL_RUNTIME_PASSWORD:?Run scripts/configure_hosted.py with both domains}@db:5432/proofops
+  DATABASE_URL: &runtime-database-url postgresql+psycopg://proofops_runtime:${FULL_RUNTIME_PASSWORD:?Run scripts/configure_hosted.py with both domains}@db:5432/proofops
   PROOFOPS_MODE: hosted
   PROOFOPS_PUBLIC_DEMO: "false"
   SECRET_KEY: ${FULL_SECRET_KEY:?Run scripts/configure_hosted.py with both domains}
@@ -71,6 +72,7 @@ services:
     command: ["python", "-m", "proofops.storage.roles", "migrate"]
     environment:
       DATABASE_URL: postgresql+psycopg://proofops_owner:${FULL_OWNER_PASSWORD}@db:5432/proofops
+      API_DATABASE_URL: *runtime-database-url
     depends_on:
       roles: {condition: service_completed_successfully}
   api:

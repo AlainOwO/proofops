@@ -5,6 +5,7 @@ import shutil
 import subprocess
 from fnmatch import fnmatch
 
+import pytest
 from proofops.config import APP_ROOT
 
 
@@ -46,6 +47,36 @@ def test_compose_core_services_have_cpu_and_memory_limits():
         units = {"k": 1024, "m": 1024**2, "g": 1024**3}
         count = int(memory[:-1]) * units[memory[-1]] if memory[-1] in units else int(memory)
         assert 0 < count <= 1_073_741_824
+
+
+@pytest.mark.parametrize(
+    "filename", ["compose.yaml", "compose.hosted.yaml", "compose.hosted-full.yaml"]
+)
+def test_migrate_and_api_share_image_and_verified_database_target(filename):
+    services = compose_model(filename)["services"]
+    api, migration = services["api"], services["migrate"]
+    assert api["image"]
+    for name in ("migrate", "worker", "roles", "seed"):
+        if name in services:
+            # Updating only the API image must also update the migration package.
+            assert services[name]["image"] == api["image"]
+            assert services[name]["build"] == api["build"]
+    assert migration["environment"]["API_DATABASE_URL"] == api["environment"]["DATABASE_URL"]
+    assert (
+        migration["environment"]["DATABASE_URL"].split("@", 1)[1]
+        == api["environment"]["DATABASE_URL"].split("@", 1)[1]
+    )
+    assert api["depends_on"]["migrate"]["condition"] == "service_completed_successfully"
+    assert (
+        services["worker"]["depends_on"]["migrate"]["condition"] == "service_completed_successfully"
+    )
+    if filename == "compose.yaml":
+        assert migration["command"] == ["python", "-m", "proofops.storage.migrate"]
+        assert migration["environment"]["DATABASE_URL"] == api["environment"]["DATABASE_URL"]
+    else:
+        assert migration["command"] == ["python", "-m", "proofops.storage.roles", "migrate"]
+        assert "proofops_owner:" in migration["environment"]["DATABASE_URL"]
+        assert "proofops_runtime:" in migration["environment"]["API_DATABASE_URL"]
 
 
 def test_hosted_compose_publishes_only_https_proxy_and_isolates_database():

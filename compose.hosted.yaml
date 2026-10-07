@@ -2,6 +2,8 @@
 name: proofops-hosted
 
 x-app: &app
+  # A partial api rebuild must also replace the one-shot migration image.
+  image: ${COMPOSE_PROJECT_NAME:-proofops-hosted}-backend
   build: .
   cpus: 1.0
   mem_limit: 512m
@@ -13,7 +15,7 @@ x-app: &app
   networks: [database]
 
 x-runtime: &runtime
-  DATABASE_URL: postgresql+psycopg://proofops_runtime:${PROOFOPS_RUNTIME_PASSWORD:?Run scripts/configure_hosted.py}@db:5432/proofops
+  DATABASE_URL: &runtime-database-url postgresql+psycopg://proofops_runtime:${PROOFOPS_RUNTIME_PASSWORD:?Run scripts/configure_hosted.py}@db:5432/proofops
   PROOFOPS_MODE: hosted
   PROOFOPS_PUBLIC_DEMO: "true"
   SECRET_KEY: ${SECRET_KEY:?Run scripts/configure_hosted.py}
@@ -67,6 +69,7 @@ services:
     command: ["python", "-m", "proofops.storage.roles", "migrate"]
     environment:
       DATABASE_URL: postgresql+psycopg://proofops_owner:${PROOFOPS_OWNER_PASSWORD}@db:5432/proofops
+      API_DATABASE_URL: *runtime-database-url
     depends_on:
       roles: {condition: service_completed_successfully}
   api:
