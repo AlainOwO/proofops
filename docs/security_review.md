@@ -1,5 +1,137 @@
 # Defensive security review
 
+## Latest commit delta review — 2026-10-08
+
+This review is limited to **`2794a53..73787e2`**: the 24 commits after
+`docs(security): finalize findings and verified remediation results`, covering
+90 changed files. Earlier code was read only to establish the boundaries used
+by these changes. The historical reviews below retain their original scope and
+results; their old image vulnerability counts are not a new scan.
+
+**No critical or high issue was confirmed in this delta.** Three medium issues
+and one low scope-hardening issue remain open below. No production code was
+changed. Each finding has a local characterization test; those tests deliberately
+describe an unresolved limitation and must not be interpreted as remediation.
+Additional negative/control tests protect the boundaries that held. Provider
+traffic uses mocks/stubs; runtime verification uses only local PostgreSQL,
+disposable Docker projects and internal TLS. No live AWS, AI or search API call
+was made, and no credential value is reproduced.
+
+| ID | Severity / status | File and line at `73787e2` | Finding, evidence and next action |
+|---|---|---|---|
+| SR-15 | **Medium — open** | `backend/proofops/tools/research.py:35`, `:47`, `:235`; `backend/proofops/cli.py:315` | Research URL validation rejects URL userinfo but preserves credential-bearing queries and fragments. Generated `access_token`, fragment token and `X-Amz-Signature` canaries survive in returned sources and the PostgreSQL cache while an `access_token=` snippet containing the same canary is redacted; CLI serialization also writes the full source URL. This violates the no-credentials-in-cache goal. Exposure is limited to optional operator-invoked research and its private artifact/shared workspace database; no HTTP research route or result-URL fetch exists. Reject sensitive URL parameters/fragments or retain a safely normalized attribution URL before persistence. Test: `tests/integration/test_research_cache.py::test_open_research_source_url_credentials_are_retained_in_cache` (three cases). |
+| SR-16 | **Medium — open** | `backend/proofops/collectors/aws.py:382`, `:427` | An AWS cache hit rechecks STS identity but does not recheck each source permission. A same-principal denial of `DescribeServices` is invisible at 59 seconds and observed at the 60-second TTL boundary; the old observation time remains intact. Default TTL is 60 seconds, maximum 3,600. This is bounded stale authorization, not a cross-account key collision or refreshed evidence timestamp. Disable the cache where immediate revocation is required, or design explicit permission/configuration invalidation. Previously acknowledged in the optimization prose; now tracked and tested in `tests/integration/test_cache_security.py::test_open_same_principal_permission_changes_are_only_seen_after_aws_cache_ttl`. |
+| SR-17 | **Medium — open; SR-08 retention** | `backend/proofops/auth.py:356`, `:369`; `backend/proofops/storage/audit.py:8` | New authentication auditing appends a durable row for every admitted peer/account-throttled login. HTTP admission bounds the rate (default 600 requests per peer per 60 seconds), but each new window admits more rows throughout the 900-second login lock; no retention or aggregation bounds the total. The regression proves outer quota rejection stops writes for that window, then the next window adds rows while throttle state remains two rows. Public-demo login is disabled and full hosting requires the Basic gateway; no authentication bypass or return of SR-04's throttle-map growth was found. Add bounded retention and aggregate repeated denials without losing security-relevant transitions. Test: `tests/integration/test_audit_attribution.py::test_http_throttled_login_audit_growth_is_per_admitted_request_across_windows`. |
+| SR-18 | **Low — open** | `backend/proofops/tools/research.py:169` | The new research key includes query, result limit, provider and credential/engine configuration digest, but no project/account/user scope. The same query/configuration under two operator AWS-account settings reuses one result in the same database. Current research is public, CLI-only and inside the documented shared workspace; this does not demonstrate anonymous access or a cross-tenant breach. It does not satisfy a stricter principal/project-isolated cache contract. Add an explicit scope before supporting private, personalized or multi-workspace research; separate databases remain the current workspace boundary. Test: `tests/integration/test_research_cache.py::test_open_research_cache_is_shared_across_operator_account_contexts`. |
+
+Requested controls checked in this delta:
+
+- **Research and normalized tools:** `tools/research.py:20`, `:93`, `:146`,
+  `:203` use one fixed Google HTTPS endpoint, disable redirects and environment
+  proxies, reject compressed responses, cap streamed bodies at 256 KiB, and
+  apply an absolute configurable 5-second deadline (maximum 20 seconds).
+  Result count and string lengths are bounded. HTTP(S) source URLs are
+  attribution only: even a metadata/private address is never fetched. Local
+  and hosted settings default to `off`; both hosted Compose files explicitly
+  set `SEARCH_PROVIDER: off` at line 31, and public-demo mode refuses research
+  before provider/cache access. Explicitly enabling research outside those
+  stacks remains a host-operator capability. `tools/interfaces.py:1` supplies
+  Python protocols, not executable provider tools or decision authority.
+- **Cache scope and invalidation:** `collectors/aws.py:389` hashes all domain
+  scope fields (account, region, cluster, service, Terraform address and
+  environment), STS Account/Arn/UserId and collection settings. Caller names and
+  credentials are not stored in plaintext keys or operation records. Generated
+  labelled log credentials are redacted before AWS caching. `models/router.py:142`
+  binds AI reuse to scope/input/policy/reference context, model, prompt, schema
+  and output settings and revalidates cached output at line 178. Neither cache
+  promises per-application-user/project tenancy: authenticated users share the
+  workspace by pre-existing design. `storage/tool_cache.py:47` rejects expired
+  or future observations and respects a shortened TTL; writes are bounded to
+  128 entries/512 KiB each with indexed, bounded cleanup. `storage/repository.py:30`
+  and `storage/analytics.py:159` use live SQL projections, not a stale global
+  review cache. Updates/deletions are immediately visible. Anonymous access
+  still fails authentication; public-demo reads use the separate seeded,
+  hash-validated path (`api/app.py:398`, `storage/demo.py:207`). SR-15/16/18 are
+  the exceptions to the requested cache guarantees; arbitrary unlabelled
+  secrets cannot be proven absent by text redaction alone.
+- **Operation metrics:** there is **no HTTP metrics endpoint**. Tests probe
+  `/metrics`, `/api/v1/metrics` and `/api/v1/operations`: ordinary anonymous
+  requests receive 401, authenticated requests 404, public-demo requests 403.
+  `observability.py:19`, `:60`, `:179`, `:209` use allowlisted metric names with finite, nonnegative numeric values and
+  static registered route templates, generate correlation UUIDs, and omit
+  request bodies, URL/query values, caller headers, SQL/parameters and exception
+  text. New success/error/unknown-route/denial canaries remain absent from
+  operation records. This is a statement about the added operation logger;
+  host log retention remains operational work.
+- **Workers:** `config.py:75` bounds concurrency to 1–4 and polling intervals
+  to 0.1–30 seconds with ordered minimum/maximum; idle/error backoff and shutdown
+  admission are tested. `storage/repository.py:219` uses database claims and
+  leases with a three-claim recovery limit. `workers/runner.py:119` fences a
+  lost owner's completion, and line 168 fences its failure update. Four-worker
+  and ownership-takeover tests preserve single completion. Public-demo guards
+  refuse work before queue claims/router construction. The inherited
+  cooperative deadline (`workers/runner.py:55`, `:98`) can retain a blocked
+  Python worker slot until its stage returns; new tests demonstrate this and
+  rejection of late persistence. This pre-existing runaway-job limitation is
+  still open, not newly fixed by polling/concurrency changes.
+- **Compose/hosted and migrations:** shared backend tags at line 6 of both
+  hosted files include API, worker, migrations, roles and seed; the API-only
+  rebuild regression executes the new migration image. Hosted read-only root
+  filesystems, dropped capabilities, `no-new-privileges`, internal application/
+  database networks, separate owner/runtime credentials, public artifact
+  read-only mounts and full-workspace writable artifact isolation remain.
+  Only the shared Caddy publishes hosted 80/443; local Compose retains its
+  intentional loopback API/web/database ports. `storage/migrate.py:34` verifies
+  matching targets and the packaged head, commits the upgrade, then checks the
+  head through a separate API-role connection. Fresh and prior-schema tests
+  exercise actual readiness and preserve the existing database/record.
+- **AI decision/context:** `models/context.py:69` still constructs an explicit
+  bounded facts/status packet; raw evidence, source IDs/labels, workload IDs,
+  finding prose and research results are excluded in both context forms.
+  `models/router.py:367` validates new explanations against the deterministic
+  report and line 178 revalidates cached output. Existing decision/fact/citation
+  mutation and injected-evidence tests remain intact. Research has no callsite
+  in the API, worker or engine. Advisory prose semantics remain the inherited
+  low SR-13 issue; model text cannot replace the saved decision.
+
+Final local verification for this delta:
+
+- **589 backend tests passed** in 127.90 seconds: the complete unit, actual
+  Conftest/policy and real-PostgreSQL integration suites, including all new
+  finding characterizations. Zero failures, errors or skips. The existing
+  upstream Starlette/TestClient deprecation warning remains.
+- **4 real-Compose migration tests passed** in 68.76 seconds; **37 existing
+  image/public/full HTTPS tests passed** in 15.73 seconds. Cached build layers
+  and images were used; no dependency or vulnerability scan is claimed. A
+  separate attempt with build-step networking disabled lacked the uv install
+  cache; hosted validation reused the current image already built and verified
+  by the migration tests. No test assertion was changed to accommodate setup.
+- **22 Chromium regressions passed** in 26.7 seconds through the authenticated
+  full gateway, including all 20 original browser tests and both gateway tests.
+  **3 seeded screenshot checks passed** in 2.1 seconds against that disposable
+  full workspace with its original credentials and assertions. The temporary
+  configuration reused the gateway settings; original documentation PNG bytes
+  were preserved. Browser traces/videos remained disabled and output used the
+  existing credential redactor.
+- Ruff lint/format, mypy, frontend production build and whitespace checks passed.
+  The actual guard fixture suite passed; replay evaluation reported **60/60
+  deterministic cases**, 20 groups and 120 template tasks. Its 360 provider
+  tasks remain explicitly unrun, consistent with the no-live-API constraint.
+
+Commands and machine evidence are under ignored `artifacts/security-delta/`
+(`backend.xml`, `compose-migrations.xml`, `containers-https.xml`, `screenshots.txt`,
+`evaluation/`); browser output is `artifacts/hosted-full/browser.txt`. Backend
+execution used `AI_MODE=off AWS_EC2_METADATA_DISABLED=true SEARCH_PROVIDER=off`
+and `pytest tests/unit tests/policy tests/integration -q --tb=short
+-o junit_family=legacy`; image/HTTPS and migration suites used their unchanged
+test paths. No test was weakened, skipped or marked expected-failure. The two
+hosted test projects and their newly created synthetic volumes were removed;
+the migration suite deliberately retains its uniquely named volumes for
+diagnosis. Original local workspace containers/data remain in place. Private
+test credentials are excluded from shared artifacts and this report.
+
+## Earlier review record
+
 Reviewed 2026-10-06, starting at `ecf0102`. The review includes all 301 tracked files (296 text files and five binary documents/images), the 24 locally available commits, and specifically `a7ecaec`, `47b3d98`, `8e4671b`, `ecf0102` and `docs/security.md`. Runtime, frontend, worker, CLI, migrations, test, CI, Docker, Terraform, fixture, evaluation and documentation paths were included. Historical text scanning covered 434 distinct text blobs; the ten historical binary blobs comprise two PDFs and eight PNGs. Generated/vendor directories are not treated as first-party source; dependency locks, local configuration and relevant build/test artifacts were inspected separately.
 
 The initial review used local inspection, synthetic canaries, mocked provider calls and local test services. The hosted follow-up also downloaded image manifests, OS packages and Trivy advisory data with authorization. No external deployment was tested, no cloud/model API was called, and no credential value is reproduced here. A negative pattern scan is not a guarantee that every possible secret has been found. References in the findings table refer to the starting revision; remediation, current source references and verification are recorded below.
