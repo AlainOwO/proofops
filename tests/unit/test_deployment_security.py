@@ -107,6 +107,29 @@ def test_hosted_compose_publishes_only_https_proxy_and_isolates_database():
     assert services["api"]["command"][services["api"]["command"].index("--workers") + 1] == "1"
 
 
+@pytest.mark.parametrize("filename", ["compose.hosted.yaml", "compose.hosted-full.yaml"])
+def test_shared_hosted_backend_preserves_privileges_mounts_and_research_off(filename):
+    services = compose_model(filename)["services"]
+    for name in ("roles", "migrate", "api", "worker", "seed"):
+        service = services[name]
+        assert service["image"] == services["api"]["image"]
+        assert service["read_only"] is True
+        assert service["cap_drop"] == ["ALL"]
+        assert service["security_opt"] == ["no-new-privileges:true"]
+        assert service["pids_limit"] == 128
+        assert not service.get("privileged")
+        assert not service.get("ports")
+        assert not service.get("network_mode")
+        assert not service.get("devices")
+        assert all(volume["type"] == "volume" for volume in service.get("volumes", []))
+    for name in ("api", "worker", "seed"):
+        environment = services[name]["environment"]
+        assert environment["SEARCH_PROVIDER"] == "off"
+        assert environment["SEARCH_API_KEY"] == ""
+        assert environment["AI_MODE"] == "off"
+        assert environment["AWS_EC2_METADATA_DISABLED"] == "true"
+
+
 def test_full_stack_is_standalone_private_writable_and_uses_restricted_runtime_roles():
     model = compose_model("compose.hosted-full.yaml")
     public = compose_model("compose.hosted.yaml")
