@@ -1,5 +1,30 @@
 # Changelog
 
+## Compose migration image consistency — 2026-10-08
+
+- Diagnosed an older `proofops-migrate` image whose packaged Alembic head was
+  `f6a91d2e83b4`, while the API image expected `2a0c9f4b7e61`. Both containers
+  used the same database credentials, network and database volume; the older
+  migration command exited successfully at its own head.
+- Local and hosted Compose now share one backend image across migration and
+  runtime services. Hosted-full and generated HTTPS test overrides preserve
+  that same image contract. Rebuilding only API also updates the migration
+  image, and normal Compose startup recreates and runs the migration service.
+- Migration success now requires packaged/API schema agreement and a committed
+  head revision read with the API's credentials from the same database/schema.
+  Hosted grants and schema changes commit together. Failed checks exit nonzero;
+  API readiness and runtime privilege restrictions remain enforced.
+- Added real PostgreSQL failure checks and four Compose regressions covering
+  fresh databases and upgrades from the previous release through API-only
+  rebuilds, including HTTP readiness, preserved records and retained volumes.
+  The Compose regression suite has its own CI job.
+- Verification: **536** backend/policy/PostgreSQL tests and **4** Compose cases
+  passed, plus Ruff lint/format and mypy. Fresh Compose cases use `up --build`;
+  upgrade cases rebuild only API before starting with dependencies. No tests
+  were skipped or weakened and no volumes were deleted. Results are saved in
+  `artifacts/checks/migration-backend.xml`, `compose-migrations.xml` in that same
+  directory, and the isolated `artifacts/compose-migrations/` project records.
+
 ## Repository optimization and full-host integration — 2026-10-07
 
 - Added the adjacent full hosted workspace behind the public stack's shared

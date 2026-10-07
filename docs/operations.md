@@ -223,6 +223,7 @@ Full mode additionally exposes imports, persistent jobs/artifacts, guard validat
 | Variable | Meaning / default |
 |---|---|
 | DATABASE_URL | PostgreSQL connection; host development uses port 55432. Compose replaces the host with `db`. |
+| API_DATABASE_URL | Migration-only verification connection, anchored to the API's `DATABASE_URL` in Compose. Hosted migration uses owner credentials for upgrades and runtime credentials for the final committed-head check. |
 | POSTGRES_PASSWORD | Required private, URL-safe database password for Compose; generated locally, no default. Existing volumes require a separate role-password rotation. |
 | SECRET_KEY | Required random secret, at least 32 characters / 16 distinct characters; generated locally, no default. Rotating it invalidates sessions. |
 | PROOFOPS_MODE | `local` by default. `hosted` requires HTTPS origins, Secure cookies and a strong active admin. |
@@ -276,7 +277,7 @@ Each input bundle carries its dated `rates.json`. The CLI can use an explicitly 
 | Login succeeds but a session is missing | Local HTTP requires `SESSION_COOKIE_SECURE=false`; hosted mode requires TLS and true. Use the same browser/API hostname. |
 | Request returns 401 / 403 | Sign in again for 401 outside demo mode. For 403, check role, demo mode, Origin and CSRF. Public-demo writes always return 403; hosted docs are disabled. |
 | Request returns 408 / 429 / admission 503 | Complete uploads within the deadline and respect `Retry-After`; inspect active request/peer capacity. Do not remove quotas or trust forwarded identities to evade a shared proxy bucket. |
-| Readiness returns 503 | Start PostgreSQL and run `alembic upgrade head`; missing model keys do not affect readiness. |
+| Readiness returns 503 | Check `migrate` logs and rebuild/start with Compose dependencies enabled. Successful migration logs must say the API database was verified at the packaged head. For native development, run `alembic upgrade head`. Missing model keys do not affect readiness. |
 | Review remains queued | Start the worker and inspect `docker compose logs --tail 100 worker`. A queued job has no fabricated report. |
 | A worker died | Restart it. Expired leases are reclaimed up to three claims; dispatched charges stay uncertain. |
 | PostgreSQL connection fails in a sandbox | Permit the specific local database test/command. Do not change to SQLite to bypass transaction checks. |
@@ -343,6 +344,33 @@ the owner migration and grants, then start the matching application images. Do
 this separately for public and full projects; do not copy credentials or data
 between them. Follow the same `migrate` services in the hosted runbooks; local
 Compose runs Alembic before startup.
+
+All backend services in a Compose project now use the same explicitly named
+`${COMPOSE_PROJECT_NAME}-backend` image. `docker compose build api` followed by
+`docker compose up -d api worker` therefore recreates an older completed migration
+container and runs the new migration before starting the matching API/worker.
+The hosted commands use the same project's `--env-file` and `-f` options. Keep
+dependencies enabled: `--no-deps` and `docker compose restart` do not perform an
+upgrade. Normal `docker compose up -d --build` also runs the migration gate.
+
+The migration gate checks that the packaged Alembic head matches the API's
+schema revision, upgrades and commits on the explicitly selected database
+connection, then opens a fresh connection using the API's credentials. It exits
+zero only after that connection sees the same database/schema and the required
+revision. Hosted grants commit with the schema change; owner/runtime separation
+is preserved. A missing verification URL, mismatched target, failed upgrade or
+stale revision exits nonzero and prevents dependent services from starting.
+
+The October 8 incident was caused by separately tagged backend images. The
+existing `proofops-migrate` image (`59c650a267f8`, built October 5 UTC) contained
+migrations only through `f6a91d2e83b4`, while `proofops-api` (`c64e8542f7d6`, built
+October 7 UTC) expected `2a0c9f4b7e61`. The migration command really was
+`alembic upgrade head`, so it succeeded at its older packaged head. Inspection
+confirmed identical local DB host, port, database, role and credentials, the
+same network and one database volume; no alternate database or volume was
+involved. The shared image and committed API check address both stale packaging
+and misdirected/no-op migrations without deleting or replacing volumes. See
+[Compose migration regression checks](testing.md#hosted-container-and-https-checks).
 
 For local Compose, restart `web` after recreating `api` even when the web image
 did not change: `docker compose restart web`. nginx resolves its upstream at
