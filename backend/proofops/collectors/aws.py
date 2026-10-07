@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from time import monotonic, sleep
 from typing import Any, Literal
 
@@ -11,6 +11,8 @@ from proofops.config import Settings
 from proofops.domain.common import digest, utcnow
 from proofops.domain.schemas import EvidenceRecord, Record, Scope
 from proofops.storage.bundles import redact_text
+from proofops.storage.database import session_factory
+from proofops.storage.tool_cache import ObservationCache
 
 
 class CallLimit(RuntimeError):
@@ -36,11 +38,14 @@ class AWSCollector:
         max_pages: int = 2,
         log_group: str = "",
         sleeper=sleep,
+        cache: ObservationCache | None = None,
+        cache_ttl_seconds: int = 60,
     ):
         if (
             not 1 <= max_calls <= 30
             or not 60 <= lookback_seconds <= 86400
             or not 1 <= max_pages <= 3
+            or not 0 <= cache_ttl_seconds <= 3600
         ):
             raise ValueError("collector limits are outside supported bounds")
         self.clients, self.max_calls, self.deadline_seconds = clients, max_calls, deadline_seconds
@@ -52,6 +57,7 @@ class AWSCollector:
         )
         self.calls, self.deadline = 0, 0.0
         self.request_metadata: list[dict] = []
+        self.cache, self.cache_ttl = cache, cache_ttl_seconds
 
     @classmethod
     def from_settings(cls, settings: Settings):
@@ -72,6 +78,10 @@ class AWSCollector:
             max_calls=settings.aws_max_calls,
             lookback_seconds=settings.aws_lookback_seconds,
             log_group=settings.aws_log_group,
+            cache=ObservationCache(session_factory(settings.database_url))
+            if settings.aws_evidence_cache_ttl_seconds
+            else None,
+            cache_ttl_seconds=settings.aws_evidence_cache_ttl_seconds,
         )
 
     def call(self, service: str, method: str, **kwargs):
@@ -363,22 +373,75 @@ class AWSCollector:
             raise ValueError("collector clients do not match the configured region")
         end = utcnow()
         start = end - timedelta(seconds=self.lookback)
-        identity = self.call("sts", "get_caller_identity")
+        try:
+            identity = self.call("sts", "get_caller_identity")
+        except (ClientError, BotoCoreError):
+            raise ValueError("AWS caller identity is unavailable; collection refused.") from None
         if identity.get("Account") != scope.account_id:
             raise ValueError("STS caller account differs from configured review scope")
+        # Always verify STS, including cache hits. Key by the actual caller, not
+        # a mutable profile name. No credentials or principal names are stored.
+        key = digest(
+            {
+                "collector": "aws-observation-v1",
+                "scope": scope,
+                "caller": {name: identity.get(name) for name in ("Account", "Arn", "UserId")},
+                "lookback": self.lookback,
+                "log_group": self.log_group,
+                "max_calls": self.max_calls,
+                "max_pages": self.max_pages,
+                "deadline_seconds": self.deadline_seconds,
+            }
+        )
+        cache_state = "disabled"
+        can_cache = (
+            self.cache is not None
+            and self.cache_ttl > 0
+            and all(identity.get(name) for name in ("Arn", "UserId"))
+        )
+        if can_cache:
+            assert self.cache is not None
+            lookup = self.cache.get("aws", key, self.cache_ttl, end)
+            cache_state = lookup.state
+            if lookup.observation:
+                saved = lookup.observation
+                try:
+                    valid = (
+                        Scope.model_validate(saved.data["scope"]) == scope
+                        and datetime.fromisoformat(saved.data["collected_at"]) == saved.collected_at
+                        and datetime.fromisoformat(saved.data["observed_end"]) <= end
+                        and len(saved.data["sources"]) == 3
+                        and all(
+                            CollectionSource.model_validate(item).status
+                            in {"complete", "not_configured"}
+                            for item in saved.data["sources"]
+                        )
+                    )
+                except (ValueError, KeyError, TypeError):
+                    valid = False
+                if valid:
+                    return {
+                        **saved.data,
+                        "calls": self.calls,
+                        "original_collection_calls": saved.data["calls"],
+                        "verification_request_metadata": self.request_metadata[:1],
+                        "cache": cache_metadata("hit", saved.collected_at, saved.expires_at, end),
+                    }
+                cache_state = "miss"
         sources = [
             self.attempt("aws_ecs", lambda: self.ecs_source(scope)),
             self.attempt("aws_cloudwatch", lambda: self.metric_source(scope, start, end)),
             self.attempt("aws_logs", lambda: self.log_source(start, end)),
         ]
-        return {
+        collected_at = utcnow()
+        result = {
             "schema_version": 1,
             "mode": "live",
             "origin": "aws_observation",
             "scope": scope.model_dump(mode="json"),
             "observed_start": start.isoformat(),
             "observed_end": end.isoformat(),
-            "collected_at": utcnow().isoformat(),
+            "collected_at": collected_at.isoformat(),
             "calls": self.calls,
             "limits": {
                 "max_calls": self.max_calls,
@@ -389,6 +452,36 @@ class AWSCollector:
             "identity_request_metadata": self.request_metadata[:1],
             "sources": [source.model_dump(mode="json") for source in sources],
         }
+        stored = False
+        if (
+            can_cache
+            and cache_state != "unavailable"
+            and all(source.status in {"complete", "not_configured"} for source in sources)
+        ):
+            assert self.cache is not None
+            stored = self.cache.put("aws", key, result, collected_at, self.cache_ttl)
+        result["cache"] = cache_metadata(
+            cache_state,
+            collected_at,
+            collected_at + timedelta(seconds=self.cache_ttl) if stored else None,
+            collected_at,
+        )
+        return result
+
+
+def cache_metadata(
+    state: str, collected_at: datetime, expires_at: datetime | None, now: datetime
+) -> dict:
+    return {
+        "state": state,
+        "source": "aws_observation",
+        "collected_at": collected_at.isoformat(),
+        "retrieved_at": now.isoformat(),
+        "expires_at": expires_at.isoformat() if expires_at else None,
+        "age_seconds": (now - collected_at).total_seconds(),
+        "freshness": "within_cache_ttl" if state == "hit" else "new_collection",
+        "contract_freshness": "not_assessed; review uses original observation timestamps",
+    }
 
 
 def task_evidence(collection: dict) -> EvidenceRecord:
@@ -411,17 +504,22 @@ def task_evidence(collection: dict) -> EvidenceRecord:
         origin=collection["origin"],
         redaction_state="allowlisted",
         metadata={
-            key: data.get(key)
-            for key in (
-                "cpu_units",
-                "memory_mib",
-                "image_digest",
-                "task_definition_arn",
-                "architecture",
-                "os",
-                "requires_fargate",
-                "task_population_complete",
-            )
+            **{
+                key: data.get(key)
+                for key in (
+                    "cpu_units",
+                    "memory_mib",
+                    "image_digest",
+                    "task_definition_arn",
+                    "architecture",
+                    "os",
+                    "requires_fargate",
+                    "task_population_complete",
+                )
+            },
+            "cache_state": collection.get("cache", {}).get("state", "unrecorded"),
+            "cache_retrieved_at": collection.get("cache", {}).get("retrieved_at"),
+            "cache_expires_at": collection.get("cache", {}).get("expires_at"),
         },
     )
 

@@ -241,6 +241,7 @@ Full mode additionally exposes imports, persistent jobs/artifacts, guard validat
 | PROOFOPS_OWNER_PASSWORD / PROOFOPS_RUNTIME_PASSWORD | Independent hosted database credentials. API/worker receive only a runtime URL; bootstrap and owner credentials are confined to maintenance services. |
 | ARTIFACT_DIR | Dedicated directory inside application `artifacts/`; rejects research, code, evaluator and trust directories. |
 | AI_MODE | `off` by default; `live` enables only otherwise eligible configured calls. |
+| AI_CACHE_ENABLED / AI_CACHE_TTL_SECONDS | Accepted-output cache on by default, TTL 300 seconds (1–3,600). Exact evidence/prompt/model/request keys and output validation remain required. |
 | OPENAI_API_KEY / ANTHROPIC_API_KEY | Empty secret environment variables. Never committed or logged. |
 | ALLOWED_PROVIDERS | Comma-separated explicit provider allowlist; empty blocks dispatch. |
 | CHEAP_PROVIDER / CHEAP_MODEL | Configurable first attempt; default provider OpenAI, exact model ID unconfigured. |
@@ -252,6 +253,7 @@ Full mode additionally exposes imports, persistent jobs/artifacts, guard validat
 | AWS_ACCOUNT_ID / AWS_REGION | Expected STS account and region; no account configured, region defaults ap-south-1. |
 | AWS_PROFILE / AWS_CLUSTER / AWS_SERVICE / AWS_LOG_GROUP | Optional normal credential-chain profile and exact collection scope. |
 | AWS_LOOKBACK_SECONDS / AWS_MAX_CALLS | Default 3600-second lookback and 12 calls; code also caps pages, results and time. |
+| AWS_EVIDENCE_CACHE_TTL_SECONDS | 60 seconds by default; 0 disables reuse, maximum 3,600. Original collection/observation times and contract freshness checks are preserved; every hit verifies STS identity. |
 | CORS_ORIGINS | Exact trusted web origins, local by default. Unknown origins are rejected; credentialed CORS never accepts wildcards. Hosted mode requires HTTPS. |
 | JOB_LEASE_SECONDS / JOB_TIMEOUT_SECONDS | Default 120-second lease, 180-second total job deadline. |
 | MAX_BUNDLE_BYTES / MAX_ARTIFACT_BYTES / MAX_BUNDLE_FILES | Default 5 MiB total, 1 MiB per JSON artifact, 24 ZIP entries. |

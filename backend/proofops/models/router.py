@@ -29,6 +29,7 @@ from proofops.policies.guards import (
 )
 from proofops.storage.coordination import try_work_lock
 from proofops.storage.database import CacheRow, session_factory
+from proofops.storage.tool_cache import prune_expired
 
 
 class ModelRouter:
@@ -273,6 +274,7 @@ class ModelRouter:
                             # output is cached, with original usage preserved.
                             if settings.ai_cache_enabled:
                                 with self.factory.begin() as session:
+                                    prune_expired(session, CacheRow, utcnow())
                                     session.execute(
                                         insert(CacheRow)
                                         .values(

@@ -17,6 +17,7 @@ from proofops.storage.database import (
     GuardRevisionRow,
     JobRow,
     LedgerRow,
+    ReportRow,
     WorkloadRow,
     identifier,
 )
@@ -24,6 +25,42 @@ from proofops.storage.database import (
 
 class IdempotencyConflict(ValueError):
     pass
+
+
+def review_summaries(session, limit: int, offset: int) -> list[dict]:
+    """Read only list fields; large cores/explanations stay in PostgreSQL."""
+    rows = session.execute(
+        select(
+            JobRow.id,
+            JobRow.bundle_id,
+            JobRow.state,
+            JobRow.stage,
+            JobRow.mode,
+            ReportRow.outcome,
+            ReportRow.core["origin"].as_string().label("origin"),
+            ReportRow.core["change"]["service_map"]["scope"]["service"]
+            .as_string()
+            .label("service"),
+            ReportRow.core["change"]["service_map"]["candidate_commit"]
+            .as_string()
+            .label("candidate_commit"),
+            JobRow.created_at,
+            JobRow.updated_at,
+            JobRow.error_code,
+        )
+        .outerjoin(ReportRow, ReportRow.id == JobRow.id)
+        .order_by(JobRow.created_at.desc(), JobRow.id.desc())
+        .offset(offset)
+        .limit(limit)
+    ).mappings()
+    return [
+        {
+            **row,
+            "created_at": row["created_at"].isoformat(),
+            "updated_at": row["updated_at"].isoformat(),
+        }
+        for row in rows
+    ]
 
 
 def store_trusted(session, trusted: TrustedRevision) -> None:

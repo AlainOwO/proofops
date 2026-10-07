@@ -162,11 +162,17 @@ def review_analytics(session) -> dict:
             select(ReportRow.outcome, func.count(ReportRow.id)).group_by(ReportRow.outcome)
         ).all()
     )
-    reports = (
-        session.execute(select(ReportRow).order_by(ReportRow.created_at.desc()).limit(100))
-        .scalars()
-        .all()
-    )
+    reports = session.execute(
+        select(
+            ReportRow.id,
+            ReportRow.outcome,
+            ReportRow.core["origin"].as_string().label("origin"),
+            ReportRow.core["cost"].label("cost"),
+            ReportRow.core["evaluation_reference_time"].as_string().label("evaluated_at"),
+        )
+        .order_by(ReportRow.created_at.desc())
+        .limit(100)
+    ).all()
     outcomes = (
         session.execute(select(OutcomeRow).order_by(OutcomeRow.created_at.desc()).limit(100))
         .scalars()
@@ -200,10 +206,10 @@ def review_analytics(session) -> dict:
         "projected_comparisons": [
             {
                 "review_id": item.id,
-                "origin": item.core["origin"],
+                "origin": item.origin,
                 "outcome": item.outcome,
-                "cost": item.core.get("cost"),
-                "evaluated_at": item.core["evaluation_reference_time"],
+                "cost": item.cost,
+                "evaluated_at": item.evaluated_at,
             }
             for item in reports
         ],

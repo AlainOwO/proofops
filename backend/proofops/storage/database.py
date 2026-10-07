@@ -25,6 +25,7 @@ from proofops.config import get_settings
 from proofops.domain.common import utcnow
 
 JSONType = JSON().with_variant(JSONB, "postgresql")
+SCHEMA_REVISION = "2a0c9f4b7e61"
 
 
 def identifier() -> str:
@@ -124,6 +125,7 @@ class JobRow(Base):
     __table_args__ = (
         UniqueConstraint("scope", "idempotency_key", name="uq_review_idempotency"),
         Index("ix_job_claim", "state", "lease_until"),
+        Index("ix_job_created_id", "created_at", "id"),
     )
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=identifier)
     bundle_id: Mapped[str] = mapped_column(ForeignKey("bundles.id"), index=True)
@@ -245,8 +247,17 @@ class CacheRow(Base):
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     scope: Mapped[str] = mapped_column(String(200), index=True)
     data: Mapped[dict] = mapped_column(JSONType)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ToolCacheRow(Base):
+    __tablename__ = "tool_observation_cache"
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    namespace: Mapped[str] = mapped_column(String(16))
+    data: Mapped[dict] = mapped_column(JSONType)
+    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
 
 class BillingImportRow(Base):

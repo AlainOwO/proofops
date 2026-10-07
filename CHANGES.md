@@ -74,6 +74,25 @@ attempt, workload and container bounds already exist and should be preserved.
 - Expected impact: fewer duplicate explanation calls. Deterministic outcomes,
   provider eligibility, two-attempt routing and budget limits are unchanged.
 
+### AWS observations and database reads
+
+- Files: `collectors/aws.py`, `storage/tool_cache.py`, `storage/database.py`,
+  `storage/repository.py`, `storage/analytics.py`, `api/app.py`, migration
+  `2a0c9f4b7e61`, `.env.example`, `docs/aws.md`, `docs/operations.md` and focused
+  cache/read/migration tests.
+- Added an optional 60-second observation cache in the existing PostgreSQL DB,
+  capped at 128 entries/512 KiB each. Cache hits verify STS caller identity and
+  retain the original observation/collection times. Failed/denied/pending/expired
+  observations are never reused as fresh evidence; zero TTL disables reuse.
+- List/analytics queries project only needed report fields. Detail loads the
+  trusted revision once. Added one job ordering index and two expiry indexes for
+  bounded cache cleanup. Existing pagination fields and public-demo allowlisting
+  remain unchanged.
+- Expected impact: fewer repeated AWS observations and less full-document
+  materialization. The additive migration preserves existing records; rollback
+  removes only disposable tool observations and the new indexes. Large databases
+  need a maintenance window for ordinary index creation.
+
 Redis is not justified at this scale: PostgreSQL already coordinates durable jobs,
 idempotency, budgets and authentication. No new queue framework, service or
 monitoring stack is planned. Resource allocations will not be lowered.
@@ -121,6 +140,13 @@ After the AI cache change, the cache/budget/recovery/measurement/context/adapter
 selection passed **41 tests** in 2.65 seconds, with no failures/skips
 (`artifacts/optimization/ai-cache.xml`). Full Ruff and backend mypy passed.
 
+Observation cache, migration downgrade/upgrade, projections, API, public-demo,
+runtime-role, AI-cache and AWS contract checks passed **94 tests** in 25.52 seconds
+(`artifacts/optimization/tools-and-reads.xml`). An initial run exposed that new
+cache provenance must fit the existing flat, twelve-field evidence metadata
+schema; the adapter was corrected without loosening that schema or its tests.
+Ruff and mypy passed.
+
 ## Performance
 
 No performance gain is claimed yet. Baseline production frontend assets are
@@ -142,6 +168,14 @@ After the cache repair, the identical four-request experiment made **two mocked
 provider calls**: accepted, cached, accepted, cached. This is a measured call-count
 reduction for that offline expiry scenario, not a measured provider cost/latency
 improvement.
+
+With the revised queries, the ten-review listing materializes **zero full report
+documents** instead of 100,530 bytes, while still executing three SQL statements
+including authentication and returning the same summaries. Detail reads the
+trusted revision **once**, down from twice. This measures document materialization,
+not total PostgreSQL wire bytes. Two mocked AWS collections use **six SDK calls**
+with reuse (five cold, one STS verification) versus **ten** without reuse. No live
+AWS latency/cost or whole-server CPU/memory reduction was measured.
 
 ## Compatibility
 

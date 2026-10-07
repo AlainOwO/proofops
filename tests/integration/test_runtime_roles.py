@@ -112,7 +112,7 @@ def test_runtime_cannot_assume_owner_but_can_append_audit(restricted):
     assert connection.exec_driver_sql("SELECT count(*) FROM audit_events").scalar_one() == 1
     assert (
         connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar_one()
-        == "f6a91d2e83b4"
+        == "2a0c9f4b7e61"
     )
 
 

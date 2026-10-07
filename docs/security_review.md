@@ -187,6 +187,19 @@ This change does not modify image/package pins or claim a new vulnerability scan
 
 ## Deployment and remaining open work
 
-Deploy with the standalone [Hosted public demo runbook](operations.md#hosted-public-demo), optionally adding the separate [gated full workspace](operations.md#hosted-full-mode-beside-the-public-demo). Never combine either with local Compose or change the public flag to offer writes. Run the owner migration through `f6a91d2e83b4`, create strong accounts through the operator CLI, seed the appropriate synthetic workspace, and verify only the shared Caddy publishes 80/443. The isolated tests do not constitute a public deployment; the existing local stack was preserved. Rotate the historical credential independently in every other deployment that reused it.
+Optimization follow-up (2026-10-07): the disposable PostgreSQL observation cache
+adds storage for normalized AWS metadata and redacted log excerpts. It is capped
+at 128 entries/512 KiB per entry, uses bounded indexed expiry cleanup, and is not
+exposed through a new public route. Every AWS cache hit verifies STS and keys by
+the actual caller/scope/request, retaining original observation times. Permission
+changes within the TTL may not be rechecked for every source; TTL membership never
+establishes contract freshness. Cache failure does not return expired evidence.
+AI cache entries are revalidated, keyed by prompt/model/output settings and
+refreshed after expiry; nonblocking PostgreSQL locks prevent duplicate identical
+dispatch while preserving uncertain-charge accounting. These locks can retain a
+connection during the existing bounded provider timeout, so the worker/pool limits
+still matter. No provider tools or deployment authority are added.
+
+Deploy with the standalone [Hosted public demo runbook](operations.md#hosted-public-demo), optionally adding the separate [gated full workspace](operations.md#hosted-full-mode-beside-the-public-demo). Never combine either with local Compose or change the public flag to offer writes. Run the owner migration through `2a0c9f4b7e61`, create strong accounts through the operator CLI, seed the appropriate synthetic workspace, and verify only the shared Caddy publishes 80/443. The isolated tests do not constitute a public deployment; the existing local stack was preserved. Rotate the historical credential independently in every other deployment that reused it.
 
 Open work includes SR-05 writable-login availability/recovery, SR-08 external audit storage/retention, SR-10 residual findings and recurring advisory checks, remaining SR-12 hardening, SR-13 advisory-prose semantics and SR-14 optional IAM scope. The demo's disabled writes/login, internal runtime networks, read-only mounts and restricted roles narrow its exposure; they do not erase the remaining image vulnerabilities or provide tenant isolation and production operations.

@@ -4,6 +4,32 @@ The implemented collector calls STS `GetCallerIdentity`, ECS `DescribeServices`,
 
 The account, region, cluster, service, task definition ARN, allocation, image and platform must match. Mixed task revisions, incomplete pagination and unknown OS/architecture remain insufficient. Service-average CPU/memory is context, not a correctness/latency measurement. Logs are bounded and redacted; empty, pending, denied and failed states remain distinct. A content hash proves identity, not source truthfulness.
 
+`AWS_EVIDENCE_CACHE_TTL_SECONDS=60` reuses complete observations in PostgreSQL for
+up to 60 seconds; `0` disables the cache, and the maximum is 3,600. Collection is
+still an explicit operator command, never an automatic review/API action. Every
+cache lookup first calls STS and verifies the configured account. The key includes
+the actual caller identity, exact scope, lookback, log group, collector version
+and collection limits. A changed caller or request cannot reuse another entry.
+
+Collection output records cache state, original collection time, retrieval time,
+age and expiration. `calls` counts the current operation's AWS calls; a hit also
+records `original_collection_calls`. Hits retain original source data, observed
+windows and `collected_at`. `task_evidence()` carries the provenance into evidence
+metadata; the deterministic engine still checks the original observed end against
+the contract. Being inside the cache TTL does **not** make evidence sufficiently
+fresh for a stricter contract. Expired, denied, failed or pending results are not
+reused. STS failure aborts collection; other permission failures remain explicit
+source states. A missing/unavailable cache performs the explicitly requested
+collection and labels the cache unavailable, never serving stale data as a fallback.
+
+The disposable tool cache holds at most 128 entries, at most 512 KiB each, shared
+with optional research. Inserts prune at most 64 expired entries using an expiry
+index and skip caching when capacity is full. The database is the existing
+workspace database; no additional service is required. These observations may
+contain private infrastructure metadata and redacted logs, so protect backups
+and operator access exactly like other evidence. Cached IAM permissions can change
+during the TTL: a hit verifies STS identity, not every ECS/CloudWatch permission.
+
 ```mermaid
 flowchart LR
   SSO[Local AWS credential chain / SSO] --> STS[STS account verification]

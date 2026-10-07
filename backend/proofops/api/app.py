@@ -36,6 +36,7 @@ from proofops.storage.analytics import billing_analytics, ingest_costs, review_a
 from proofops.storage.artifacts import get_artifact
 from proofops.storage.bundles import REPLAYS, import_zip, load_replay, redact_text
 from proofops.storage.database import (
+    SCHEMA_REVISION,
     ArtifactRow,
     AuditRow,
     BundleRow,
@@ -47,7 +48,12 @@ from proofops.storage.database import (
     session_factory,
 )
 from proofops.storage.demo import public_demo_analytics, public_demo_reports, reset_demo_data
-from proofops.storage.repository import IdempotencyConflict, create_job, store_bundle
+from proofops.storage.repository import (
+    IdempotencyConflict,
+    create_job,
+    review_summaries,
+    store_bundle,
+)
 
 
 class LoginRequest(Record):
@@ -283,7 +289,7 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
                 version = session.execute(
                     text("SELECT version_num FROM alembic_version")
                 ).scalar_one()
-                if version != "f6a91d2e83b4":
+                if version != SCHEMA_REVISION:
                     return JSONResponse(
                         {"status": "not_ready", "reason": "migrations required"}, status_code=503
                     )
@@ -396,16 +402,10 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
                     "limit": limit,
                     "offset": offset,
                 }
-            rows = session.execute(
-                select(JobRow, ReportRow)
-                .outerjoin(ReportRow, ReportRow.id == JobRow.id)
-                .order_by(JobRow.created_at.desc())
-                .offset(offset)
-                .limit(limit)
-            ).all()
+            items = review_summaries(session, limit, offset)
             total = session.scalar(select(func.count(JobRow.id)))
             return {
-                "items": [job_summary(job, report) for job, report in rows],
+                "items": items,
                 "total": total,
                 "limit": limit,
                 "offset": offset,
@@ -436,13 +436,14 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
                     candidate_commit is not None
                     and candidate_commit != core.change.service_map.candidate_commit
                 )
-                policy_changed = core.trusted_revision_hash != load_trusted().revision_hash
+                current_trusted = load_trusted()
+                policy_changed = core.trusted_revision_hash != current_trusted.revision_hash
                 age = (utcnow() - core.evaluation_reference_time).total_seconds()
                 result["applicability"] = {
                     "candidate_changed": changed,
                     "policy_changed": policy_changed,
                     "stale_now": age
-                    > load_trusted().contract.requirements.max_evidence_age_seconds,
+                    > current_trusted.contract.requirements.max_evidence_age_seconds,
                     "historical_snapshot": core.mode == "replay",
                     "deployment_approval": False,
                     "message": "Candidate changed; collect matching evidence and rerun."
