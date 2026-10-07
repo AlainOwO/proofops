@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     artifact_dir: Path = APP_ROOT / "artifacts"
     proofops_mode: Literal["local", "hosted"] = "local"
     proofops_public_demo: bool = False
+    operation_logging: bool = True
     secret_key: SecretStr = SecretStr("")
     proofops_admin_username: str = ""
     proofops_admin_password: SecretStr = SecretStr("")
@@ -71,6 +72,9 @@ class Settings(BaseSettings):
     search_cache_ttl_seconds: int = Field(default=300, ge=0, le=3600)
     job_lease_seconds: int = Field(default=120, ge=30, le=600)
     job_timeout_seconds: int = Field(default=180, ge=30, le=600)
+    worker_concurrency: int = Field(default=1, ge=1, le=4)
+    worker_poll_min_seconds: float = Field(default=0.5, ge=0.1, le=5)
+    worker_poll_max_seconds: float = Field(default=5, ge=0.1, le=30)
     cors_origins: str = "http://127.0.0.1:5173,http://localhost:5173"
     max_bundle_bytes: int = Field(default=5_242_880, ge=1024, le=20_971_520)
     max_artifact_bytes: int = Field(default=1_048_576, ge=1024, le=5_242_880)
@@ -105,6 +109,8 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def hosted_database(self) -> Self:
         self.validate_database_security()
+        if self.worker_poll_max_seconds < self.worker_poll_min_seconds:
+            raise ValueError("worker maximum poll interval must not be below the minimum")
         return self
 
     @field_validator("artifact_dir")

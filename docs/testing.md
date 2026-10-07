@@ -176,6 +176,28 @@ To resume missing comparison runs after calibration, use `compare` with the same
 
 ## Interpretation and unrun checks
 
+The optimization regressions additionally exercise cache expiry/replacement,
+changed evidence/prompt/model settings, concurrent AI dispatch, caller-bound AWS
+reuse and stale evidence, optional research failures/untrusted content, bounded
+worker polling/concurrency/deadlines, migration rollback and secret-free operation
+logs. All provider calls in these checks are mocked. k6 isolation tests execute
+`k6 inspect` (initialization only) against the pinned local tool; they send no
+workload requests and preserve smoke/full scenario thresholds. The runner refuses
+hosted/public-demo mode, and the JS target allowlist is limited to dedicated local
+8080/18080 targets. API/worker images contain neither k6 nor Playwright tooling.
+
+For repeatable offline call/read measurements:
+
+```sh
+AI_MODE=off AWS_EC2_METADATA_DISABLED=true .venv/bin/pytest \
+  tests/integration/test_optimization_measurements.py tests/integration/test_aws_cache.py \
+  -q -o junit_family=legacy --junitxml=artifacts/optimization/measurements.xml
+```
+
+JUnit properties record mocked provider call counts, full-document materialization,
+trusted-file reads and a small warm deterministic-engine timing sample. These are
+not production latency, cloud cost, CPU/RAM or realized-savings benchmarks.
+
 Passing means the stated checks passed for the exact supplied inputs. A known breach is a failure. Insufficient/incompatible measurements are inconclusive, even if the code correctly chooses `collect_evidence`. Unrun means prerequisites were absent. Local Linux ARM64 Docker measurements cannot validate the synthetic Linux x86_64 AWS approval. No cloud invoice or realized savings was measured.
 
 The FOCUS file is a separate 1,000-row sample: 13 negative billed rows, BilledCost `20.52022672899` USD and EffectiveCost `14.97651418586` USD. Tests derive those totals from the actual pinned input. They are not production dashboard constants.

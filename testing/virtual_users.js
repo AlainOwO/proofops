@@ -6,7 +6,10 @@ import execution from 'k6/execution';
 import { Counter, Rate, Trend } from 'k6/metrics';
 
 const baseUrl = (__ENV.TARGET_URL || 'http://127.0.0.1:8080').replace(/\/$/, '');
-if (!/^http:\/\/(127\.0\.0\.1|localhost|workload)(:\d+)?$/.test(baseUrl)) {
+if ((__ENV.PROOFOPS_MODE || 'local') !== 'local' || __ENV.PROOFOPS_PUBLIC_DEMO === 'true') {
+  throw new Error('Workload tests are disabled in hosted/public-demo mode.');
+}
+if (!/^http:\/\/((127\.0\.0\.1|localhost):(8080|18080)|workload:8080)$/.test(baseUrl)) {
   throw new Error('This workload is restricted to the dedicated local target.');
 }
 const runId = __ENV.RUN_ID || 'baseline-smoke-01';

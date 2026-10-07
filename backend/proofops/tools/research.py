@@ -11,6 +11,7 @@ from pydantic import ConfigDict, Field, SecretStr, field_validator
 from proofops.config import Settings
 from proofops.domain.common import canonical, digest, strict_json, utcnow
 from proofops.domain.schemas import Record
+from proofops.observability import measured
 from proofops.storage.bundles import redact_text
 from proofops.storage.database import session_factory
 from proofops.storage.tool_cache import ObservationCache
@@ -152,6 +153,7 @@ class ResearchTool:
         )
         return cls(settings, provider, cache=cache)
 
+    @measured("research.search")
     def search(self, query: str) -> ResearchResult:
         now, settings = utcnow(), self.settings
         base = ResearchResult(

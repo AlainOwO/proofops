@@ -121,6 +121,10 @@ def main(argv: list[str] | None = None) -> int:
     evaluate_parser.add_argument("--output", type=Path, default=APP_ROOT / "artifacts/evaluation")
     args = parser.parse_args(argv)
     try:
+        if get_settings().operation_logging:
+            from proofops.observability import configure_logging
+
+            configure_logging()
         if args.command == "users":
             from proofops.auth import create_user, update_user
             from proofops.storage.database import session_factory

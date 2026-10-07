@@ -259,8 +259,17 @@ def claim_job(factory, owner: str, lease_seconds: int = 120) -> str | None:
                     )
                 )
         if job.claimed_count >= 3:
-            job.state, job.error_code = "failed", "JOB_RECOVERY_LIMIT"
+            job.state, job.stage, job.error_code = "failed", "failed", "JOB_RECOVERY_LIMIT"
             job.lease_until = None
+            job.updated_at = now
+            session.add(
+                AuditRow(
+                    scope=job.scope,
+                    kind="review_failed",
+                    actor=job.requested_by,
+                    data={"review_id": job.id, "status": "JOB_RECOVERY_LIMIT"},
+                )
+            )
             return None
         job.state, job.owner, job.stage = "running", owner, "normalize_and_review"
         job.claimed_count += 1

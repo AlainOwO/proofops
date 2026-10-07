@@ -112,6 +112,25 @@ attempt, workload and container bounds already exist and should be preserved.
   model/tool instruction. Hosted research stays explicitly off; no API route,
   service, frontend dependency or egress network is added.
 
+### Worker bounds, observability and workload isolation
+
+- Files: `workers/runner.py`, `storage/repository.py`, `observability.py`,
+  `storage/database.py`, API boundaries, provider entry points, configuration,
+  full Compose, `scripts/run_workload.py`, `testing/virtual_users.js` and focused tests.
+- Worker polling backs off while idle and resets after work; concurrency is
+  bounded/configurable (default one, maximum four) using the existing queue.
+  Timeouts are checked before artifacts/commit, and exhausted recovery gets a
+  final failed stage/timestamp/audit record. Existing uncertain-charge recovery,
+  idempotency and public-demo refusal remain.
+- Added JSON timings and counters for requests, SQL, worker/review stages,
+  artifact sizes, queue wait, model usage, AWS calls and cache reuse. Logging
+  excludes secrets, SQL/parameters and private content; no monitoring service.
+- k6 refuses hosted/public-demo mode and unintended targets before running.
+  Its existing smoke/full workload profiles and thresholds remain intact.
+- Expected impact: fewer idle queue polls and better diagnosis. Maximum idle
+  pickup delay increases to five seconds by default. CPU/memory limits are not
+  reduced; no measured server-throughput or memory saving is claimed.
+
 Redis is not justified at this scale: PostgreSQL already coordinates durable jobs,
 idempotency, budgets and authentication. No new queue framework, service or
 monitoring stack is planned. Resource allocations will not be lowered.
@@ -169,6 +188,11 @@ Ruff and mypy passed.
 Research/provider/cache/CLI/deployment/context checks passed **44 tests** using
 mocked HTTP (`artifacts/optimization/research.xml`); no external search was run.
 Ruff and mypy passed, including all new provider interfaces.
+
+Worker, logging, budget/recovery, audit, HTTP boundaries and measurement checks
+passed **58 tests** in 5.45 seconds. Ten actual k6-initialization/runner-isolation
+checks passed in 0.32 seconds, sending no workload traffic. Evidence:
+`workers-and-logging.xml` and `workload-isolation.xml` under `artifacts/optimization/`.
 
 ## Performance
 

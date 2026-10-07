@@ -94,7 +94,11 @@ services:
   worker:
     <<: *app
     command: ["proofops-worker"]
-    environment: *runtime
+    environment:
+      <<: *runtime
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
+      WORKER_POLL_MIN_SECONDS: ${WORKER_POLL_MIN_SECONDS:-0.5}
+      WORKER_POLL_MAX_SECONDS: ${WORKER_POLL_MAX_SECONDS:-5}
     restart: unless-stopped
     volumes: ["full-artifacts:/app/artifacts"]
     depends_on:

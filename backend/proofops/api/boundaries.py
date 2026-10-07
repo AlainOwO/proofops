@@ -14,6 +14,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from proofops.config import Settings
+from proofops.observability import RequestOperations
 
 SECURITY_HEADERS = {
     b"content-security-policy": b"default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
@@ -46,7 +47,12 @@ class SecureFastAPI(FastAPI):
     def build_middleware_stack(self):
         # Starlette's ServerErrorMiddleware is outside add_middleware(). Wrap it
         # too, so unhandled 500s and every middleware rejection get the headers.
-        return SecurityHeadersBoundary(super().build_middleware_stack())
+        return SecurityHeadersBoundary(
+            RequestOperations(
+                super().build_middleware_stack(),
+                enabled=getattr(self.state, "operation_logging", True),
+            )
+        )
 
 
 class OriginBoundary:

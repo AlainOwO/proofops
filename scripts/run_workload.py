@@ -12,6 +12,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import httpx
+from proofops.config import get_settings
 from proofops.domain.common import bytes_digest, digest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,6 +30,12 @@ ALLOCATIONS = {
     "baseline": {"cpus": "2.0", "memory_mib": 512},
     "candidate": {"cpus": "1.0", "memory_mib": 256},
 }
+
+
+def require_local_experiment():
+    settings = get_settings()
+    if settings.proofops_mode != "local" or settings.proofops_public_demo:
+        raise ValueError("Workload experiments require local mode and an isolated test target.")
 
 
 def now():
@@ -92,6 +99,7 @@ def pins(image):
 
 
 def container_start(image_id, role, memory=None, pressure=False):
+    require_local_experiment()
     allocation = ALLOCATIONS.get(role, {"cpus": "1.0", "memory_mib": memory})
     memory = memory or allocation["memory_mib"]
     name = f"proofops-experiment-{uuid4().hex[:12]}"
@@ -179,6 +187,7 @@ def metric(summary, name, field="count", default=0):
 
 
 def run_one(image, role, run_id, profile):
+    require_local_experiment()
     directory = RESULTS / run_id
     if directory.exists():
         raise ValueError(f"run {run_id} already exists; use an unused run ID to preserve evidence")
@@ -350,6 +359,7 @@ def main():
         "--series", help="New experiment subdirectory; omit to resume the original series"
     )
     args = parser.parse_args()
+    require_local_experiment()
     RESULTS = experiment_directory(args.series)
     image = image_info()
     if args.mode in {"smoke", "all"}:

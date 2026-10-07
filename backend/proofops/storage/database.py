@@ -17,6 +17,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     create_engine,
+    event,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
@@ -286,7 +287,7 @@ def make_engine(url: str | None = None):
     url = url or get_settings().database_url
     if not url.startswith("postgresql"):
         raise ValueError("ProofOps requires PostgreSQL for transaction and lease guarantees")
-    return create_engine(
+    engine = create_engine(
         url,
         pool_pre_ping=True,
         pool_size=5,
@@ -297,6 +298,33 @@ def make_engine(url: str | None = None):
             "options": "-c statement_timeout=15000 -c lock_timeout=5000",
         },
     )
+    # Counters attach only to an active operation. SQL text/parameters and
+    # connection URLs are never collected or logged.
+    from time import perf_counter
+
+    from proofops.observability import current_operation
+
+    @event.listens_for(engine, "before_cursor_execute")
+    def before(conn, cursor, statement, parameters, context, executemany):
+        span = current_operation.get()
+        context.proofops_timing = (span, perf_counter()) if span else None
+
+    def finish(context):
+        timing = getattr(context, "proofops_timing", None)
+        if timing:
+            span, started = timing
+            span.query(perf_counter() - started)
+            context.proofops_timing = None
+
+    @event.listens_for(engine, "after_cursor_execute")
+    def after(conn, cursor, statement, parameters, context, executemany):
+        finish(context)
+
+    @event.listens_for(engine, "handle_error")
+    def failed(context):
+        finish(context.execution_context)
+
+    return engine
 
 
 @lru_cache

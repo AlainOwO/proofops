@@ -30,6 +30,7 @@ from proofops.config import APP_ROOT, Settings, get_settings
 from proofops.domain.common import bytes_digest, canonical, digest, strict_json, utcnow
 from proofops.domain.schemas import Label, Origin, Record, ReviewReport
 from proofops.models.router import ModelRouter
+from proofops.observability import configure_logging
 from proofops.policies.fixtures import fixture_suite, policy_data
 from proofops.policies.guards import TrustedRevision, load_trusted, validate_proposal
 from proofops.storage.analytics import billing_analytics, ingest_costs, review_analytics
@@ -132,6 +133,9 @@ def create_app(settings: Settings | None = None, *, factory=None) -> FastAPI:
         openapi_url=None if hosted else "/openapi.json",
     )
     app.state.settings, app.state.factory = settings, factory
+    app.state.operation_logging = settings.operation_logging
+    if settings.operation_logging:
+        configure_logging()
     app.state.auth = auth
     admission = AdmissionController(settings)
     app.state.admission = admission

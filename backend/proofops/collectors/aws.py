@@ -10,6 +10,7 @@ from pydantic import Field
 from proofops.config import Settings
 from proofops.domain.common import digest, utcnow
 from proofops.domain.schemas import EvidenceRecord, Record, Scope
+from proofops.observability import measured
 from proofops.storage.bundles import redact_text
 from proofops.storage.database import session_factory
 from proofops.storage.tool_cache import ObservationCache
@@ -40,6 +41,7 @@ class AWSCollector:
         sleeper=sleep,
         cache: ObservationCache | None = None,
         cache_ttl_seconds: int = 60,
+        operation_logging: bool = True,
     ):
         if (
             not 1 <= max_calls <= 30
@@ -58,6 +60,7 @@ class AWSCollector:
         self.calls, self.deadline = 0, 0.0
         self.request_metadata: list[dict] = []
         self.cache, self.cache_ttl = cache, cache_ttl_seconds
+        self.operation_logging = operation_logging
 
     @classmethod
     def from_settings(cls, settings: Settings):
@@ -82,6 +85,7 @@ class AWSCollector:
             if settings.aws_evidence_cache_ttl_seconds
             else None,
             cache_ttl_seconds=settings.aws_evidence_cache_ttl_seconds,
+            operation_logging=settings.operation_logging,
         )
 
     def call(self, service: str, method: str, **kwargs):
@@ -361,6 +365,7 @@ class AWSCollector:
             note="Incomplete query stopped at the configured bound; no completed result is claimed.",
         )
 
+    @measured("aws.collect")
     def collect(self, scope: Scope) -> dict:
         self.calls = 0
         self.request_metadata = []

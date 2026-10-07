@@ -21,6 +21,7 @@ from proofops.models.budget import (
 )
 from proofops.models.context import explanation_context
 from proofops.models.explanations import template_explanation, validate_explanation
+from proofops.observability import measured
 from proofops.policies.guards import (
     GuardSpec,
     TrustedRevision,
@@ -65,6 +66,7 @@ class ModelRouter:
                 raise BudgetUnavailable("provider is not supported")
         return self.adapters[provider]
 
+    @measured("model.generate")
     def generate(
         self,
         *,
