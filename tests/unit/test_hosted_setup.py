@@ -1,12 +1,20 @@
+import json
 import os
 import re
 import secrets
+import shutil
 import stat
 import subprocess
 
 import pytest
 
 from scripts import configure_hosted
+
+
+def private_assert(condition, message="Private credential invariant failed"):
+    # Assertion rewriting/fixture reprs must not disclose secrets on failure.
+    if not condition:
+        pytest.fail(message, pytrace=False)
 
 
 @pytest.fixture
@@ -22,7 +30,8 @@ def offline_bcrypt(monkeypatch):
         return hashed
 
     monkeypatch.setattr(configure_hosted, "bcrypt_hash", hash_password)
-    return hashes
+    hash_password.calls = hashes
+    return hash_password
 
 
 def test_hosted_setup_generates_separate_private_secrets_and_preserves_them(
@@ -34,14 +43,16 @@ def test_hosted_setup_generates_separate_private_secrets_and_preserves_them(
     content = target.read_text()
     values = dict(line.split("=", 1) for line in content.splitlines() if not line.startswith("#"))
     passwords = [values[name] for name in configure_hosted.SECRET_NAMES]
-    assert len(set(passwords)) == len(passwords)
-    assert all(len(password) >= 32 and len(set(password)) >= 16 for password in passwords)
+    private_assert(len(set(passwords)) == len(passwords))
+    private_assert(all(len(password) >= 32 and len(set(password)) >= 16 for password in passwords))
     if os.name == "posix":
         assert stat.S_IMODE(target.stat().st_mode) == 0o600
     configure_hosted.configure("demo.example.com", "operator@example.com")
-    assert bool(target.read_text() == content)
+    private_assert(target.read_text() == content)
     output = capsys.readouterr()
-    assert all(not bool(password in output.out or password in output.err) for password in passwords)
+    private_assert(
+        all(password not in output.out and password not in output.err for password in passwords)
+    )
 
 
 @pytest.mark.parametrize(
@@ -85,29 +96,35 @@ def test_full_setup_preserves_public_credentials_and_generates_private_independe
     configure_hosted.configure_full("demo.example.com", "full.example.com", "operator@example.com")
     full = tmp_path / ".env.hosted-full"
     full_original = full.read_bytes()
-    assert bool(public.read_bytes() == original)
+    private_assert(public.read_bytes() == original)
     values = configure_hosted.read_private(full)
     assert values["FULL_DOMAIN"] == "full.example.com"
-    passwords = list(offline_bcrypt[0]) + [
+    passwords = list(offline_bcrypt.calls[0]) + [
         values[name] for name in configure_hosted.FULL_SECRET_NAMES
     ]
     public_values = configure_hosted.read_private(public)
     deployment_secrets = [public_values[name] for name in configure_hosted.SECRET_NAMES] + [
         values[name] for name in configure_hosted.FULL_SECRET_NAMES
     ]
-    assert len(set(deployment_secrets)) == len(deployment_secrets)
-    assert all(len(value) >= 32 and len(set(value)) >= 16 for value in deployment_secrets)
-    assert len(values["FULL_BASIC_AUTH_PASSWORD"]) <= 72
-    assert re.fullmatch(configure_hosted.BCRYPT_PATTERN, values["FULL_BASIC_AUTH_HASH"])
-    assert bool("FULL_BASIC_AUTH_HASH='" + values["FULL_BASIC_AUTH_HASH"] + "'" in full.read_text())
+    private_assert(len(set(deployment_secrets)) == len(deployment_secrets))
+    private_assert(all(len(value) >= 32 and len(set(value)) >= 16 for value in deployment_secrets))
+    private_assert(len(values["FULL_BASIC_AUTH_PASSWORD"]) <= 72)
+    private_assert(re.fullmatch(configure_hosted.BCRYPT_PATTERN, values["FULL_BASIC_AUTH_HASH"]))
+    private_assert(
+        "FULL_BASIC_AUTH_HASH='" + values["FULL_BASIC_AUTH_HASH"] + "'" in full.read_text()
+    )
     assert stat.S_IMODE(full.stat().st_mode) == stat.S_IMODE(public.stat().st_mode) == 0o600
     configure_hosted.configure_full("demo.example.com", "full.example.com", "operator@example.com")
-    assert bool(full.read_bytes() == full_original and public.read_bytes() == original)
-    assert len(offline_bcrypt) == 1, "Existing gateway passwords and hashes must never be rotated"
+    private_assert(full.read_bytes() == full_original and public.read_bytes() == original)
+    private_assert(
+        len(offline_bcrypt.calls) == 1, "Existing gateway credentials must never be rotated"
+    )
     output = capsys.readouterr()
-    assert all(
-        not bool(secret in output.out or secret in output.err)
-        for secret in passwords + deployment_secrets
+    private_assert(
+        all(
+            not bool(secret in output.out or secret in output.err)
+            for secret in passwords + deployment_secrets
+        )
     )
 
 
@@ -128,7 +145,7 @@ def test_full_setup_rejects_invalid_addresses_before_writing(
     monkeypatch.setattr(configure_hosted, "ROOT", tmp_path)
     with pytest.raises(ValueError):
         configure_hosted.configure_full(public_domain, full_domain, email)
-    assert list(tmp_path.iterdir()) == [] and offline_bcrypt == []
+    assert list(tmp_path.iterdir()) == [] and offline_bcrypt.calls == []
 
 
 def test_full_setup_rejects_symlinked_full_configuration_without_changing_public(
@@ -143,7 +160,7 @@ def test_full_setup_rejects_symlinked_full_configuration_without_changing_public
         configure_hosted.configure_full(
             "demo.example.com", "full.example.com", "operator@example.com"
         )
-    assert bool(public.read_bytes() == original)
+    private_assert(public.read_bytes() == original)
 
 
 @pytest.mark.parametrize(
@@ -166,9 +183,11 @@ def test_full_setup_refuses_invalid_existing_credentials_without_overwriting(
         configure_hosted.configure_full(
             "demo.example.com", "full.example.com", "operator@example.com"
         )
-    assert all(
-        bool(target.read_bytes() == original)
-        for target, original in zip((public, full), originals, strict=True)
+    private_assert(
+        all(
+            bool(target.read_bytes() == original)
+            for target, original in zip((public, full), originals, strict=True)
+        )
     )
 
 
@@ -187,7 +206,7 @@ def test_full_setup_hash_failure_leaves_existing_public_configuration_untouched(
         configure_hosted.configure_full(
             "other.example.com", "full.example.com", "operator@example.com"
         )
-    assert bool((tmp_path / ".env.hosted").read_bytes() == original)
+    private_assert((tmp_path / ".env.hosted").read_bytes() == original)
     assert not (tmp_path / ".env.hosted-full").exists()
 
 
@@ -196,14 +215,74 @@ def test_bcrypt_uses_private_stdin_without_network_or_password_arguments(monkeyp
     hashed = "$2b$14$" + secrets.token_hex(27)[:53]
 
     def run(command, **kwargs):
-        assert "--plaintext" not in command and not bool(password in " ".join(command))
+        private_assert("--plaintext" not in command and password not in " ".join(command))
         assert command[command.index("--network") + 1] == "none"
         assert command[command.index("--pull") + 1] == "never"
         assert command[command.index("--algorithm") + 1] == "bcrypt"
         assert command[command.index("--bcrypt-cost") + 1] == "14"
-        assert bool(kwargs["input"] == password + "\n") and kwargs["capture_output"]
+        private_assert(kwargs["input"] == password + "\n" and kwargs["capture_output"])
         return subprocess.CompletedProcess(command, 0, hashed + "\n", "")
 
     monkeypatch.setattr(configure_hosted.subprocess, "run", run)
-    assert bool(configure_hosted.bcrypt_hash(password) == hashed)
+    private_assert(configure_hosted.bcrypt_hash(password) == hashed)
     assert capsys.readouterr() == ("", "")
+
+
+def test_combined_compose_environment_preserves_bcrypt_and_separates_runtime_secrets(
+    tmp_path, monkeypatch, offline_bcrypt
+):
+    root = configure_hosted.ROOT
+    monkeypatch.setattr(configure_hosted, "ROOT", tmp_path)
+    configure_hosted.configure_full("demo.example.com", "full.example.com", "operator@example.com")
+    public_file, full_file = tmp_path / ".env.hosted", tmp_path / ".env.hosted-full"
+    public = configure_hosted.read_private(public_file)
+    full = configure_hosted.read_private(full_file)
+    docker = shutil.which("docker")
+    assert docker is not None
+
+    def model(*filenames):
+        result = subprocess.run(  # noqa: S603
+            [
+                docker,
+                "compose",
+                "--env-file",
+                str(public_file),
+                "--env-file",
+                str(full_file),
+                *(argument for filename in filenames for argument in ("-f", str(root / filename))),
+                "config",
+                "--format",
+                "json",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=15,
+        )
+        private_assert(
+            result.returncode == 0 and not result.stderr,
+            "Private Compose interpolation must succeed without warnings",
+        )
+        return json.loads(result.stdout)["services"]
+
+    shared = model("compose.hosted.yaml", "compose.hosted-gateway.yaml")
+    writable = model("compose.hosted-full.yaml")
+    # `compose config` escapes dollars for a subsequent Compose parse. The
+    # actual single-dollar container value is also checked by the HTTPS suite.
+    private_assert(
+        shared["caddy"]["environment"]["FULL_BASIC_AUTH_HASH"]
+        == full["FULL_BASIC_AUTH_HASH"].replace("$", "$$")
+    )
+    private_assert(shared["api"]["environment"]["SECRET_KEY"] == public["SECRET_KEY"])
+    private_assert(writable["api"]["environment"]["SECRET_KEY"] == full["FULL_SECRET_KEY"])
+    private_assert(
+        public["PROOFOPS_RUNTIME_PASSWORD"] in shared["api"]["environment"]["DATABASE_URL"]
+    )
+    private_assert(full["FULL_RUNTIME_PASSWORD"] in writable["api"]["environment"]["DATABASE_URL"])
+    for services in (shared, writable):
+        private_assert(
+            all(
+                not bool(full["FULL_BASIC_AUTH_PASSWORD"] in json.dumps(service))
+                for service in services.values()
+            )
+        )

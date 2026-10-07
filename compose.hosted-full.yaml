@@ -1,5 +1,6 @@
-# Standalone deployment: do not merge with compose.yaml (which publishes local ports).
-name: proofops-hosted
+# Standalone writable workspace. Never merge with the public or local stack.
+# Its only ingress is the public stack's Caddy with compose.hosted-gateway.yaml.
+name: proofops-hosted-full
 
 x-app: &app
   build: .
@@ -13,19 +14,22 @@ x-app: &app
   networks: [database]
 
 x-runtime: &runtime
-  DATABASE_URL: postgresql+psycopg://proofops_runtime:${PROOFOPS_RUNTIME_PASSWORD:?Run scripts/configure_hosted.py}@db:5432/proofops
+  DATABASE_URL: postgresql+psycopg://proofops_runtime:${FULL_RUNTIME_PASSWORD:?Run scripts/configure_hosted.py with both domains}@db:5432/proofops
   PROOFOPS_MODE: hosted
-  PROOFOPS_PUBLIC_DEMO: "true"
-  SECRET_KEY: ${SECRET_KEY:?Run scripts/configure_hosted.py}
+  PROOFOPS_PUBLIC_DEMO: "false"
+  SECRET_KEY: ${FULL_SECRET_KEY:?Run scripts/configure_hosted.py with both domains}
   SESSION_COOKIE_SECURE: "true"
-  ALLOWED_HOSTS: ${HOSTED_DOMAIN:?Set the hosted DNS name}
-  CORS_ORIGINS: https://${HOSTED_DOMAIN}
+  ALLOWED_HOSTS: ${FULL_DOMAIN:?Set the full DNS name}
+  CORS_ORIGINS: https://${FULL_DOMAIN}
   ARTIFACT_DIR: /app/artifacts
   AI_MODE: "off"
   ALLOWED_PROVIDERS: ""
   OPENAI_API_KEY: ""
   ANTHROPIC_API_KEY: ""
   AWS_EC2_METADATA_DISABLED: "true"
+  LOGIN_WINDOW_SECONDS: "900"
+  LOGIN_MAX_FAILURES: "5"
+  LOGIN_MAX_IP_ATTEMPTS: "60"
 
 services:
   db:
@@ -41,10 +45,10 @@ services:
     environment:
       POSTGRES_DB: proofops
       POSTGRES_USER: proofops_bootstrap
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/configure_hosted.py}
+      POSTGRES_PASSWORD: ${FULL_POSTGRES_PASSWORD:?Run scripts/configure_hosted.py with both domains}
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
     command: ["postgres", "-c", "password_encryption=scram-sha-256", "-c", "max_connections=60"]
-    volumes: ["hosted-db18:/var/lib/postgresql"]
+    volumes: ["full-db18:/var/lib/postgresql"]
     networks: [database]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U proofops_bootstrap -d proofops"]
@@ -55,16 +59,16 @@ services:
     <<: *app
     command: ["python", "-m", "proofops.storage.roles", "bootstrap"]
     environment:
-      DATABASE_URL: postgresql+psycopg://proofops_bootstrap:${POSTGRES_PASSWORD}@db:5432/proofops
-      PROOFOPS_OWNER_PASSWORD: ${PROOFOPS_OWNER_PASSWORD:?Run scripts/configure_hosted.py}
-      PROOFOPS_RUNTIME_PASSWORD: ${PROOFOPS_RUNTIME_PASSWORD}
+      DATABASE_URL: postgresql+psycopg://proofops_bootstrap:${FULL_POSTGRES_PASSWORD}@db:5432/proofops
+      PROOFOPS_OWNER_PASSWORD: ${FULL_OWNER_PASSWORD:?Run scripts/configure_hosted.py with both domains}
+      PROOFOPS_RUNTIME_PASSWORD: ${FULL_RUNTIME_PASSWORD}
     depends_on:
       db: {condition: service_healthy}
   migrate:
     <<: *app
     command: ["python", "-m", "proofops.storage.roles", "migrate"]
     environment:
-      DATABASE_URL: postgresql+psycopg://proofops_owner:${PROOFOPS_OWNER_PASSWORD}@db:5432/proofops
+      DATABASE_URL: postgresql+psycopg://proofops_owner:${FULL_OWNER_PASSWORD}@db:5432/proofops
     depends_on:
       roles: {condition: service_completed_successfully}
   api:
@@ -74,13 +78,14 @@ services:
     restart: unless-stopped
     networks:
       application:
-        aliases: [public-api]
+        aliases: [full-api]
       database:
-    volumes: ["hosted-artifacts:/app/artifacts:ro"]
+    volumes: ["full-artifacts:/app/artifacts"]
     depends_on:
       migrate: {condition: service_completed_successfully}
     healthcheck:
-      test: ["CMD", "python", "-c", "import os, urllib.request; r=urllib.request.Request('http://127.0.0.1:8000/readyz', headers={'Host':os.environ['ALLOWED_HOSTS']}); urllib.request.urlopen(r, timeout=5)"]
+      # /readyz requires an application session in full mode; /healthz is internal.
+      test: ["CMD", "python", "-c", "import os, urllib.request; r=urllib.request.Request('http://127.0.0.1:8000/healthz', headers={'Host':os.environ['ALLOWED_HOSTS']}); urllib.request.urlopen(r, timeout=5)"]
       interval: 10s
       timeout: 6s
       retries: 6
@@ -88,8 +93,8 @@ services:
     <<: *app
     command: ["proofops-worker"]
     environment: *runtime
-    profiles: [worker]
-    volumes: ["hosted-artifacts:/app/artifacts:ro"]
+    restart: unless-stopped
+    volumes: ["full-artifacts:/app/artifacts"]
     depends_on:
       migrate: {condition: service_completed_successfully}
   seed:
@@ -97,7 +102,7 @@ services:
     command: ["proofops", "reset-demo-data", "--yes"]
     environment: *runtime
     profiles: [maintenance]
-    volumes: ["hosted-artifacts:/app/artifacts"]
+    volumes: ["full-artifacts:/app/artifacts"]
     depends_on:
       migrate: {condition: service_completed_successfully}
   web:
@@ -112,36 +117,13 @@ services:
     security_opt: ["no-new-privileges:true"]
     networks:
       application:
-        aliases: [public-web]
+        aliases: [full-web]
     depends_on:
       api: {condition: service_healthy}
-  caddy:
-    build: {context: ./deploy/caddy}
-    cpus: 0.5
-    mem_limit: 256m
-    pids_limit: 64
-    restart: unless-stopped
-    read_only: true
-    cap_drop: [ALL]
-    cap_add: [NET_BIND_SERVICE]
-    security_opt: ["no-new-privileges:true"]
-    environment:
-      HOSTED_DOMAIN: ${HOSTED_DOMAIN}
-      ACME_EMAIL: ${ACME_EMAIL:?Set an ACME contact email}
-    ports: ["80:80", "443:443"]
-    volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    networks: [edge, application]
-    depends_on: [web]
 
 networks:
-  edge:
   application: {internal: true}
   database: {internal: true}
 volumes:
-  hosted-db18:
-  hosted-artifacts:
-  caddy-data:
-  caddy-config:
+  full-db18:
+  full-artifacts:

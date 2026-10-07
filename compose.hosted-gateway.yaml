@@ -1,0 +1,17 @@
+# Overlay ONLY for compose.hosted.yaml. The existing Caddy owns both hostnames.
+# Start the standalone full project first so its internal application network exists.
+services:
+  caddy:
+    environment:
+      FULL_DOMAIN: ${FULL_DOMAIN:?Run scripts/configure_hosted.py with both domains}
+      FULL_BASIC_AUTH_USER: ${FULL_BASIC_AUTH_USER:?Configure private gateway credentials}
+      FULL_BASIC_AUTH_HASH: ${FULL_BASIC_AUTH_HASH:?Configure a private bcrypt hash}
+    volumes:
+      - ./deploy/Caddyfile.full:/etc/caddy/Caddyfile:ro
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile.public:ro
+    networks: [edge, application, full_application]
+
+networks:
+  full_application:
+    external: true
+    name: ${FULL_PROXY_NETWORK:-proofops-hosted-full_application}

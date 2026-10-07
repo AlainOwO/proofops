@@ -8,7 +8,7 @@ from fnmatch import fnmatch
 from proofops.config import APP_ROOT
 
 
-def compose_model(filename):
+def compose_model(*filenames):
     docker = shutil.which("docker")
     assert docker is not None, "Docker Compose is required for deployment checks"
     result = subprocess.run(  # noqa: S603
@@ -17,8 +17,7 @@ def compose_model(filename):
             "compose",
             "--env-file",
             "/dev/null",
-            "-f",
-            str(APP_ROOT / filename),
+            *(argument for filename in filenames for argument in ("-f", str(APP_ROOT / filename))),
             "config",
             "--no-interpolate",
             "--no-env-resolution",
@@ -31,7 +30,12 @@ def compose_model(filename):
         timeout=15,
     )
     assert result.returncode == 0, "Compose configuration must validate"
-    return json.loads(result.stdout)
+    model = json.loads(result.stdout)
+    # Compose can serialize unresolved merged environments as KEY=value lists.
+    for service in model["services"].values():
+        if isinstance(service.get("environment"), list):
+            service["environment"] = dict(value.split("=", 1) for value in service["environment"])
+    return model
 
 
 def test_compose_core_services_have_cpu_and_memory_limits():
@@ -70,6 +74,114 @@ def test_hosted_compose_publishes_only_https_proxy_and_isolates_database():
     assert services["worker"]["profiles"] == ["worker"]
     assert "--no-proxy-headers" in services["api"]["command"]
     assert services["api"]["command"][services["api"]["command"].index("--workers") + 1] == "1"
+
+
+def test_full_stack_is_standalone_private_writable_and_uses_restricted_runtime_roles():
+    model = compose_model("compose.hosted-full.yaml")
+    public = compose_model("compose.hosted.yaml")
+    services = model["services"]
+    assert model["name"] == "proofops-hosted-full" != public["name"]
+    assert not any(
+        service.get("ports") or service.get("network_mode") for service in services.values()
+    )
+    assert set(model["volumes"]).isdisjoint(public["volumes"])
+    assert all(
+        network["internal"] and not network.get("external")
+        for network in model["networks"].values()
+    )
+    assert set(services["db"]["networks"]) == set(services["worker"]["networks"]) == {"database"}
+    assert set(services["web"]["networks"]) == {"application"}
+    assert services["api"]["networks"]["application"]["aliases"] == ["full-api"]
+    assert services["web"]["networks"]["application"]["aliases"] == ["full-web"]
+    for name in ("api", "worker"):
+        service = services[name]
+        env = service["environment"]
+        assert env["DATABASE_URL"].startswith(
+            "postgresql+psycopg://proofops_runtime:${FULL_RUNTIME_PASSWORD:"
+        )
+        assert env["SECRET_KEY"].startswith("${FULL_SECRET_KEY:")
+        assert env["PROOFOPS_MODE"] == "hosted" and env["PROOFOPS_PUBLIC_DEMO"] == "false"
+        assert env["SESSION_COOKIE_SECURE"] == "true"
+        assert env["AI_MODE"] == "off" and env["ALLOWED_PROVIDERS"] == ""
+        assert env["OPENAI_API_KEY"] == env["ANTHROPIC_API_KEY"] == ""
+        assert env["LOGIN_WINDOW_SECONDS"] == "900"
+        assert env["LOGIN_MAX_FAILURES"] == "5" and env["LOGIN_MAX_IP_ATTEMPTS"] == "60"
+        assert not any("PASSWORD" in key or "BASIC_AUTH" in key for key in env)
+        assert service["read_only"] and service["cap_drop"] == ["ALL"]
+        assert service["cpus"] and service["mem_limit"] and service["pids_limit"]
+        assert service["security_opt"] == ["no-new-privileges:true"]
+        assert all(
+            volume["type"] == "volume"
+            and volume["source"] == "full-artifacts"
+            and not volume.get("read_only")
+            for volume in service["volumes"]
+        )
+        assert not service.get("profiles")
+    assert services["worker"]["restart"] == "unless-stopped"
+    assert services["migrate"]["environment"]["DATABASE_URL"].startswith(
+        "postgresql+psycopg://proofops_owner:${FULL_OWNER_PASSWORD}"
+    )
+    assert services["roles"]["environment"]["DATABASE_URL"].startswith(
+        "postgresql+psycopg://proofops_bootstrap:${FULL_POSTGRES_PASSWORD}"
+    )
+    assert "--no-proxy-headers" in services["api"]["command"]
+    assert services["api"]["command"][services["api"]["command"].index("--workers") + 1] == "1"
+    assert "/healthz" in " ".join(services["api"]["healthcheck"]["test"])
+    assert (
+        services["db"]["build"]["args"]["POSTGRES_BASE"]
+        == public["services"]["db"]["build"]["args"]["POSTGRES_BASE"]
+    )
+
+
+def test_shared_gateway_preserves_public_controls_and_is_the_only_ingress():
+    public = compose_model("compose.hosted.yaml")
+    shared = compose_model("compose.hosted.yaml", "compose.hosted-gateway.yaml")
+    assert shared["name"] == public["name"] and shared["volumes"] == public["volumes"]
+    for name, service in public["services"].items():
+        if name != "caddy":
+            assert shared["services"][name] == service
+    caddy = shared["services"]["caddy"]
+    assert {name for name, service in shared["services"].items() if service.get("ports")} == {
+        "caddy"
+    }
+    assert caddy["ports"] == public["services"]["caddy"]["ports"]
+    assert set(caddy["networks"]) == {"edge", "application", "full_application"}
+    assert shared["networks"]["full_application"]["external"]
+    assert (
+        shared["networks"]["full_application"]["name"]
+        == "${FULL_PROXY_NETWORK:-proofops-hosted-full_application}"
+    )
+    assert set(caddy["environment"]) == {
+        "HOSTED_DOMAIN",
+        "ACME_EMAIL",
+        "FULL_DOMAIN",
+        "FULL_BASIC_AUTH_USER",
+        "FULL_BASIC_AUTH_HASH",
+    }
+    mounts = {volume["target"]: volume for volume in caddy["volumes"]}
+    assert mounts["/etc/caddy/Caddyfile"]["source"].endswith("deploy/Caddyfile.full")
+    assert mounts["/etc/caddy/Caddyfile.public"]["source"].endswith("deploy/Caddyfile")
+    assert (
+        mounts["/etc/caddy/Caddyfile"]["read_only"]
+        and mounts["/etc/caddy/Caddyfile.public"]["read_only"]
+    )
+    assert shared["services"]["api"]["networks"]["application"]["aliases"] == ["public-api"]
+    assert shared["services"]["web"]["networks"]["application"]["aliases"] == ["public-web"]
+
+
+def test_full_proxy_gates_every_path_before_proxying_and_strips_basic_credentials():
+    public = (APP_ROOT / "deploy/Caddyfile").read_text()
+    full = (APP_ROOT / "deploy/Caddyfile.full").read_text()
+    assert "import /etc/caddy/Caddyfile.public" in full
+    assert "https://{$FULL_DOMAIN}" in full and "http://{$FULL_DOMAIN}" in full
+    assert "basic_auth {" in full and "{$FULL_BASIC_AUTH_USER} {$FULL_BASIC_AUTH_HASH}" in full
+    assert full.index("route {") < full.index("basic_auth {") < full.index("handle @api {")
+    assert "reverse_proxy full-api:8000" in full and "reverse_proxy full-web:8080" in full
+    assert "reverse_proxy public-api:8000" in public and "reverse_proxy public-web:8080" in public
+    assert full.count("header_up -Authorization") == full.count("reverse_proxy") == 2
+    assert "FULL_BASIC_AUTH_PASSWORD" not in full
+    assert 'Strict-Transport-Security "max-age=31536000"' in full
+    assert "handle_errors" in full and "import security_headers" in full
 
 
 def test_frontend_context_excludes_private_files_and_nginx_runs_unprivileged():

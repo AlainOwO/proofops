@@ -44,7 +44,7 @@ https://{$HOSTED_DOMAIN} {
 	header Strict-Transport-Security "max-age=31536000"
 	@api path /api/* /healthz /readyz /docs /docs/* /redoc /openapi.json
 	handle @api {
-		reverse_proxy api:8000 {
+		reverse_proxy public-api:8000 {
 			transport http {
 				dial_timeout 2s
 				response_header_timeout 25s
@@ -52,7 +52,7 @@ https://{$HOSTED_DOMAIN} {
 		}
 	}
 	handle {
-		reverse_proxy web:8080 {
+		reverse_proxy public-web:8080 {
 			transport http {
 				dial_timeout 2s
 				response_header_timeout 25s
