@@ -46,6 +46,34 @@ The capture authenticates with the prepared synthetic admin, verifies exact fixt
 
 ## Hosted container and HTTPS checks
 
+Migration startup has a separate real-Compose regression suite:
+
+```sh
+.venv/bin/pytest tests/containers/test_compose_migrations.py -q \
+  --junitxml=artifacts/checks/compose-migrations.xml
+```
+
+It builds the backend and PostgreSQL images and exercises both `compose.yaml`
+and `compose.hosted.yaml`, once with a fresh database using `up --build` and once
+starting at `f6a91d2e83b4`. The upgrade case first starts the previous migration image and
+checks its readiness, then rebuilds **only API** and runs ordinary Compose
+startup. Both cases require the actual migration container to exit zero, API
+and migrate to use the same image, the API's own database connection to see the
+current Alembic head, and the actual `/readyz` endpoint to return 200. The
+upgrade also verifies the database container and an existing record survive.
+No integration fixture upgrades the database on the test's behalf. Each case
+configures a generated synthetic bootstrap admin; the local readiness request
+authenticates through the normal HTTP login and CSRF flow. Hosted readiness
+uses the public demo's existing anonymous read policy.
+
+Docker/Compose 2.24.4+ and image-build network access are required; missing
+prerequisites fail the tests. Each case generates its own project name and
+private credentials, publishes no ports, and shuts down its containers while
+**retaining all named volumes**. Commands and safe results are saved under
+`artifacts/compose-migrations/<project>/`; its `private/` subdirectory contains
+credentials and must not be uploaded. The `compose-migrations` CI job runs all
+four cases independently of the ordinary backend fixture suite.
+
 The normal backend suite includes admission/body-deadline/header tests, actor-bound audit tests, real-PostgreSQL runtime privilege tests and effective Compose checks. The following additional suites exercise the built nginx/PostgreSQL images and the actual Caddy TLS boundary. They need Docker, curl, Compose 2.24.4 or newer and free loopback ports 15080/15443. They use no public ACME or cloud/model API. Image/package/advisory downloads during builds and scans require network access.
 
 From the app root, after local configuration and frozen test dependencies are installed:
