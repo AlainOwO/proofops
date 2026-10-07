@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     request_max_buffered_bytes: int = Field(default=20_971_520, ge=1024, le=134_217_728)
     allowed_hosts: str = "127.0.0.1,localhost,api"
     ai_mode: Literal["off", "live"] = "off"
+    ai_cache_enabled: bool = True
+    ai_cache_ttl_seconds: int = Field(default=300, ge=1, le=3600)
     openai_api_key: SecretStr = SecretStr("")
     anthropic_api_key: SecretStr = SecretStr("")
     allowed_providers: str = ""

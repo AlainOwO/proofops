@@ -27,6 +27,7 @@ from proofops.policies.guards import (
     draft_from_approved,
     validate_proposal,
 )
+from proofops.storage.coordination import try_work_lock
 from proofops.storage.database import CacheRow, session_factory
 
 
@@ -41,7 +42,7 @@ class ModelRouter:
         sleeper: Callable[[float], None] = sleep,
     ):
         self.settings = settings or get_settings()
-        self.factory = factory or session_factory()
+        self.factory = factory or session_factory(self.settings.database_url)
         self.ledger = BudgetLedger(self.factory)
         self.adapters = adapters or {}
         self.prices = prices
@@ -76,6 +77,7 @@ class ModelRouter:
         scope: str,
         review_id: str | None = None,
         policy: str = "routed",
+        prompt_version: str = "language-task-v1",
     ) -> dict:
         settings = self.settings
         attempts: list[dict[str, Any]] = []
@@ -144,141 +146,172 @@ class ModelRouter:
                         "schema": schema,
                         "provider": provider,
                         "model": model,
-                        "prompt_version": "v1",
+                        "prompt_version": prompt_version,
+                        "max_output_tokens": settings.model_max_output_tokens,
+                        "request_version": "structured-output-v1",
                         "price_version": price.as_of.isoformat(),
                     }
                 )
-                with self.factory() as session:
-                    cached = session.execute(
-                        select(CacheRow).where(
-                            CacheRow.key == cache_key,
-                            CacheRow.scope == scope,
-                            CacheRow.expires_at > utcnow(),
+                with try_work_lock(self.factory, "model-output", cache_key) as acquired:
+                    if not acquired:
+                        output["reason"] = (
+                            "An equivalent model request is in progress; use the deterministic template or retry later."
                         )
-                    ).scalar_one_or_none()
-                    if cached:
-                        validator(cached.data["output"])
-                        return {
-                            **cached.data,
-                            "status": "cached",
-                            "cache_key": cache_key,
-                            "original_usage": cached.data.get("attempts", []),
-                            "attempts": attempts,
-                            "incremental_cost_usd": str(spent),
-                            "pending_reserved_usd": str(pending),
-                        }
-                reservation = self.ledger.reserve(
-                    budget_id="configured-local-USD",
-                    limit=budget,
-                    amount=reserve,
-                    task_key=digest({"task_id": task_id, "task": task, "number": number}),
-                    provider=provider,
-                    model=model,
-                    input_hash=digest({"system": system, "user": user, "schema": schema}),
-                    review_id=review_id,
-                    metadata={
-                        "task": task,
-                        "prompt_version": "v1",
-                        "schema_hash": digest(schema),
-                        "price": price.model_dump(mode="json"),
-                        "route_reason": last_reason,
-                    },
-                )
-                if not reservation.created or not self.ledger.dispatch(reservation.attempt_id):
-                    if reservation.state in {"reserved", "dispatched", "uncertain"}:
-                        output["pending_reserved_usd"] = str(pending + reservation.amount)
-                    output["reason"] = (
-                        "A prior attempt exists; reconcile it before any repeated dispatch."
-                    )
-                    break
-                started = monotonic()
-                result = adapter.generate_structured(
-                    system=system,
-                    user=user,
-                    schema=schema,
-                    model=model,
-                    max_output_tokens=settings.model_max_output_tokens,
-                    timeout=settings.model_timeout_seconds,
-                )
-                latency = monotonic() - started
-                cost = (
-                    Decimal(0) if result.definitely_unbilled else actual_cost(price, result.usage)
-                )
-                metadata = {
-                    "provider": provider,
-                    "model": model,
-                    "terminal_status": result.terminal_status,
-                    "usage": result.usage,
-                    "provider_request_id": result.provider_request_id,
-                    "error_class": result.error_class,
-                    "latency_seconds": latency,
-                    "route_reason": last_reason,
-                    "price_version": price.as_of.isoformat(),
-                }
-                self.ledger.reconcile(
-                    reservation.attempt_id, cost, metadata, result.terminal_status
-                )
-                consumed += cost if cost is not None else reserve
-                spent += cost if cost is not None else Decimal(0)
-                pending += reserve if cost is None else Decimal(0)
-                attempt = {
-                    **metadata,
-                    "attempt_id": reservation.attempt_id,
-                    "actual_cost_usd": str(cost) if cost is not None else None,
-                    "reserved_cost_usd": str(reserve),
-                    "accepted": False,
-                }
-                attempts.append(attempt)
-                output.update(incremental_cost_usd=str(spent), pending_reserved_usd=str(pending))
-                if result.terminal_status == "completed" and result.output is not None:
-                    try:
-                        accepted = validator(result.output)
-                    except ValueError:
-                        last_reason = "mechanical_validation_failed"
-                        attempt["validation"] = "rejected"
-                    else:
-                        attempt["accepted"] = True
-                        output.update(
-                            status="accepted",
-                            output=accepted.model_dump(mode="json"),
-                            reason=last_reason,
-                            provider=provider,
-                            model=model,
-                            cache_key=cache_key,
-                            end_to_end_seconds=monotonic() - task_start,
-                        )
-                        # Accounting uncertainty is visible; only complete accepted
-                        # output is cached, with original usage preserved.
-                        with self.factory.begin() as session:
-                            session.execute(
-                                insert(CacheRow)
-                                .values(
-                                    key=cache_key,
-                                    scope=scope,
-                                    data=output,
-                                    expires_at=utcnow() + timedelta(minutes=5),
+                        break
+                    if settings.ai_cache_enabled:
+                        with self.factory() as session:
+                            cached = session.execute(
+                                select(CacheRow).where(
+                                    CacheRow.key == cache_key,
+                                    CacheRow.scope == scope,
+                                    CacheRow.expires_at > utcnow(),
+                                    CacheRow.created_at <= utcnow(),
+                                    CacheRow.created_at
+                                    > utcnow() - timedelta(seconds=settings.ai_cache_ttl_seconds),
                                 )
-                                .on_conflict_do_nothing(index_elements=[CacheRow.key])
+                            ).scalar_one_or_none()
+                            if cached:
+                                try:
+                                    validator(cached.data["output"])
+                                except (ValueError, KeyError, TypeError):
+                                    cached = None
+                            if cached:
+                                return {
+                                    **cached.data,
+                                    "status": "cached",
+                                    "cache_key": cache_key,
+                                    "original_usage": cached.data.get("attempts", []),
+                                    "attempts": attempts,
+                                    "incremental_cost_usd": str(spent),
+                                    "pending_reserved_usd": str(pending),
+                                }
+                    reservation = self.ledger.reserve(
+                        budget_id="configured-local-USD",
+                        limit=budget,
+                        amount=reserve,
+                        task_key=digest({"task_id": task_id, "task": task, "number": number}),
+                        provider=provider,
+                        model=model,
+                        input_hash=digest({"system": system, "user": user, "schema": schema}),
+                        review_id=review_id,
+                        metadata={
+                            "task": task,
+                            "prompt_version": prompt_version,
+                            "schema_hash": digest(schema),
+                            "price": price.model_dump(mode="json"),
+                            "route_reason": last_reason,
+                        },
+                    )
+                    if not reservation.created or not self.ledger.dispatch(reservation.attempt_id):
+                        if reservation.state in {"reserved", "dispatched", "uncertain"}:
+                            output["pending_reserved_usd"] = str(pending + reservation.amount)
+                        output["reason"] = (
+                            "A prior attempt exists; reconcile it before any repeated dispatch."
+                        )
+                        break
+                    started = monotonic()
+                    result = adapter.generate_structured(
+                        system=system,
+                        user=user,
+                        schema=schema,
+                        model=model,
+                        max_output_tokens=settings.model_max_output_tokens,
+                        timeout=settings.model_timeout_seconds,
+                    )
+                    latency = monotonic() - started
+                    cost = (
+                        Decimal(0)
+                        if result.definitely_unbilled
+                        else actual_cost(price, result.usage)
+                    )
+                    metadata = {
+                        "provider": provider,
+                        "model": model,
+                        "terminal_status": result.terminal_status,
+                        "usage": result.usage,
+                        "provider_request_id": result.provider_request_id,
+                        "error_class": result.error_class,
+                        "latency_seconds": latency,
+                        "route_reason": last_reason,
+                        "price_version": price.as_of.isoformat(),
+                    }
+                    self.ledger.reconcile(
+                        reservation.attempt_id, cost, metadata, result.terminal_status
+                    )
+                    consumed += cost if cost is not None else reserve
+                    spent += cost if cost is not None else Decimal(0)
+                    pending += reserve if cost is None else Decimal(0)
+                    attempt = {
+                        **metadata,
+                        "attempt_id": reservation.attempt_id,
+                        "actual_cost_usd": str(cost) if cost is not None else None,
+                        "reserved_cost_usd": str(reserve),
+                        "accepted": False,
+                    }
+                    attempts.append(attempt)
+                    output.update(
+                        incremental_cost_usd=str(spent), pending_reserved_usd=str(pending)
+                    )
+                    if result.terminal_status == "completed" and result.output is not None:
+                        try:
+                            accepted = validator(result.output)
+                        except ValueError:
+                            last_reason = "mechanical_validation_failed"
+                            attempt["validation"] = "rejected"
+                        else:
+                            attempt["accepted"] = True
+                            output.update(
+                                status="accepted",
+                                output=accepted.model_dump(mode="json"),
+                                reason=last_reason,
+                                provider=provider,
+                                model=model,
+                                cache_key=cache_key,
+                                end_to_end_seconds=monotonic() - task_start,
                             )
-                        return output
-                else:
-                    last_reason = result.error_class or result.terminal_status
-                if (
-                    cost is None
-                    or result.error_class
-                    in {"permanent_quota", "authentication", "unsupported_request"}
-                    or result.terminal_status == "refused"
-                ):
-                    output["reason"] = last_reason
-                    break
-                if result.error_class == "transient_throttle":
-                    self.sleeper(0.2)
-                elif policy == "routed":
-                    route = strong
-                elif policy == "strong_only":
-                    route = strong
-                else:
-                    route = cheap
+                            # Accounting uncertainty is visible; only complete accepted
+                            # output is cached, with original usage preserved.
+                            if settings.ai_cache_enabled:
+                                with self.factory.begin() as session:
+                                    session.execute(
+                                        insert(CacheRow)
+                                        .values(
+                                            key=cache_key,
+                                            scope=scope,
+                                            data=output,
+                                            expires_at=utcnow()
+                                            + timedelta(seconds=settings.ai_cache_ttl_seconds),
+                                        )
+                                        .on_conflict_do_update(
+                                            index_elements=[CacheRow.key],
+                                            set_={
+                                                "data": output,
+                                                "created_at": utcnow(),
+                                                "expires_at": utcnow()
+                                                + timedelta(seconds=settings.ai_cache_ttl_seconds),
+                                            },
+                                            where=CacheRow.scope == scope,
+                                        )
+                                    )
+                            return output
+                    else:
+                        last_reason = result.error_class or result.terminal_status
+                    if (
+                        cost is None
+                        or result.error_class
+                        in {"permanent_quota", "authentication", "unsupported_request"}
+                        or result.terminal_status == "refused"
+                    ):
+                        output["reason"] = last_reason
+                        break
+                    if result.error_class == "transient_throttle":
+                        self.sleeper(0.2)
+                    elif policy == "routed":
+                        route = strong
+                    elif policy == "strong_only":
+                        route = strong
+                    else:
+                        route = cheap
             except (BudgetUnavailable, KeyError, OSError) as exc:
                 output["reason"] = (
                     str(exc)
@@ -338,6 +371,7 @@ class ModelRouter:
             review_id=review_id,
             scope=digest(report.change.service_map.scope),
             policy=policy,
+            prompt_version=context["prompt_version"],
         )
         if result["output"] is None:
             result["fallback"] = fallback
@@ -372,6 +406,7 @@ class ModelRouter:
             review_id=review_id,
             scope=digest(trusted.contract.scope),
             policy=policy,
+            prompt_version="guard-v1",
         )
         if result["output"] is None:
             result["fallback"] = {"status": "template", "output": draft.model_dump(mode="json")}

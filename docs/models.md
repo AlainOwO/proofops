@@ -18,4 +18,16 @@ Before dispatch, the app requires an exact allowlisted model, key from the envir
 
 Cache hits preserve original usage and record current incremental cost separately. Failed/truncated output is never an accepted cache entry. Timeout/crash uncertainty retains reserved money. When both providers fail, the deterministic report and template next step remain available and AI unavailability is visible. Live quality, latency, parity and task-cost comparisons are null, not invented zeroes. Mocked official SDK requests have passed; they are not a model benchmark.
 
+`AI_CACHE_ENABLED=true` and `AI_CACHE_TTL_SECONDS=300` control the accepted-output
+cache (TTL 1–3,600 seconds). Keys bind normalized evidence, scope, evaluation time,
+task, exact prompt/context/schema, prompt/request version, provider/model, output
+token limit and dated pricing. Cache reads still validate the output against the
+current deterministic facts; expired or invalid entries are replaced only by
+newly validated output. Reducing the TTL also limits existing entries. This does
+not relax dispatch eligibility, the persistent overall budget or per-task limits.
+Equivalent concurrent model requests use a nonblocking PostgreSQL advisory lock:
+one dispatches, while another returns explicit AI unavailability with its
+deterministic template. There is no extra model call or waiting queue. Process
+loss releases the lock but preserves uncertain spending in the existing ledger.
+
 Sources checked 2026-10-05: [OpenAI structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [OpenAI pricing reference](https://developers.openai.com/api/docs/pricing), [Anthropic structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs), [Anthropic pricing reference](https://platform.claude.com/docs/en/about-claude/pricing). No particular price or account-specific model access is asserted from these links.

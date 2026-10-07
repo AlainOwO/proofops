@@ -60,8 +60,19 @@ attempt, workload and container bounds already exist and should be preserved.
 
 ## Changes made
 
-Implementation in progress. Each completed change and its verification will be
-recorded here before final handoff.
+### Accepted AI cache and concurrent requests
+
+- Files: `models/router.py`, `models/context.py`, `storage/coordination.py`,
+  `config.py`, `.env.example`, `docs/models.md`, `tests/integration/test_model_cache.py`.
+- Expired/invalid entries are replaced after validation. The key now includes the
+  real prompt version, request version and output token limit. Configurable
+  enablement/TTL defaults preserve the existing five-minute cache.
+- A nonblocking PostgreSQL advisory lock prevents concurrent identical provider
+  dispatches. A contender receives the existing deterministic template and an
+  explicit AI-unavailable reason. Locks release on transaction/process loss;
+  budget reservations and uncertain charges remain durable.
+- Expected impact: fewer duplicate explanation calls. Deterministic outcomes,
+  provider eligibility, two-attempt routing and budget limits are unchanged.
 
 Redis is not justified at this scale: PostgreSQL already coordinates durable jobs,
 idempotency, budgets and authentication. No new queue framework, service or
@@ -103,6 +114,12 @@ Fresh baseline, before runtime changes:
 - `.venv/bin/pytest tests/integration/test_optimization_measurements.py -q -o junit_family=legacy --junitxml=artifacts/optimization/baseline-measurements.xml`
   — three offline characterization checks passed. These tests save measured
   counters/timings as JUnit properties; provider responses are mocks.
+- The credential-redacting hosted browser runner — **22 passed** in 16.4 seconds;
+  saved separately in `artifacts/optimization/baseline-browser.txt`.
+
+After the AI cache change, the cache/budget/recovery/measurement/context/adapter
+selection passed **41 tests** in 2.65 seconds, with no failures/skips
+(`artifacts/optimization/ai-cache.xml`). Full Ruff and backend mypy passed.
 
 ## Performance
 
@@ -120,6 +137,11 @@ including authentication. A report-detail request read trusted policy files
 **twice**. Thirty warm synthetic engine runs had a median of **0.1980 ms** and
 p95 of **0.2335 ms** on this host. These are narrow local measurements, not a
 production benchmark or evidence of cloud cost savings.
+
+After the cache repair, the identical four-request experiment made **two mocked
+provider calls**: accepted, cached, accepted, cached. This is a measured call-count
+reduction for that offline expiry scenario, not a measured provider cost/latency
+improvement.
 
 ## Compatibility
 
