@@ -1,6 +1,6 @@
 # Operations and troubleshooting
 
-Local Docker Compose runs PostgreSQL, migrations, API, worker and web, with published ports bound to loopback. The standalone `compose.hosted.yaml` runs a read-only public demo behind Caddy HTTPS, with a private database and restricted runtime credentials. See the hosted runbook below and [security](security.md). No AWS or model key is required for readiness or replay. Private setup files contain generated secrets and must never be printed or committed.
+Local Docker Compose runs PostgreSQL, migrations, API, worker and web, with published ports bound to loopback. The standalone `compose.hosted.yaml` runs a read-only public demo behind Caddy HTTPS, with a private database and restricted runtime credentials. A separate `compose.hosted-full.yaml` can add an authenticated, writable workspace through that same Caddy without changing public-demo permissions. See the hosted runbooks below and [security](security.md). No AWS or model key is required for readiness or replay. Private setup files contain generated secrets and must never be printed or committed.
 
 ## Startup, ports and migrations
 
@@ -79,6 +79,145 @@ Admission defaults apply to the **single API process** in this deployment: 16 co
 
 Rebuild and rescan before exposure and after dependency/image changes. [Security review](security_review.md#hosted-demo-image-scan) records both filtered and unfiltered HIGH/CRITICAL counts, including remaining Debian findings with no published distribution fix. A zero `--ignore-unfixed` result is not a clean scan. The local verification used an internal test certificate issuer; public DNS/ACME issuance and internet load resistance were not tested.
 
+## Hosted full mode beside the public demo
+
+This is a separate, writable **single workspace** for a small, trusted audience. Keep the public hostname and its synthetic database read-only. Point a second DNS hostname at the same host. [compose.hosted-full.yaml](../compose.hosted-full.yaml) is standalone, with project name `proofops-hosted-full`, a separate PostgreSQL 18 cluster, `full-db18`/`full-artifacts` volumes and independent credentials. Never merge it with either other stack. It fixes hosted mode, `PROOFOPS_PUBLIC_DEMO=false`, Secure cookies, AI off and the existing database login limits. Its worker starts by default; API/worker root filesystems remain read-only with a separate writable artifact volume.
+
+[compose.hosted-gateway.yaml](../compose.hosted-gateway.yaml) is an overlay **only for the public stack**. It connects the existing Caddy to the full project's internal application network and imports both hostname routes. Only that Caddy publishes TCP 80/443. The public and full API/web services have distinct proxy aliases; their database networks and volumes are separate. Neither API nor worker has internet egress. Caddy never joins either database network.
+
+First build the cached Caddy image used for offline password hashing, then configure both hostnames. Use the existing public hostname when extending an existing deployment:
+
+```sh
+docker build --pull --tag proofops-caddy deploy/caddy
+python3 scripts/configure_hosted.py \
+  --public-domain reviews.example.com \
+  --full-domain workspace.example.com \
+  --email operator@example.com
+
+public() {
+  docker compose --env-file .env.hosted --env-file .env.hosted-full \
+    -f compose.hosted.yaml -f compose.hosted-gateway.yaml "$@"
+}
+full() {
+  docker compose --env-file .env.hosted-full -f compose.hosted-full.yaml "$@"
+}
+
+public config --quiet
+full config --quiet
+full --profile maintenance build --no-cache --pull
+public --profile worker --profile maintenance build --no-cache --pull
+full up -d db
+full run --rm migrate
+public up -d db
+public run --rm migrate
+```
+
+Configuration preserves existing credentials, including the public deployment's credentials. It generates missing full bootstrap, owner, runtime and session secrets plus a random gateway username/password and a bcrypt hash with cost 14. The two env files use separate credential names and mode 0600; keep both private. The hasher uses the cached image with networking disabled and passes the password over stdin. Its output is captured. The gateway password and hash are stored only in `.env.hosted-full`; only the username and hash enter Caddy's environment. Bcrypt's dollar signs are single-quoted for Compose. Do not remove those quotes, source the env files, print resolved configuration, or treat rerunning setup as password rotation. Import the gateway username/password into your password manager through a secure local-file workflow.
+
+Create the full admin and viewer after migrations. This interactive operator snippet uses non-echoing prompts and passes each password directly to `--password-stdin`, without arguments, shell variables or stdout. Choose distinct strong passwords from your password manager. **Omit the public-admin row if the existing public demo already has its required admin.** Existing users are never overwritten.
+
+```sh
+python3 - <<'PY'
+import getpass
+import subprocess
+import warnings
+
+warnings.simplefilter("error", getpass.GetPassWarning)
+accounts = [
+    (".env.hosted", "compose.hosted.yaml", "public-admin", "admin"),
+    (".env.hosted-full", "compose.hosted-full.yaml", "full-admin", "admin"),
+    (".env.hosted-full", "compose.hosted-full.yaml", "full-viewer", "viewer"),
+]
+for env_file, compose_file, username, role in accounts:
+    password = getpass.getpass(f"Unique password for {username}: ")
+    if password != getpass.getpass("Confirm password: "):
+        raise SystemExit("Passwords did not match; no account changed for this entry.")
+    subprocess.run(
+        ["docker", "compose", "--env-file", env_file, "-f", compose_file,
+         "run", "--rm", "--no-deps", "-T", "api", "proofops", "users", "create",
+         "--username", username, "--role", role, "--password-stdin"],
+        input=password + "\n", text=True, check=True,
+    )
+PY
+
+full run --rm --no-deps seed
+full up -d --wait
+# Only for a fresh public database; omit when the public demo is already seeded:
+public run --rm --no-deps seed
+public up -d --wait
+public ps
+full ps
+```
+
+Start the full project before attaching the shared Caddy: it owns the `proofops-hosted-full_application` network. If deliberately using another full project name, set `FULL_PROXY_NETWORK` to that project's application network in the private full env file. The public project retains its original name and certificate volumes. After enabling the shared gateway, use the `public` wrapper above for public operations so the overlay remains loaded. Caddy restarts affect both hostnames; force-recreate only Caddy when changing mounted Caddyfiles, since its admin API is disabled.
+
+Verify the deployed hostnames without credentials:
+
+```sh
+curl --silent --show-error --output /dev/null --write-out '%{http_code}\n' \
+  --request POST https://reviews.example.com/api/v1/bundles --data '{}'
+curl --silent --show-error --output /dev/null --write-out '%{http_code}\n' \
+  https://workspace.example.com/
+```
+
+Expect **403** on the public write and **401** with a Basic challenge on the full hostname. The full gate covers assets, health, login, API, documentation and every method; HTTP redirects to HTTPS. Supply the gateway credential in the browser, then expect **Sign in to ProofOps**. Sign in separately as the full admin to import/run an AI-off review; sign in as the viewer to inspect/export it with no write controls. Basic Auth does not grant an application role. Caddy removes the Basic Authorization header before proxying. Application sessions remain host-only, Secure/HttpOnly/SameSite cookies, and writes still require application authentication, admin role and CSRF.
+
+The public hostname must still show only three seeded reviews and `DEMO · READ-ONLY`, with no sign-in or editing controls. A full-stack review or session cannot make it writable or public. Both `ps` listings must show host publications only on the public project's Caddy. The reproducible [two-stack HTTPS/browser checks](testing.md#two-stack-hosted-checks) verify these boundaries, actual runtime privileges, the default worker and login lockout.
+
+Seeding is a reset, not an import into an active workspace. The initial full seed is optional; later reseeding discards that stack's reviews while preserving users, sessions, audit/accounting data and older artifacts. Stop that stack's API and worker first, and take a backup before resetting saved work:
+
+```sh
+full stop web api worker
+full run --rm --no-deps seed
+full up -d --wait
+```
+
+For public-only reseeding while retaining full-host availability, use `public stop web api worker`, run its seed service, then `public up -d --wait`. Leave Caddy running. Routine `stop`/`down` preserves data; do not add `--volumes`. To retire full mode, first recreate Caddy using just the original public Compose file, which removes the full route and detaches its network; then bring down the full project.
+
+### Manual backup and recovery
+
+Back up both workspaces independently, both private env files, the deployed revision/configuration, and Caddy's certificate state. This maintenance-window example requires an installed `age` binary and `HOSTED_BACKUP_RECIPIENT` set to the backup operator's **public** age recipient. Keep its decryption key off the application host. The commands stream directly into encrypted, owner-only files; no passwords are printed. Prevent concurrent CLI maintenance while taking the snapshots. Stopping Caddy pauses both hostnames.
+
+```sh
+(
+  set -eu
+  set -o pipefail
+  command -v age >/dev/null
+  : "${HOSTED_BACKUP_RECIPIENT:?Set the public age recipient for backups}"
+  umask 077
+  snapshot="artifacts/hosted-backups/$(date -u +%Y%m%dT%H%M%SZ)"
+  mkdir -p "$snapshot"
+  trap 'set +e; full up -d --wait; public up -d --wait' EXIT
+  public stop caddy web api worker
+  full stop web api worker
+
+  full exec -T db pg_dump -U proofops_bootstrap -d proofops -Fc \
+    | age -r "$HOSTED_BACKUP_RECIPIENT" > "$snapshot/full.dump.age"
+  full run --rm --no-deps -T --entrypoint tar api -czf - -C /app/artifacts . \
+    | age -r "$HOSTED_BACKUP_RECIPIENT" > "$snapshot/full-artifacts.tar.gz.age"
+  public exec -T db pg_dump -U proofops_bootstrap -d proofops -Fc \
+    | age -r "$HOSTED_BACKUP_RECIPIENT" > "$snapshot/public.dump.age"
+  public run --rm --no-deps -T --entrypoint tar api -czf - -C /app/artifacts . \
+    | age -r "$HOSTED_BACKUP_RECIPIENT" > "$snapshot/public-artifacts.tar.gz.age"
+  public run --rm --no-deps -T --entrypoint tar caddy -czf - -C / data config \
+    | age -r "$HOSTED_BACKUP_RECIPIENT" > "$snapshot/caddy.tar.gz.age"
+  tar -czf - .env.hosted .env.hosted-full compose.hosted.yaml \
+    compose.hosted-full.yaml compose.hosted-gateway.yaml deploy/Caddyfile deploy/Caddyfile.full \
+    | age -r "$HOSTED_BACKUP_RECIPIENT" > "$snapshot/configuration.tar.gz.age"
+  git rev-parse HEAD > "$snapshot/revision.txt"
+)
+```
+
+Check every pipeline succeeded before transferring the encrypted set off-host. An incomplete set is not a recovery point. Rehearse decryption and restore into **new, isolated projects/volumes**, never over the running public demo: provision matching owner/runtime roles, restore each PostgreSQL dump as the bootstrap operator, run the owner migration/grants for the recorded app version, and restore its matching artifacts with UID 10001 ownership. Restore private env files as 0600 and retain the matching session/database credentials. Restore Caddy state separately before reconnecting DNS. Verify authentication, viewer restrictions, review/export hashes and public write rejection. Do not restore a full dump into the public project or attach an older PostgreSQL data directory to 18.x.
+
+This manual procedure is not an automated backup, retention or disaster-recovery service. Encrypting/copying files does not establish a working restore; the operator must rehearse it and monitor future backups.
+
+### Limits of full mode
+
+This deployment is **not production-grade team hosting**. It has no MFA/SSO or self-service recovery, and every authenticated full user shares one workspace; there is no tenant or per-review isolation. A shared Basic password is an outer access gate, not a second factor or an individual audit identity. **SR-05 remains open:** five account failures can deny the correct password, and all users behind Caddy share the 60-attempt peer bucket per 15 minutes. Do not disable these limits or trust arbitrary forwarded IP headers.
+
+Full mode additionally exposes imports, persistent jobs/artifacts, guard validation, billing and disposition writes. Admission bounds and container limits remain, but durable queue/storage quotas, automated retention, reviewed recovery, distributed edge limiting and external append-only audit storage are still absent. Full traffic can exhaust the shared host or Caddy; Caddy is trusted by both stacks and a shared availability dependency. Read the [full-mode attack-surface review](security_review.md#hosted-full-mode-attack-surface) and existing unresolved image findings before using real data. AI/cloud credentials and live calls remain disabled.
+
 ## Environment variables
 
 | Variable | Meaning / default |
@@ -96,6 +235,9 @@ Rebuild and rescan before exposure and after dependency/image changes. [Security
 | REQUEST_MAX_CONCURRENCY / REQUEST_MAX_PEER_CONCURRENCY / REQUEST_MAX_PRINCIPAL_CONCURRENCY / REQUEST_MAX_LOGIN_CONCURRENCY | Per-process concurrent admission defaults 16 / 8 / 4 / 2; no waiting queue. |
 | REQUEST_QUOTA_WINDOW_SECONDS / REQUEST_PEER_QUOTA / REQUEST_PRINCIPAL_QUOTA / REQUEST_MAX_IDENTITIES | Window 60 seconds, request quotas 600 / 300, at most 2,048 tracked peer/principal identities per map. Idle expired entries are reused; exhaustion fails closed. |
 | HOSTED_DOMAIN / ACME_EMAIL | DNS hostname and certificate contact in private `.env.hosted`; used by the standalone Caddy deployment. |
+| FULL_DOMAIN / FULL_PROXY_NETWORK | Separate full hostname in `.env.hosted-full`; optional network override defaults to `proofops-hosted-full_application`. |
+| FULL_POSTGRES_PASSWORD / FULL_OWNER_PASSWORD / FULL_RUNTIME_PASSWORD / FULL_SECRET_KEY | Independent full-stack bootstrap, owner, runtime and session credentials; never reuse public values. |
+| FULL_BASIC_AUTH_USER / FULL_BASIC_AUTH_PASSWORD / FULL_BASIC_AUTH_HASH | Generated gateway credentials, stored only in private `.env.hosted-full`; Caddy receives only the username and bcrypt hash. |
 | PROOFOPS_OWNER_PASSWORD / PROOFOPS_RUNTIME_PASSWORD | Independent hosted database credentials. API/worker receive only a runtime URL; bootstrap and owner credentials are confined to maintenance services. |
 | ARTIFACT_DIR | Dedicated directory inside application `artifacts/`; rejects research, code, evaluator and trust directories. |
 | AI_MODE | `off` by default; `live` enables only otherwise eligible configured calls. |
@@ -148,4 +290,4 @@ API errors omit raw provider bodies and secret-bearing input values. Database op
 
 ## Before team hosting
 
-The supplied hosted deployment targets a dedicated read-only synthetic demo. Writable team hosting still needs reviewed recovery/edge limiting, secret delivery, encrypted backups, restore/retention procedures, monitoring and dependency maintenance. There is no tenant isolation, MFA/SSO, self-service recovery, separate approval role or external tamper-evident audit pipeline. Proxy peers share rate limits because forwarded headers are not trusted. [Security](security.md) describes these boundaries; this is not a production security certification.
+The supplied deployments cover a dedicated read-only synthetic demo and a separate gated full workspace. Production team hosting still needs reviewed recovery/edge limiting, secret delivery, operated encrypted backups, restore/retention procedures, monitoring and dependency maintenance. There is no tenant isolation, MFA/SSO, self-service recovery, separate approval role or external tamper-evident audit pipeline. Proxy peers share rate limits because forwarded headers are not trusted; SR-05 remains open. [Security](security.md) describes these boundaries; this is not a production security certification.

@@ -64,7 +64,11 @@ Imports, queued/completed/failed reviews, reset and billing events carry the aut
 
 For the requested read-only public demo, use the standalone [Hosted public demo runbook](operations.md#hosted-public-demo). It generates a separate `.env.hosted`, provisions bootstrap/owner/runtime database roles, seeds synthetic results, and starts Caddy automatic HTTPS. Only ports 80/443 are published; API, web and database stay internal. Do not merge the hosted file with local Compose. Its API/worker mounts are read-only, AI is off, provider credentials are absent, and the worker is not started by default.
 
-Custom hosted deployments must preserve these settings and the restricted runtime database role:
+For a separate writable workspace, use the [adjacent full-mode runbook](operations.md#hosted-full-mode-beside-the-public-demo). Its standalone project has independent PostgreSQL/artifact volumes and credentials, restricted runtime roles, hosted/Secure settings, AI off and a default-on worker. The public project's Caddy is the only ingress to both stacks. Every full-host path first requires a generated Basic credential; Caddy stores only the bcrypt hash and strips the Authorization header before proxying. The password and hash stay in the owner-only `.env.hosted-full` file. Application login, roles, CSRF and database login limits remain independently enforced. Public-demo settings and seeded-read boundaries remain unchanged.
+
+The full workspace has no MFA or tenant isolation; Basic Auth is a shared gate, not a second factor. SR-05 account lockout and the shared proxy peer bucket still affect new logins. Full mode also exposes writable imports, queues/artifacts and guard/billing/disposition operations. Caddy is trusted by both workspaces and shares their availability risk. The [full-mode security review](security_review.md#hosted-full-mode-attack-surface) describes these additional limits; this is not production-grade team hosting.
+
+Custom public-demo deployments must preserve these settings and the restricted runtime database role:
 
 ```dotenv
 PROOFOPS_MODE=hosted
@@ -87,7 +91,7 @@ Use a dedicated demo database/workspace. In hosted Compose, run the separate `se
 
 The UI opens directly with a viewer role and no sign-in/sign-out or admin controls. All unsafe HTTP methods return 403 regardless of an existing admin session. Only explicitly seeded membership rows, unchanged report/explanation hashes, the supplied replay hashes and original content-addressed exports are eligible for anonymous reading. Normal imported reviews are never included, even if they use synthetic inputs. Without a reset after the auth migration, the public listing is empty. Modified/unmarked results are omitted and their detail/export returns 404.
 
-Anonymous analytics cover only those seeded results. Private guard drafts, billing, dispositions, model accounting, docs and arbitrary future paths are unavailable. Host operators can still manage accounts or reseed with the CLI. To restore login, unset the flag and recreate the API; existing unexpired sessions may resume because toggling demo mode does not revoke accounts.
+Anonymous analytics cover only those seeded results. Private guard drafts, billing, dispositions, model accounting, docs and arbitrary future paths are unavailable. Host operators can still manage accounts or reseed with the CLI. Keep the supplied public stack's flag enabled; use the separate full stack for hosted login and writes. In custom deployments, toggling demo mode does not revoke accounts, so previously issued unexpired sessions can resume when that flag is removed.
 
 ## Upgrading and rotating credentials
 
