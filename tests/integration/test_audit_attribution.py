@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from proofops.api.app import create_app
 from proofops.auth import AuthService, create_user, update_user
-from proofops.storage.database import AuditRow, AuthSessionRow, JobRow, UserRow
+from proofops.storage.database import AuditRow, AuthSessionRow, JobRow, LoginThrottleRow, UserRow
 from proofops.workers.runner import run_once
 from sqlalchemy import select
 
@@ -170,6 +170,60 @@ def test_rate_limited_logins_are_audited_without_account_identifiers(db, auth_se
         "peer_rate_limited",
     }
     assert all(event.actor == "anonymous" and event.data["user_id"] is None for event in events)
+
+
+def test_http_throttled_login_audit_growth_is_per_admitted_request_across_windows(
+    db, auth_settings, monkeypatch
+):
+    # Characterize the open retention issue with stricter-than-default limits:
+    # auth throttling bounds password work/state, while each admitted rejection
+    # still appends an audit row. The HTTP quota bounds rate, not durable totals.
+    auth_settings.login_max_failures = 3
+    auth_settings.login_max_ip_attempts = 10
+    auth_settings.request_peer_quota = 15
+    clock = [0.0]
+    monkeypatch.setattr("proofops.api.boundaries.monotonic", lambda: clock[0])
+    password = secrets.token_urlsafe(32)
+    with TestClient(create_app(auth_settings, factory=db)) as api:
+        challenge = api.get("/api/v1/auth/login")
+        assert challenge.status_code == 200
+        headers = {"X-CSRF-Token": challenge.json()["csrf_token"]}
+
+        def reject():
+            return api.post(
+                "/api/v1/auth/login",
+                json={"username": "unknown-audit-retention-user", "password": password},
+                headers=headers,
+            )
+
+        for index in range(auth_settings.request_peer_quota - 1):
+            response = reject()
+            assert response.status_code == (401 if index < 3 else 429)
+            assert response.json()["detail"] != "Request capacity exceeded. Try again later."
+        events = audit_events(db, "login_failed")
+        assert len(events) == 14
+        assert sum(event.data["status"] == "peer_rate_limited" for event in events) == 4
+        with db() as session:
+            assert len(session.scalars(select(LoginThrottleRow)).all()) == 2
+
+        response = reject()
+        assert response.status_code == 429
+        assert response.json() == {"detail": "Request capacity exceeded. Try again later."}
+        assert len(audit_events(db, "login_failed")) == 14
+
+        # Only the HTTP admission clock moves. The persistent 900-second login
+        # lock is still in force when the next request window admits more work.
+        clock[0] += auth_settings.request_quota_window_seconds + 1
+        for _ in range(5):
+            response = reject()
+            assert response.status_code == 429
+            assert response.json() == {"detail": "Unable to sign in. Try again later."}
+        events = audit_events(db, "login_failed")
+        assert len(events) == 19
+        assert sum(event.data["status"] == "peer_rate_limited" for event in events) == 9
+        assert all(event.actor == "anonymous" and event.data["user_id"] is None for event in events)
+        with db() as session:
+            assert len(session.scalars(select(LoginThrottleRow)).all()) == 2
 
 
 def test_bootstrap_creation_is_audited_once(db, auth_settings):

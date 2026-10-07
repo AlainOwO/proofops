@@ -230,3 +230,89 @@ def test_reflected_provider_credential_is_rejected():
     )
     result = ResearchTool(configuration, provider).search("public docs")
     assert result.status == "unavailable" and marker not in canonical(result).decode()
+
+
+@pytest.mark.parametrize("mode", ["local", "hosted"])
+def test_research_default_is_off_even_with_credentials_and_hosted_mode(monkeypatch, mode):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("default-disabled research accessed a provider/database")
+
+    monkeypatch.setattr(httpx, "AsyncClient", forbidden)
+    monkeypatch.setattr("proofops.tools.research.session_factory", forbidden)
+    configuration = Settings(
+        _env_file=None,
+        proofops_mode=mode,
+        database_url="postgresql+psycopg://review:" + secrets.token_urlsafe(48) + "@db/proofops",
+        search_api_key=secrets.token_urlsafe(32),
+        search_engine_id="mock-engine",
+    )
+    assert configuration.search_provider == "off"
+    assert ResearchTool.from_settings(configuration).search("public docs").status == "disabled"
+
+
+@pytest.mark.parametrize("status", [301, 302, 303, 307, 308])
+def test_all_redirects_stop_before_private_target_request(status):
+    configuration = settings()
+    requests = []
+
+    def redirect(request):
+        requests.append(request)
+        return httpx.Response(status, headers={"Location": "http://169.254.169.254/latest/"})
+
+    provider = GoogleSearchProvider(
+        configuration.search_api_key,
+        configuration.search_engine_id,
+        transport=httpx.MockTransport(redirect),
+    )
+    result = ResearchTool(configuration, provider).search("http://127.0.0.1/private")
+    assert result.status == "unavailable" and result.error_code == "provider_error"
+    assert len(requests) == 1
+    assert requests[0].url.scheme == "https" and requests[0].url.host == "www.googleapis.com"
+
+
+def test_unknown_length_response_stops_at_byte_bound_and_closes_stream():
+    class Chunks(httpx.AsyncByteStream):
+        count, closed = 0, False
+
+        async def __aiter__(self):
+            for chunk in (b"x" * 262_144, b"x", b"must not be consumed"):
+                self.count += 1
+                yield chunk
+
+        async def aclose(self):
+            self.closed = True
+
+    stream = Chunks()
+    result = tool_with_response(httpx.Response(200, stream=stream)).search("public docs")
+    assert result.status == "unavailable" and result.error_code == "response_too_large"
+    assert stream.count == 2 and stream.closed
+
+
+def test_compressed_response_is_rejected_without_consuming_body():
+    class ForbiddenBody(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            raise AssertionError("compressed provider body was consumed")
+            yield b""
+
+    result = tool_with_response(
+        httpx.Response(200, stream=ForbiddenBody(), headers={"Content-Encoding": "gzip"})
+    ).search("public docs")
+    assert result.status == "unavailable" and result.error_code == "invalid_response"
+
+
+def test_google_transport_ignores_proxy_environment(monkeypatch):
+    original_client = httpx.AsyncClient
+    client_options = []
+
+    def client(**kwargs):
+        client_options.append(kwargs)
+        return original_client(**kwargs)
+
+    monkeypatch.setenv("HTTPS_PROXY", "http://127.0.0.1:1")
+    monkeypatch.setenv("ALL_PROXY", "http://127.0.0.1:1")
+    monkeypatch.setattr(httpx, "AsyncClient", client)
+    result = tool_with_response(httpx.Response(200, json={"items": []})).search("public docs")
+    assert result.status == "empty"
+    assert len(client_options) == 1
+    assert client_options[0]["trust_env"] is False
+    assert client_options[0]["follow_redirects"] is False
