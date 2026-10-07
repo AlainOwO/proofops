@@ -327,8 +327,9 @@ passwords, headers and provider bodies are not part of these records.
 
 Counters cover SQLAlchemy statements, not pool pings or every wire round trip;
 cursor time excludes pool wait/transaction commit. Model tokens/cost reflect
-reported new attempts, not duplicate charges for cached output. Existing stored
-accounting stays authoritative. Configure host log rotation; no monitoring service
+reported new attempts, not duplicate charges for cached output. Input totals
+include uncached input and provider cache reads/writes. Existing stored accounting
+stays authoritative. Configure host log rotation; no monitoring service
 or external telemetry collector is installed.
 
 ## Optimization migration and rollback

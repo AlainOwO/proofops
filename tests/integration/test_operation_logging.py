@@ -1,12 +1,18 @@
 import json
 import secrets
+from decimal import Decimal
 from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 from proofops.api.app import create_app
+from proofops.domain.engine import review
+from proofops.models.adapters import ModelResult
+from proofops.models.explanations import template_explanation
 from proofops.observability import logger, operation
 from sqlalchemy import text
+
+from tests.integration.test_budget_jobs import setup_router
 
 pytestmark = pytest.mark.integration
 
@@ -62,3 +68,26 @@ def test_disabled_operation_logging_leaves_api_behavior_intact(
         login_user(client)
         assert client.get("/api/v1/reviews").status_code == 200
     assert not records
+
+
+def test_model_usage_includes_cached_input_without_recounting_reused_output(
+    db, valid_bundle, trusted, monkeypatch
+):
+    records = []
+    monkeypatch.setattr(logger, "info", records.append)
+    report = review(valid_bundle, trusted)
+    usage = {"input_uncached": 100, "cache_read": 20, "cache_write": 30, "output": 40}
+    output = template_explanation(report)["output"]
+    router, cheap, strong = setup_router(db, [ModelResult("completed", output, usage)])
+    first = router.explain(report, ai_preference="auto", task_id="logged-provider-usage")
+    assert first["status"] == "accepted"
+    event = json.loads(records[-1])
+    assert event["input_tokens"] == 150 and event["output_tokens"] == 40
+    assert Decimal(str(event["actual_cost_usd"])) == Decimal(first["incremental_cost_usd"])
+    assert event["attempts"] == 1 and event["cache_misses"] == 1
+
+    cached = router.explain(report, ai_preference="auto", task_id="logged-output-cache")
+    assert cached["status"] == "cached" and cheap.calls == 1 and strong.calls == 0
+    event = json.loads(records[-1])
+    assert event["cache_hits"] == 1
+    assert not any(event.get(key) for key in ("input_tokens", "output_tokens", "actual_cost_usd"))

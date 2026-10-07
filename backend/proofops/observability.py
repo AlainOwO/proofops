@@ -153,6 +153,8 @@ def measured(name: str):
                             usage = attempt.get("usage") or {}
                             for key, field_name in (
                                 ("input_uncached", "input_tokens"),
+                                ("cache_read", "input_tokens"),
+                                ("cache_write", "input_tokens"),
                                 ("output", "output_tokens"),
                             ):
                                 if type(usage.get(key)) is int:
