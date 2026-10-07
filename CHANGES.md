@@ -29,7 +29,7 @@ Existing features retained as the foundation:
   credentials; one Caddy gateway; read-only public demo; gated full hostname;
   restricted hosted database roles, Secure cookies, AI off and private API/DB ports.
 
-The API inventory is unchanged by the planned optimizations:
+The API inventory is unchanged by these optimizations:
 
 | Method | Route | Existing purpose |
 |---|---|---|
@@ -57,6 +57,23 @@ per second; listings/analytics load full report documents when only projections
 are needed; detail loads the same trusted revision twice. AWS collection has no
 TTL cache, and no optional research provider interface exists. Input, SQL, model
 attempt, workload and container bounds already exist and should be preserved.
+
+Resource analysis from code/configuration inspection:
+
+| Work | Existing cost or bound | Decision |
+|---|---|---|
+| Deterministic review | Small in the supplied warm replay measurements; normalization, policy and workload checks already run in the worker | Preserve the engine and instrument its duration; no CPU-allocation reduction |
+| Imports and exports | ZIP/JSON validation and serialization allocate memory; existing 5 MiB bundle/24-file limits, admission quotas and container limits bound this work | Preserve these bounds and record artifact bytes |
+| Authentication | Argon2 verification uses 64 MiB per verification and is deliberately expensive | Preserve login admission and rate limits; do not trade password security for throughput |
+| Database reads and polling | Full report JSON was loaded for summaries; detail reread trusted policy; idle workers polled every 0.5 seconds | Use projections, one policy read and bounded idle backoff |
+| AWS/model requests | Network observations and optional paid explanations can repeat for identical inputs | Reuse only validated, scoped, unexpired results; retain original evidence times and spending limits |
+| Concurrent work | Existing persisted queue, leases, SQL/SDK deadlines and connection limits | Bound worker slots to 1–4; retain crash recovery and container memory limits |
+| k6/browser tests | Separate workload runner/profile and browser dev dependency | Keep out of normal API traffic and runtime images; reject hosted workload execution |
+
+Compose allocations remain unchanged: database 1 CPU/1 GiB, API and worker each
+1 CPU/512 MiB, web 0.5 CPU/128 MiB, optional workload 1 CPU/256 MiB. The hosted
+gateway keeps its existing separate bounds. No whole-server profile established
+a safe basis for reducing these limits.
 
 ## Changes made
 
@@ -125,6 +142,8 @@ attempt, workload and container bounds already exist and should be preserved.
 - Added JSON timings and counters for requests, SQL, worker/review stages,
   artifact sizes, queue wait, model usage, AWS calls and cache reuse. Logging
   excludes secrets, SQL/parameters and private content; no monitoring service.
+  Input-token totals include provider cache reads/writes; reusing an accepted
+  application cache entry does not recount provider tokens or charges.
 - k6 refuses hosted/public-demo mode and unintended targets before running.
   Its existing smoke/full workload profiles and thresholds remain intact.
 - Expected impact: fewer idle queue polls and better diagnosis. Maximum idle
@@ -133,21 +152,49 @@ attempt, workload and container bounds already exist and should be preserved.
 
 Redis is not justified at this scale: PostgreSQL already coordinates durable jobs,
 idempotency, budgets and authentication. No new queue framework, service or
-monitoring stack is planned. Resource allocations will not be lowered.
+monitoring stack was added. Resource allocations were not lowered.
+
+### Documentation and upgrade integration
+
+- Files: README, `docs/operations.md`, `docs/testing.md`, `docs/models.md`,
+  `docs/aws.md`, `docs/tools.md`, `docs/architecture.md`,
+  `docs/module_reference.md`, `docs/security_review.md`, `CHANGELOG.md` and
+  `IMPLEMENTATION_STATUS.md`.
+- Recorded safe configuration defaults, tool trust boundaries, migration and
+  rollback, worker tradeoffs, exact tests and measured limits. Preserved earlier
+  changelog/status results and published PDFs. Documented restarting the local
+  nginx proxy after API container replacement, confirmed during upgrade checks.
+- Expected impact: reproducible local/hosted upgrades and clear operating limits;
+  no automatic deployment or production-readiness claim.
 
 ## Frontend
 
-Preserve `AppShell`, ReviewsPage/list/form, job/report/evidence/workload/guard
+Preserved `AppShell`, ReviewsPage/list/form, job/report/evidence/workload/guard
 panels, OutcomesPage/billing, AuthGate/login and shared presentation components.
-Keep hash routes, polling states, loading/errors, downloads, responsive layouts,
-navigation, CSS, typography, colors and spacing. No visual redesign is planned.
+No frontend source, CSS, navigation, layout, color, typography, spacing, framework
+or workflow changed. No UI adaptation was needed: existing API response fields,
+hash routes, polling, loading/errors and downloads remain compatible.
+
+The native and production-image builds retain `index-5CMvr3l3.js` and
+`index-JeX5wiNX.css`. All local/hosted browser regressions passed, including
+desktop/mobile projection styling, loading/error recovery and authentication.
+All three seeded screenshot checks passed and the new captures were visually
+inspected. The existing historical-evidence warning now appears because the
+2026-10-05 fixtures are stale for a decision on 2026-10-07; it does not change the
+recorded replay outcome. Tracked screenshots were restored byte-for-byte after
+capture; new inspection images remain under ignored artifacts.
 
 ## Security
 
-Deterministic outcomes remain authoritative. Provider tests use mocks; no live
-AWS, model or research API calls are authorized. Secrets stay server-side and are
-never printed. Public-demo restrictions, full-host Basic Auth, login rate limits,
-CSRF, restricted database roles and container/network hardening remain required.
+Deterministic outcomes remain authoritative; the domain engine, contracts,
+policies, source fixtures and evaluator data are unchanged. No live AWS, model or
+research API call was made. Secrets remain in private server configuration and
+were never printed. Public-demo restrictions, full-host Basic Auth, login rate
+limits, CSRF, restricted database roles and container/network hardening passed
+the rebuilt-container checks. The full deployment added before this optimization
+baseline remains a separate project/database/volume/credential set behind the
+same Caddy. See the [security review](docs/security_review.md) for the new cache,
+research, worker and logging surface and the open findings.
 
 ## Tests
 
@@ -194,13 +241,106 @@ passed **58 tests** in 5.45 seconds. Ten actual k6-initialization/runner-isolati
 checks passed in 0.32 seconds, sending no workload traffic. Evidence:
 `workers-and-logging.xml` and `workload-isolation.xml` under `artifacts/optimization/`.
 
+Final validation:
+
+- `env AI_MODE=off OPENAI_API_KEY= ANTHROPIC_API_KEY= AWS_EC2_METADATA_DISABLED=true SEARCH_PROVIDER=off .venv/bin/pytest tests/unit tests/policy tests/integration -q --tb=short -o junit_family=legacy --junitxml=artifacts/optimization/backend-final.xml`
+  — **517 passed**, no failures/errors/skips, 119.00 seconds. This includes all
+  original unit/policy/API/PostgreSQL tests and 72 additional tests since the
+  baseline. The existing upstream TestClient deprecation warning remains.
+- `.venv/bin/ruff check backend scripts tests evaluation demo`,
+  `.venv/bin/ruff format --check backend scripts tests evaluation demo` and
+  `.venv/bin/mypy backend/proofops` — passed; 112 formatted Python files and
+  46 backend source files checked.
+- `npm --prefix frontend run build` and
+  `docker build --no-cache --tag proofops-web frontend` — passed, including
+  TypeScript/browser-test types and the unchanged production frontend assets.
+  `docker build --no-cache --tag proofops-api --tag proofops-worker .` — passed
+  for the final backend image, with frozen runtime dependencies and OS upgrades.
+- `env AI_MODE=off OPENAI_API_KEY= ANTHROPIC_API_KEY= AWS_EC2_METADATA_DISABLED=true SEARCH_PROVIDER=off .venv/bin/pytest tests/containers tests/hosted tests/hosted_full -q --tb=short --junitxml=artifacts/optimization/hosted-final.xml`
+  — **37 passed** on the final images. The original standalone public Caddy
+  configuration also passed all **16** tests via `.venv/bin/pytest tests/hosted
+  -q --tb=short --junitxml=artifacts/optimization/public-only.xml`, after which
+  the shared gateway was restored.
+- `.venv/bin/python -m scripts.run_hosted_full_browser_checks` — **22 passed**
+  through the full HTTPS hostname, including both gateway tests. The original
+  **20 Chromium tests passed** against the isolated local Compose project at
+  loopback port 25173. All three seeded screenshot checks also passed and were
+  visually inspected. No frontend test assertion or timeout was weakened.
+- Local browser commands used the existing configs with
+  `PROOFOPS_WEB_URL=http://127.0.0.1:25173` and a private
+  `PROOFOPS_BROWSER_AUTH_FILE`, invoking `node node_modules/@playwright/test/cli.js
+  test --config playwright.config.ts --reporter=list` from `frontend/` (and
+  `playwright.demo.config.ts` for screenshots). The ignored helper
+  `.venv/bin/python artifacts/optimization/check_local_compose.py` was invoked
+  with `start`, `browser` and `screenshots` actions. It generated independent
+  secrets, used project `proofops-local-optimization`,
+  remapped only loopback ports and redacted output. It never used the original
+  workspace environment or reset its database. Tracked screenshots were restored.
+- `.venv/bin/proofops guards test --output artifacts/optimization/final-guards.json`
+  — **10/10** actual trusted Conftest fixtures passed.
+  `.venv/bin/proofops evaluate --mode replay --output artifacts/optimization/final-evaluation`
+  — **60/60** deterministic cases; 120 template tasks ran, 360 provider tasks
+  explicitly unrun. AI/model keys were disabled in both environments.
+- For each supplied replay, `.venv/bin/proofops review --bundle
+  fixtures/replays/<scenario> --ai off --output artifacts/optimization/final-cli/<scenario>`
+  produced the expected exit/result (valid 0/request_review, unsafe
+  2/revise_change, incomplete 3/collect_evidence). Each subsequent
+  `.venv/bin/proofops replay artifacts/optimization/final-cli/<scenario>` exited
+  zero. All report/explanation/Markdown/ZIP artifacts were present, with template
+  explanations. Browser checks additionally exercised real guard exports,
+  dispositions, repeated billing import, viewer permissions and login/logout.
+- `.venv/bin/pytest tests/integration/test_optimization_measurements.py tests/integration/test_aws_cache.py -q -o junit_family=legacy --junitxml=artifacts/optimization/measurements.xml`
+  — **12 passed**, using only the dedicated test DB and mocked SDKs/providers.
+- `.tools/bin/terraform -chdir=infra/aws-demo fmt -check` and
+  `.tools/bin/terraform -chdir=infra/aws-demo validate` — passed. Validation used
+  installed plugins, disabled AWS credentials/metadata and no plan/apply.
+- Temporary network-disabled runtime containers confirmed the final API source,
+  default-disabled research and the absence of pytest/Playwright/k6 in the API
+  image and Node/Playwright/k6 in the web image. The 384 original research-file
+  checksums passed `.venv/bin/python scripts/check_research.py` unchanged.
+- Markdown file-link validation passed for 23 documents. A comparison of ten
+  current private configuration/account files against all 357 tracked/proposed
+  files found no credential matches; all ten private files had mode 0600.
+  No resolved environment, password or provider secret was printed.
+
+Failures found and resolved without skipping tests:
+
+- Network-disabled Docker build attempts could not retrieve missing dependency
+  layers. Authorized uncached builds with package downloads passed; existing
+  pins were preserved, and no AWS/model/search API was called.
+- Final logging review found that input-token counters omitted provider cache
+  reads/writes. The corrected totals and no-double-count behavior passed four
+  focused logging tests and the final 517-test suite.
+- Recreating only local API/worker containers with `--no-deps` left nginx using
+  the previous API address: an additional browser run had 19 failures/one pass
+  with 502 responses. Direct API health and the original workspace stayed 200.
+  Restarting only that disposable `web` container refreshed DNS; all unchanged
+  20 tests then passed in 18.5 seconds. The upgrade runbook now requires this
+  proxy restart; no application, proxy or test assertion was relaxed.
+- The initial Terraform plugin check could not execute inside the sandbox;
+  approved local validation passed. JUnit measurement runs now use the legacy
+  format so recorded properties do not generate xunit2 compatibility warnings.
+
+Machine evidence is under ignored `artifacts/optimization/`, including
+`backend-final.xml`, `hosted-final.xml`, `public-only.xml`, `measurements.xml`,
+`hosted-upgrade.json`, `final-images.json`, `runtime-boundaries.json`, `final-cli/`
+and redacted browser records. Private test identities remain in owner-only
+`private/` directories and must not be published. The published PDFs and older
+measurement artifacts were not regenerated.
+
+After verification, only `proofops-hosted-check`, `proofops-hosted-full-check`
+and `proofops-local-optimization` were removed with their synthetic volumes and
+networks. The original `proofops` container identities were unchanged, and its
+API and web `/healthz` responses remained 200. Cleanup and private-audit results
+are recorded in `cleanup.json` and `private-audit.json` under the same directory.
+
 ## Performance
 
-No performance gain is claimed yet. Baseline production frontend assets are
-274.95 kB JavaScript (84.44 kB gzip) and 28.88 kB CSS (7.05 kB gzip). Test suite
-runtime is verification timing, not an application latency benchmark. Local
-measurements will distinguish call/query counts from end-user latency and from
-unmeasured cloud costs, CPU or memory savings.
+Measured improvements are limited to the offline call/read experiments below.
+Production frontend assets remain 274.95 kB JavaScript and 28.88 kB CSS with the
+same content hashes. Test suite runtime is verification timing, not an
+application latency benchmark. No end-user latency, cloud cost, CPU, memory or
+realized savings improvement is claimed.
 
 Baseline measurements: four identical eligible AI requests, with forced cache
 expiry before request three, made **three mocked provider calls** (accepted,
@@ -224,16 +364,42 @@ not total PostgreSQL wire bytes. Two mocked AWS collections use **six SDK calls*
 with reuse (five cold, one STS verification) versus **ten** without reuse. No live
 AWS latency/cost or whole-server CPU/memory reduction was measured.
 
+The final dedicated thirty-run engine sample measured median **0.2056 ms** and
+p95 **0.2424 ms**, versus baseline 0.1980/0.2335 ms. These small local samples do
+not demonstrate a latency improvement; the engine code is unchanged. All counts
+and durations above are recorded in `artifacts/optimization/baseline-measurements.xml`
+and `measurements.xml`; AWS call-count comparisons use mocked SDK clients.
+
 ## Compatibility
 
-Keep existing API response fields and all three review/export flows. Native,
-local Docker and both hosted configurations remain supported. Proper forward and
-rollback-tested migrations will accompany any new tables/indexes; existing
-reports, users, budgets, audit history and credentials must survive upgrades.
+Existing API response fields and all three review/export flows are preserved.
+Native checks, an isolated local Compose project, both hosted stacks together
+and the standalone public proxy were exercised. Existing source/UI contracts and
+the original local Compose bindings are unchanged; no new service is required.
+
+Migration `2a0c9f4b7e61` was tested in both directions against the existing schema.
+The two populated hosted test databases were upgraded without reseeding: hashes
+and counts of existing users, reports, jobs, artifacts, billing, audit and
+accounting tables matched before/after. Empty accounting tables in those hosted
+fixtures are not a substitute for the populated budget/recovery integration
+tests, which also pass. Deployment requires the matching owner migration and
+runtime grants before the new images start; rollback instructions are in
+[operations](docs/operations.md#optimization-migration-and-rollback).
 
 ## Known limitations
 
-No live provider quality/cost or AWS savings measurements. No MFA/SSO, tenant
-isolation, self-service recovery, automated retention/backup/restore or distributed
-edge limiting. SR-05 login availability and the previously recorded image findings
-remain open. A shared Basic password is not MFA. No production-readiness claim.
+No live provider quality/cost, Google account/HTTP-contract validation or AWS
+savings measurements. Research currently returns snippets and does not fetch
+result pages. Worker stage deadlines are cooperative; no hard process timeout,
+durable queue/storage quota or automatic retention service was added. More worker
+slots still share the existing CPU/memory/database limits; default idle backoff
+can add up to five seconds before pickup.
+
+No MFA/SSO, tenant isolation, self-service recovery, operated backup/restore or
+distributed edge limiting. SR-05 login availability remains open. A shared Basic
+password is not MFA. Public DNS/ACME, disaster recovery and remote CI were not
+exercised. API/worker/web were rebuilt using existing pins and OS updates; the
+earlier Trivy findings are historical and these rebuilt images were not rescanned.
+Current image IDs are recorded separately under `artifacts/optimization/`.
+Published PDFs and earlier workload/evaluation records remain historical.
+No production-readiness claim is made.

@@ -26,6 +26,24 @@ Directory/ZIP inputs contain only allowlisted JSON records. Size, filename, dupl
 
 The AWS input is a configured identity/scope and normal boto3 credentials. STS verifies the account before bounded ECS, CloudWatch and Logs calls. The collector checks task revision/platform/allocation, redacts bounded log examples and stops pending Logs Insights queries at the call cap. Output preserves collection state and observation provenance. Denied, empty, partial, failed and pending data never silently becomes zero. The replay adapter returns recorded observations without cloud access. The collector is a CLI path; it does not deploy or automatically repair evidence. Tests in `test_aws_collectors.py` use actual SDK Stubber contracts, including account mismatch and query cancellation. Live AWS remains unrun.
 
+`storage/tool_cache.py` optionally reuses bounded PostgreSQL observations. Every
+AWS hit verifies STS, matches caller/scope/request and retains the original
+collection/observation timestamps. TTL membership does not establish contract
+freshness. `tests/integration/test_aws_cache.py` covers reuse, stale evidence,
+changed callers, expiry and failures; [AWS configuration](aws.md) lists controls.
+
+## Optional tool interfaces and research
+
+**Files:** `tools/interfaces.py`, `tools/pricing.py`, `tools/research.py`.
+
+Small evidence/pricing/search protocols normalize provider data without adding
+deployment authority. The dated-file pricing adapter preserves Decimal costs.
+The explicit `research` CLI is off by default and produces attributed untrusted
+text with bounded results/deadlines and optional caching. It is not invoked by
+the API, worker, engine or model adapters. The first provider returns Google
+snippets and never fetches result URLs. [Tools](tools.md) documents configuration
+and failure states; unit/HTTP/cache tests use mocked providers only.
+
 ## Deterministic review and coverage
 
 **File:** `domain/engine.py`.
@@ -66,7 +84,7 @@ Adapters translate the shared request into OpenAI Responses or Anthropic Message
 
 **File:** `models/budget.py`; cache integration in `models/router.py`.
 
-Inputs include positive overall/per-task limits, exact model/capability prices and a stable task identity. PostgreSQL transactions reserve conservative planned cost before dispatch and reconcile reported uncached/cache-read/cache-write/output usage afterward. Timeouts/crashes keep ambiguous amounts pending. Restarting does not reset spend. Actual cost exceeding a reservation is recorded, not concealed. Cache identity includes scope, inputs, policy, time basis, mode, prompt/schema, provider/model and price version; only complete validated outputs are cached for five minutes, retaining original usage. Tests: `test_atomic_budget_reservations_and_duplicate_dispatch`, `test_same_reservation_key_cannot_double_spend`, `test_nonretryable_and_uncertain_attempts`.
+Inputs include positive overall/per-task limits, exact model/capability prices and a stable task identity. PostgreSQL transactions reserve conservative planned cost before dispatch and reconcile reported uncached/cache-read/cache-write/output usage afterward. Timeouts/crashes keep ambiguous amounts pending. Restarting does not reset spend. Actual cost exceeding a reservation is recorded, not concealed. Cache identity includes scope, inputs, policy, time basis, mode, prompt/schema versions, output limits, provider/model and price version; only complete validated outputs are cached, retaining original usage. Enablement and TTL are configurable, defaulting to five minutes. Expired entries can be replaced; nonblocking advisory locks prevent identical concurrent dispatches. Tests: `test_atomic_budget_reservations_and_duplicate_dispatch`, `test_same_reservation_key_cannot_double_spend`, `test_nonretryable_and_uncertain_attempts` and `tests/integration/test_model_cache.py`.
 
 ## PostgreSQL repository and migrations
 
@@ -78,13 +96,24 @@ SQLAlchemy maps normalized records and bounded JSONB data to PostgreSQL. Alembic
 
 **File:** `workers/runner.py`.
 
-The worker claims a queued or expired job with `FOR UPDATE SKIP LOCKED`, renews its lease, runs bounded stages and persists the deterministic result before optional prose. A maximum claim count prevents endless recovery. Reclaiming a dispatched model attempt preserves uncertain charges and never blindly redispatches it. Outputs are persisted stage, report/artifact IDs and sanitized errors. Tests: `test_job_claims_and_expired_lease_recovery`, `test_worker_crash_after_dispatch_keeps_charge_pending_and_does_not_retry`.
+The worker claims a queued or expired job with `FOR UPDATE SKIP LOCKED`, renews its lease and computes the deterministic result before optional prose, then persists the report/artifact. One slot is the default, with at most four configurable slots and bounded idle polling backoff. A maximum of three claims prevents endless recovery. Stage deadlines are cooperative; SDK/SQL/input/container bounds remain necessary. Reclaiming a dispatched model attempt preserves uncertain charges and never blindly redispatches it. Outputs are persisted stage, report/artifact IDs and sanitized errors. Tests: `test_job_claims_and_expired_lease_recovery`, `test_worker_crash_after_dispatch_keeps_charge_pending_and_does_not_retry` and `tests/integration/test_worker_limits.py`.
+
+## Operation measurements
+
+**File:** `observability.py`; hooks in API boundaries, provider entry points,
+the worker and `storage/database.py`.
+
+Optional JSON records contain generated correlation IDs, durations, SQL counters,
+cache counts, available model usage and artifact bytes. SQL/parameters, credentials,
+request/search text and private evidence are excluded. This is local logging,
+not an external telemetry service or a replacement for audit/accounting records.
+`tests/integration/test_operation_logging.py` checks privacy, disabling and usage.
 
 ## API and command line
 
 **Files:** `api/app.py`, `cli.py`, `domain/summaries.py`.
 
-FastAPI handles imports, review creation/list/detail, bundle downloads, draft/validate/export, outcomes and billing analytics. `proofops.auth` owns Argon2id identities, server sessions and persistent login limits; `api/auth.py` applies default-deny authentication, admin write restrictions and CSRF to every route. Health is public; readiness and docs require authentication. Request byte caps, exact host/origin checks and typed IDs bound the interface. The CLI exposes host-operator `users create/set-password/disable`, `reset-demo-data`, `review`, `replay`, `guards test`, `collect`, `ingest-costs` and explicit `evaluate`; review summaries share the engine's outcomes and exit codes. Evaluation launches a separate program rather than adding labels to runtime imports. Tests include the complete endpoint/role matrix in `test_auth.py`, `test_public_demo.py`, `test_origins_paths_validation_and_unknown_ids`, `test_cli_evaluator_paths_rejected_without_reading` and `test_cli_trusted_map_cannot_be_changed_by_input`.
+FastAPI handles imports, review creation/list/detail, bundle downloads, draft/validate/export, outcomes and billing analytics. `proofops.auth` owns Argon2id identities, server sessions and persistent login limits; `api/auth.py` applies default-deny authentication, admin write restrictions and CSRF to every route. Health is public; readiness and local docs require authentication, while hosted docs are disabled. Request byte caps, exact host/origin checks and typed IDs bound the interface. The CLI exposes host-operator `users create/set-password/disable`, `reset-demo-data`, `review`, `replay`, `guards test`, `collect`, `research`, `ingest-costs` and explicit `evaluate`; review summaries share the engine's outcomes and exit codes. Evaluation launches a separate program rather than adding labels to runtime imports. Tests include the complete endpoint/role matrix in `test_auth.py`, `test_public_demo.py`, `test_origins_paths_validation_and_unknown_ids`, `test_cli_evaluator_paths_rejected_without_reading` and `test_cli_trusted_map_cannot_be_changed_by_input`.
 
 ## UI and analytics
 

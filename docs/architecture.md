@@ -22,6 +22,13 @@ flowchart LR
 
 The API accepts JSON replay IDs or ZIP uploads, assigns IDs, and queues jobs with a scope-bound idempotency key. Reusing the same key/body returns the same job; a changed request returns 409. The worker claims with PostgreSQL `FOR UPDATE SKIP LOCKED`, records its lease, renews bounded work and writes the deterministic report separately from AI prose. A reclaimed dispatched model call becomes uncertain; its money remains reserved and the call is not sent again.
 
+The worker defaults to one slot, with bounded configurable concurrency and idle
+backoff. PostgreSQL also supplies short work-coordination locks and disposable
+observation caching; no new queue/cache service is required. AWS cache hits retain
+original evidence timestamps. [Provider-neutral tools](tools.md) normalize dated
+rates/evidence; optional research stays a separate, untrusted CLI artifact and
+never enters deployment approval or model instructions automatically.
+
 The only enforcing guard family is `ecs_task_memory_floor`. A trusted revision binds service scope, contract hash, image/profile/dependency applicability, approved bound and exact fixed Rego template hash. A UI draft and fixture pass never activate a guard. The API can export a draft for separate review. Existing reports become historical when their commit/policy/time basis changes.
 
 ## Decisions and invariants
@@ -45,4 +52,16 @@ The raw Terraform plan is parsed in memory and discarded after extracting a boun
 
 Model context is built from matched report facts and original development cards/examples. It contains no research evaluator paths, labels or revealing case IDs. Provider adapters have no tools. Mechanical schema/citation checks do not prove causal reasoning; evaluator annotations score semantics separately. API/worker containers do not contain the evaluation corpus.
 
-Multiple users share one workspace; tenant/per-review isolation, MFA, production TLS deployment, retention and complete auth auditing are not implemented. Team enforcement also needs deployment-specific approvals and protected trusted workflows. Kubernetes, other services/clouds, autonomous deployment and trained routing remain outside this build.
+The hosted public and full deployments have separate databases, volumes and
+credentials. One Caddy routes by hostname and adds a Basic gate to the full
+workspace; only Caddy publishes ports. The public demo remains read-only and both
+hosted runtimes keep AI/research off. [Operations](operations.md) covers setup,
+migrations, accounts, seeding and manual backups.
+
+Multiple users inside a full workspace share its reviews; tenant/per-review
+isolation, MFA, automated retention and external tamper-evident audit storage are
+not implemented. Login lockout/recovery risk SR-05 remains open. The hosted files
+and local TLS checks do not establish production readiness. Team enforcement also
+needs deployment-specific approvals and protected trusted workflows. Kubernetes,
+other services/clouds, autonomous deployment and trained routing remain outside
+this build.

@@ -270,6 +270,7 @@ Each input bundle carries its dated `rates.json`. The CLI can use an explicitly 
 | Symptom | Inspect / resolve |
 |---|---|
 | Backend is unavailable | `docker compose ps` and `docker compose logs --tail 100 api`; verify port 8000 is free. |
+| Local web returns 502 after API recreation, while API health is 200 | nginx resolves the API container address at startup. Run `docker compose restart web` with the same project/env/Compose options used for that deployment to refresh its upstream address. |
 | API startup refuses auth configuration | Generate missing secrets, run migrations, and check hosted HTTPS/Secure/admin requirements. Do not disable the authentication boundary. |
 | Login says invalid credentials or is rate limited | Use the configured account or rotate its password through the CLI. Wait for `Retry-After` after lockout; usernames receive generic errors. |
 | Login succeeds but a session is missing | Local HTTP requires `SESSION_COOKIE_SECURE=false`; hosted mode requires TLS and true. Use the same browser/API hostname. |
@@ -342,6 +343,12 @@ the owner migration and grants, then start the matching application images. Do
 this separately for public and full projects; do not copy credentials or data
 between them. Follow the same `migrate` services in the hosted runbooks; local
 Compose runs Alembic before startup.
+
+For local Compose, restart `web` after recreating `api` even when the web image
+did not change: `docker compose restart web`. nginx resolves its upstream at
+startup, so replacing only API/worker with `--no-deps` can leave the old API
+address cached and return 502s. Verify `/healthz` through the web port as well as
+the direct API. Use the same project/env options for an isolated test project.
 
 Rollback requires stopping the new application, downgrading to `f6a91d2e83b4` as
 the owner, and starting the previous matching images/configuration. Downgrade

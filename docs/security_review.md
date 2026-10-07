@@ -19,7 +19,7 @@ No critical application issue was confirmed in the initial source review. All fo
 | SR-07 | **medium** | `backend/proofops/api/app.py:125`, `backend/proofops/api/app.py:173`, `frontend/nginx.conf:7` | The built frontend has a useful CSP with `frame-ancestors 'none'`, but direct backend HTML docs have no CSP or frame protection and load third-party documentation scripts. Origin/size/Host rejection and some unhandled-error responses bypass the common response-header wrapper. HSTS is delegated to an unprovided TLS proxy. | Self-host or disable hosted API documentation, apply response headers at the outer boundary, add `X-Frame-Options: DENY` for compatibility, and configure HSTS at the actual TLS endpoint. | **Fixed** — hosted docs removed; outer headers and Caddy HTTPS/HSTS; application/proxy rejection and error tests pass. |
 | SR-08 | **medium** | `backend/proofops/storage/repository.py:99`, `backend/proofops/storage/repository.py:149`, `backend/proofops/api/app.py:708`, `backend/proofops/api/app.py:714`, `backend/proofops/auth.py:115` | Guard creation/validation and dispositions record the authenticated actor, but imports and review jobs use the default actor; reset has no dedicated actor-bound audit event, billing imports lack one, and account/login/logout administration is not audited. Incident reconstruction cannot reliably identify who made many consequential changes. | Carry the principal into each transaction; append dedicated reset, billing, account and authentication events with IDs/status only. Add retention, access controls and an external append-only audit sink. | **Attribution fixed** — `deb104f`; runtime audit access restricted. External append-only sink and retention scheduling remain open. |
 | SR-09 | **medium** | `compose.yaml:6`, `compose.yaml:20`, `compose.yaml:28`, `compose.yaml:39` | API, worker and migrations share the role created by `POSTGRES_USER`, which is a cluster superuser in the official image. A compromised API/worker has substantially more database and server authority than application CRUD requires, even after credential rotation. | Use a separate migration/owner role and restricted runtime roles, restrict `pg_hba.conf`/networks, and remove the host database port in deployments that do not need native clients. | **Fixed for hosted deployment** — `1fd40e2` and standalone Compose; separate roles, startup privilege checks, private DB network/no published DB port. Local operator Compose is not hosted runtime configuration. |
-| SR-10 | **medium** | `uv.lock:1`, `frontend/package-lock.json:1`, `compose.yaml:4`, `frontend/Dockerfile:7` | Current vulnerability status is unverified offline. `pip-audit` is absent; npm's offline audit returned an empty vulnerability object without a usable advisory database. Pinning versions/digests provides reproducibility, not evidence that packages or OS images are patched. | Run the online commands below, triage actual advisories and scan the built images. Add recurring CI audits and a controlled lock/image update process. | **Partially remediated; residual findings open** — refreshed/pulled pins, OS upgrades and uncached builds completed. Zero fixable HIGH/CRITICAL in six built images; API/worker each retain 53 HIGH + 2 CRITICAL without a published Debian fix. See scan record below. |
+| SR-10 | **medium** | `uv.lock:1`, `frontend/package-lock.json:1`, `compose.yaml:4`, `frontend/Dockerfile:7` | Current vulnerability status is unverified offline. `pip-audit` is absent; npm's offline audit returned an empty vulnerability object without a usable advisory database. Pinning versions/digests provides reproducibility, not evidence that packages or OS images are patched. | Run the online commands below, triage actual advisories and scan the built images. Add recurring CI audits and a controlled lock/image update process. | **Partially remediated; residual findings open** — the 2026-10-06 scan found zero fixable HIGH/CRITICAL in six built images, with 53 HIGH + 2 CRITICAL remaining per API/worker image without a published Debian fix. The 2026-10-07 API/worker/web rebuilds were not rescanned; those historical counts do not describe the new tags. See the scan and optimization records below. |
 | SR-11 | **low** | `frontend/.dockerignore:1`, `frontend/Dockerfile:5` | The frontend build context does not exclude `.env*`, private keys or local credential files. A future frontend environment file would enter the intermediate image through `COPY . .`; `VITE_*` variables can also be embedded in public assets. No current frontend `.env` was found. | Exclude private files from this build context; use narrowly scoped build secrets where needed and treat every `VITE_*` value as public. | **Fixed** — `.env*`, nested environment files, credential files and keys excluded; regression coverage added. `VITE_*` values remain public. |
 | SR-12 | **low** | `frontend/Dockerfile:7`, `compose.yaml:4`, `compose.yaml:58` | The frontend inherits the stock Nginx root master process; PostgreSQL's entrypoint initially runs as root before dropping privileges. API/worker/migration images explicitly run as UID 10001. Compose PostgreSQL and optional k6 images use mutable tags. | Use an unprivileged web image/listener, drop unnecessary capabilities, use read-only filesystems where practical, and pin remaining images by verified digest. Do not break PostgreSQL volume ownership initialization. | **Partially fixed** — nginx runs unprivileged on 8080; hosted runtime hardening and PostgreSQL/Caddy pins added; PostgreSQL UID switch tested. Root volume initialization and optional local mutable k6 tag remain. |
 | SR-13 | **low** | `backend/proofops/models/explanations.py:43`, `backend/proofops/domain/schemas.py:318` | Mechanical validation fixes decisions, findings and cited values, but does not prove the truth of summary/limitation prose. The action-language regex checks a few phrases and can be paraphrased. An explanation can mislead a reader without changing the saved decision. | Keep the deterministic decision visually authoritative; clearly label model prose as advisory and subject it to semantic evaluation/human review. Do not describe the regex as complete prompt-injection prevention. | **Open** |
@@ -185,7 +185,7 @@ Final local verification for this change:
 
 This change does not modify image/package pins or claim a new vulnerability scan. The cached images were those recorded in the earlier scan; its residual Debian findings and scope limitations still apply. Public DNS/ACME, internet load resistance, backup decryption/restore and real team operations were not validated by the local checks.
 
-## Deployment and remaining open work
+## Optimization attack surface and verification
 
 Optimization follow-up (2026-10-07): the disposable PostgreSQL observation cache
 adds storage for normalized AWS metadata and redacted log excerpts. It is capped
@@ -212,6 +212,41 @@ approval evidence. The API/worker/engine do not invoke search. Public/full Compo
 explicitly disables research and retains internal-only runtime networks. Future
 custom providers or content fetchers need their own egress/provenance review;
 the protocol is not permission to execute external instructions.
+
+Worker concurrency is bounded to four slots, with one as the default inside the
+existing container/connection limits. More slots increase simultaneous admitted
+work; they do not add queue/storage quotas or hard process deadlines. Stage
+timeouts are cooperative and lost leases cannot overwrite another owner. Idle
+backoff can add five seconds before a new job starts. k6 initialization and its
+operator runner reject hosted/public-demo execution; browser tooling remains a
+test/build dependency, absent from the production web/API runtime.
+
+Operation logs add generated request/job correlation, timing, query counts,
+artifact bytes and available usage/cache counters. They omit SQL/parameters,
+credentials, headers, host/IP values, search queries and evidence/provider text;
+provider input totals include cache reads/writes without recounting reused output.
+They are local logs with no external collector. Host log rotation and audit
+retention remain operational requirements; disabling operation logs does not
+disable security audits.
+
+This follow-up passed 517 backend tests, the 37 existing container/two-host HTTPS
+checks, 16 standalone public checks, 22 hosted and 20 local Chromium regressions
+and three seeded screenshot checks. Migrations were tested in both directions;
+the two populated hosted test databases retained existing records during upgrade.
+Public writes still return 403, full requests without Basic Auth return 401,
+gated application login works, and hosted API/database ports remain private.
+No admission/login limit or existing test was weakened. Detailed commands and
+measurement limits are recorded in [CHANGES.md](../CHANGES.md).
+
+API/worker/web images were rebuilt on 2026-10-07 with existing pins and package
+updates, then exercised locally. Their current IDs are in
+`artifacts/optimization/final-images.json`; the earlier image scan and
+`container_images.json` remain a historical record for the 2026-10-06 builds.
+**No new vulnerability scan was run**, so do not apply the old counts to the new
+tags or treat successful tests as a clean scan. No public ACME, live AWS/model/
+search API call, external security test or disaster-recovery rehearsal was made.
+
+## Deployment and remaining open work
 
 Deploy with the standalone [Hosted public demo runbook](operations.md#hosted-public-demo), optionally adding the separate [gated full workspace](operations.md#hosted-full-mode-beside-the-public-demo). Never combine either with local Compose or change the public flag to offer writes. Run the owner migration through `2a0c9f4b7e61`, create strong accounts through the operator CLI, seed the appropriate synthetic workspace, and verify only the shared Caddy publishes 80/443. The isolated tests do not constitute a public deployment; the existing local stack was preserved. Rotate the historical credential independently in every other deployment that reused it.
 

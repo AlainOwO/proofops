@@ -1,5 +1,32 @@
 # Changelog
 
+## Repository optimization and full-host integration — 2026-10-07
+
+- Added the adjacent full hosted workspace behind the public stack's shared
+  Caddy, with independent private credentials/database/volumes, bcrypt Basic
+  Auth, application login, a default worker and restricted runtime DB roles.
+  Public writes remain forbidden; only Caddy publishes hosted ports. The
+  operations runbook covers both stacks, stdin account creation, seeding and
+  backups; MFA, tenant isolation and SR-05 limitations remain explicit.
+- Repaired expired AI cache replacement and coordinated identical dispatches;
+  added scoped TTL observation caching while preserving original AWS timestamps.
+  Reduced report document reads without changing API response fields or any
+  deterministic outcomes. Existing cheap-first routing and budgets remain.
+- Added optional bounded research and normalized tool/pricing interfaces,
+  configurable worker slots/idle backoff, private JSON operation counters and
+  hosted workload-runner safeguards. Search is disabled by default, remains
+  untrusted context and never determines an approval. No new service or UI change.
+- Verification: 517 backend tests, 37 container/shared-HTTPS checks, 16 standalone
+  public checks, 22 hosted and 20 local browser tests, three screenshot checks,
+  builds, lint/typechecking, ten guard fixtures and 60/60 replay decisions passed.
+  No tests were skipped or weakened and no live AWS/model/search calls were made.
+  Existing local workspace data and all original research files were preserved.
+- Offline repeated-call/read reductions, migration/rollback instructions, exact
+  test commands and remaining limitations are in [CHANGES.md](CHANGES.md).
+  No production latency, CPU/RAM, provider-cost or realized savings improvement
+  is claimed. The earlier Trivy counts below describe the 2026-10-06 images;
+  rebuilt 2026-10-07 API/worker/web images were not rescanned.
+
 ## Hosted public demo hardening — 2026-10-06
 
 - Added authentication/authorization before protected body reads, absolute read deadlines, bounded concurrent/peer/principal admission and buffered payload quotas. Import parsing/storage runs off the event loop. Hosted docs/OpenAPI are disabled; API and proxy security headers cover rejection/error paths.

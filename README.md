@@ -176,7 +176,9 @@ Accepted AI output caching is configurable; [AWS observation caching](docs/aws.m
 retains original evidence timestamps. The [optional research tool](docs/tools.md)
 is disabled by default and available only through an explicit CLI command. It
 does not affect review outcomes or the existing UI. Both hosted stacks keep AI
-and research off. See [CHANGES.md](CHANGES.md) for the current optimization pass,
+and research off. [Worker controls and operation logs](docs/operations.md#worker-execution-and-lightweight-measurements)
+use the existing PostgreSQL queue; upgrades require the documented owner migration.
+See [CHANGES.md](CHANGES.md) for the current optimization pass,
 verification and measurement limits.
 
 Use Python 3.12, uv 0.12.23, Node 22 LTS and Docker for PostgreSQL. The host build was verified on macOS ARM64; Docker supplies Linux containers. PowerShell instructions are provided but were not executed on this host.

@@ -1,6 +1,49 @@
 # Implementation status
 
-Updated 2026-10-05. This file records actual implementation and verification, not intended outcomes.
+Updated 2026-10-07. This file records actual implementation and verification, not intended outcomes. Earlier handoff and UI results are preserved below.
+
+## Optimization and hosted integration — 2026-10-07
+
+The existing engine, API routes, frontend source/design, replay/export/guard
+workflows and local Compose remain intact. The separate public/full hosted
+deployments share one Caddy and retain independent databases, volumes and secrets;
+public writes remain forbidden, while full mode requires both the Basic gate and
+application login. Full admin/viewer setup, seeding, backups and limitations are
+documented in [operations](docs/operations.md).
+
+Implemented validated AI cache refresh/concurrency coordination, scoped AWS
+observation caching, narrower report queries, optional provider-neutral research
+and pricing interfaces, bounded worker concurrency/idle backoff, private operation
+metrics and hosted k6 safeguards. No Redis, queue framework, monitoring service,
+UI redesign or resource-limit reduction was introduced. Research is off by default;
+the hosted stacks explicitly keep AI and research off.
+
+- Verification: **517 backend tests**, **37 container/two-host HTTPS checks**,
+  **16 standalone public HTTPS checks**, **22 hosted and 20 local Chromium tests**,
+  and **three seeded screenshot checks** passed without skipped/weakened tests.
+  Ruff, formatting, mypy (46 modules), TypeScript/Vite, production image builds,
+  Terraform fmt/validate and all ten trusted guard fixtures passed. Replay still
+  matches **60/60** decisions; 360 provider tasks remain explicitly unrun.
+- Offline measurements: four repeated/expired AI requests use **2 instead of 3**
+  mocked provider calls; two AWS collections use **6 instead of 10** mocked SDK
+  calls. Ten-review summaries materialize no full report documents instead of
+  100,530 bytes, with the same three SQL statements. Detail reads policy once
+  instead of twice. No server latency/CPU/memory, provider-cost or AWS savings
+  improvement is claimed.
+- Migration `2a0c9f4b7e61` passed upgrade/downgrade checks. Both populated hosted
+  test databases retained their existing rows during upgrade. The running original
+  workspace was preserved; only isolated projects were used for current runtime
+  verification. All 384 original research checksums remain unchanged.
+- Limits: cooperative worker deadlines, no durable queue/storage quotas or
+  automatic retention, no MFA/tenant isolation, SR-05 login recovery still open,
+  and no live AWS/model/search or public ACME validation. Newly rebuilt images
+  were not rescanned; earlier image findings are historical, not a current clean
+  scan. Published PDFs and previous workload/evaluation measurements are unchanged.
+
+Exact commands, file/module changes, measurements and evidence locations are in
+[CHANGES.md](CHANGES.md).
+
+## Original handoff — 2026-10-05
 
 | Area | State | Evidence / remaining work |
 |---|---|---|
@@ -49,6 +92,6 @@ Local check outputs are `artifacts/checks/ui-polish-backend.xml` and `artifacts/
 - Live provider comparisons need exact verified model IDs, keys, official dated USD prices, positive budgets and independent semantic annotations. The default is AI off; prices, task costs and quality measurements remain null for both unconfigured slots. Context serialization is prepared; downstream quality/token-cost comparison is unrun.
 - Remote GitHub Actions/protected enforcement need an authorized repository and protected workflow/policy review. Local workflow definition and regression results are not a remote run.
 - T24 needs consenting uncoached engineers. Windows/PowerShell commands are documented but were not executed on this macOS host. No human feedback was invented.
-- Basic admin/viewer authentication, expiring sessions, CSRF and persistent login limits are implemented; see [security and hosting](docs/security.md). MFA/SSO, tenant/account isolation, complete authentication auditing, retention, managed secret operations and a production TLS deployment remain deferred, along with additional services/clouds, Kubernetes, arbitrary policies, trained routing, general diagnosis, autonomous changes/rollback and Infracost import.
+- Basic admin/viewer authentication, expiring sessions, CSRF, actor-bound audit events and persistent login limits are implemented; see [security and hosting](docs/security.md). MFA/SSO, tenant/account isolation, external audit retention, managed secret operations and a publicly validated production TLS deployment remain deferred, along with additional services/clouds, Kubernetes, arbitrary policies, trained routing, general diagnosis, autonomous changes/rollback and Infracost import.
 
 The supported local replay workflow is complete. Read `CHANGELOG.md` for the implemented bug/security improvements. All new files remain within `proofops-app/`; the preservation audit checks 384 unchanged original research files, and runtime containers contain no research/evaluator directories.
