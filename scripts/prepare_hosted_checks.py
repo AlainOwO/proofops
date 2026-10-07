@@ -23,11 +23,11 @@ def main() -> None:
     images = {
         name: {"image": "proofops-" + image}
         for name, image in {
-            "roles": "api",
-            "migrate": "api",
-            "api": "api",
-            "worker": "worker",
-            "seed": "api",
+            "roles": "backend",
+            "migrate": "backend",
+            "api": "backend",
+            "worker": "backend",
+            "seed": "backend",
             "web": "web",
             "caddy": "caddy",
         }.items()

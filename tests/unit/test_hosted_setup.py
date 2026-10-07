@@ -9,7 +9,12 @@ import subprocess
 
 import pytest
 
-from scripts import configure_hosted, run_hosted_full_browser_checks
+from scripts import (
+    configure_hosted,
+    prepare_hosted_checks,
+    prepare_hosted_full_checks,
+    run_hosted_full_browser_checks,
+)
 
 
 def private_assert(condition, message="Private credential invariant failed"):
@@ -287,6 +292,69 @@ def test_combined_compose_environment_preserves_bcrypt_and_separates_runtime_sec
                 for service in services.values()
             )
         )
+
+
+@pytest.mark.parametrize("full", [False, True])
+def test_isolated_hosted_preparation_preserves_shared_backend_images(
+    tmp_path, monkeypatch, offline_bcrypt, full
+):
+    root = configure_hosted.ROOT
+    (tmp_path / "deploy").mkdir()
+    shutil.copyfile(root / "deploy/Caddyfile", tmp_path / "deploy/Caddyfile")
+    monkeypatch.setattr(configure_hosted, "ROOT", tmp_path)
+    if full:
+        private = tmp_path / "artifacts/hosted-full/private"
+        monkeypatch.setattr(prepare_hosted_full_checks, "ROOT", tmp_path)
+        monkeypatch.setattr(prepare_hosted_full_checks, "PRIVATE", private)
+        prepare_hosted_full_checks.prepare()
+        variants = [
+            ("compose.hosted.yaml", "images-public.json"),
+            ("compose.hosted-full.yaml", "images-full.json"),
+        ]
+    else:
+        private = tmp_path / "artifacts/hosted-security/private"
+        prepare_hosted_checks.main()
+        variants = [("compose.hosted.yaml", "images.json")]
+    docker = shutil.which("docker")
+    assert docker is not None
+    env_files = [private / ".env.hosted"]
+    if full:
+        env_files.append(private / ".env.hosted-full")
+    for filename, override in variants:
+        result = subprocess.run(  # noqa: S603
+            [
+                docker,
+                "compose",
+                *(argument for path in env_files for argument in ("--env-file", str(path))),
+                "--profile",
+                "*",
+                "-f",
+                str(root / filename),
+                "-f",
+                str(private / override),
+                "config",
+                "--format",
+                "json",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=15,
+        )
+        private_assert(result.returncode == 0, "Generated hosted Compose overrides must validate")
+        # Keep assertion values free of the generated private environment.
+        images = {
+            name: service.get("image")
+            for name, service in json.loads(result.stdout)["services"].items()
+        }
+        assert {images[name] for name in ("roles", "migrate", "api", "worker", "seed")} == {
+            "proofops-backend"
+        }
+        assert images["web"] == "proofops-web"
+        if filename == "compose.hosted.yaml":
+            assert images["caddy"] == "proofops-caddy"
+        else:
+            assert "caddy" not in images
 
 
 def test_browser_output_redacts_raw_and_encoded_credentials(tmp_path, monkeypatch, offline_bcrypt):
