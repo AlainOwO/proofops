@@ -53,8 +53,8 @@ The raw Terraform plan is parsed in memory and discarded after extracting a boun
 Model context is built from matched report facts and original development cards/examples. It contains no research evaluator paths, labels or revealing case IDs. Provider adapters have no tools. Mechanical schema/citation checks do not prove causal reasoning; evaluator annotations score semantics separately. API/worker containers do not contain the evaluation corpus.
 
 The hosted public and full deployments have separate databases, volumes and
-credentials. One Caddy routes by hostname and adds a Basic gate to the full
-workspace; only Caddy publishes ports. The public demo remains read-only and both
+credentials. One Caddy routes by hostname; only Caddy publishes ports. The full
+workspace uses application authentication. The public demo remains read-only and both
 hosted runtimes keep AI/research off. [Operations](operations.md) covers setup,
 migrations, accounts, seeding and manual backups.
 

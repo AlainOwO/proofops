@@ -1,5 +1,31 @@
 # Changelog
 
+## Full-host application authentication — 2026-10-10
+
+- Removed Caddy's full-host authentication challenge and its credential
+  generation/configuration. Setup preserves every existing active credential
+  and ignores obsolete proxy entries, including quoted or incomplete values;
+  it no longer needs a Caddy image to generate configuration.
+- Anonymous full-host visitors receive the ProofOps login page with HTTP 200;
+  protected API calls return HTTP 401 with `Authentication required.`. Application
+  login, CSRF, rate limits, Secure cookies, security headers/HSTS, public-demo
+  HTTP 403 writes and Caddy-only port publication remain enforced.
+- Operations and security documentation identify application authentication as
+  the full host's only access control, list SR-05 and the other open exposures,
+  and state that this deployment is not production-grade.
+- Verification: **604** backend/unit/policy/PostgreSQL tests and **45**
+  container/migration/public/full HTTPS tests passed with no failures or skips.
+  All **22** hosted Chromium regressions (including the original 20 browser
+  tests) and **3** seeded screenshot checks passed. Original documentation PNGs
+  were preserved. Ruff lint/format, mypy, frontend production build, all ten guard
+  fixtures and all 60 deterministic replay decisions passed. Existing upstream TestClient
+  and JUnit property warnings remain. Test artifacts are in
+  `artifacts/checks/backend.xml` and `artifacts/hosted-full/`; private files must
+  not be published. No live AWS, model, research or public ACME calls were made.
+- Markdown file links and whitespace checks passed, and no generated private
+  value was found in tracked files. Disposable hosted stacks/volumes were
+  removed; local workspace data and retained migration-test volumes were kept.
+
 ## Compose migration image consistency — 2026-10-08
 
 - Diagnosed an older `proofops-migrate` image whose packaged Alembic head was
@@ -28,8 +54,8 @@
 ## Repository optimization and full-host integration — 2026-10-07
 
 - Added the adjacent full hosted workspace behind the public stack's shared
-  Caddy, with independent private credentials/database/volumes, bcrypt Basic
-  Auth, application login, a default worker and restricted runtime DB roles.
+  Caddy, with independent private credentials/database/volumes, application
+  login, a default worker and restricted runtime DB roles.
   Public writes remain forbidden; only Caddy publishes hosted ports. The
   operations runbook covers both stacks, stdin account creation, seeding and
   backups; MFA, tenant isolation and SR-05 limitations remain explicit.

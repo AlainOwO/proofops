@@ -7,8 +7,8 @@ Updated 2026-10-07. This file records actual implementation and verification, no
 The existing engine, API routes, frontend source/design, replay/export/guard
 workflows and local Compose remain intact. The separate public/full hosted
 deployments share one Caddy and retain independent databases, volumes and secrets;
-public writes remain forbidden, while full mode requires both the Basic gate and
-application login. Full admin/viewer setup, seeding, backups and limitations are
+public writes remain forbidden, while full mode requires application login.
+Full admin/viewer setup, seeding, backups and limitations are
 documented in [operations](docs/operations.md).
 
 Implemented validated AI cache refresh/concurrency coordination, scoped AWS

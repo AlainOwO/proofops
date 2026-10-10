@@ -1,5 +1,26 @@
 # Defensive security review
 
+## Current full-host exposure — 2026-10-10
+
+The full host is protected only by application authentication. An anonymous
+visitor receives the ProofOps login page with HTTP 200; protected API requests
+return HTTP 401 with `Authentication required.`. Login is publicly reachable.
+Application roles, CSRF, persistent login limits, Secure sessions, security
+headers and HSTS remain enforced. The public host still rejects writes with
+HTTP 403, and only Caddy publishes ports. This is **not production-grade team
+hosting**: MFA/SSO, tenant isolation and self-service recovery are absent.
+
+The exposure includes open SR-05 account/shared-peer login denial, SR-06 writable
+queue/storage bounds, SR-08 audit retention/external storage, SR-10 residual image
+findings and recurring scans, SR-12 remaining container hardening, and SR-17
+admitted-login audit growth. Anyone who can reach full-host login can exercise
+SR-05 and SR-17 within the existing admission limits. SR-13 advisory-prose
+semantics, SR-14 optional IAM scope, SR-15 research URL credentials, SR-16 AWS
+permission-cache staleness and SR-18 shared research-cache scope also remain
+open; the supplied hosted stacks keep AI, AWS and research access disabled.
+The detailed findings and historical verification records below retain their
+original review scope; those results are not a new security or image scan.
+
 ## Latest commit delta review — 2026-10-08
 
 This review is limited to **`2794a53..73787e2`**: the 24 commits after
@@ -21,7 +42,7 @@ was made, and no credential value is reproduced.
 |---|---|---|---|
 | SR-15 | **Medium — open** | `backend/proofops/tools/research.py:35`, `:47`, `:235`; `backend/proofops/cli.py:315` | Research URL validation rejects URL userinfo but preserves credential-bearing queries and fragments. Generated `access_token`, fragment token and `X-Amz-Signature` canaries survive in returned sources and the PostgreSQL cache while an `access_token=` snippet containing the same canary is redacted; CLI serialization also writes the full source URL. This violates the no-credentials-in-cache goal. Exposure is limited to optional operator-invoked research and its private artifact/shared workspace database; no HTTP research route or result-URL fetch exists. Reject sensitive URL parameters/fragments or retain a safely normalized attribution URL before persistence. Test: `tests/integration/test_research_cache.py::test_open_research_source_url_credentials_are_retained_in_cache` (three cases). |
 | SR-16 | **Medium — open** | `backend/proofops/collectors/aws.py:382`, `:427` | An AWS cache hit rechecks STS identity but does not recheck each source permission. A same-principal denial of `DescribeServices` is invisible at 59 seconds and observed at the 60-second TTL boundary; the old observation time remains intact. Default TTL is 60 seconds, maximum 3,600. This is bounded stale authorization, not a cross-account key collision or refreshed evidence timestamp. Disable the cache where immediate revocation is required, or design explicit permission/configuration invalidation. Previously acknowledged in the optimization prose; now tracked and tested in `tests/integration/test_cache_security.py::test_open_same_principal_permission_changes_are_only_seen_after_aws_cache_ttl`. |
-| SR-17 | **Medium — open; SR-08 retention** | `backend/proofops/auth.py:356`, `:369`; `backend/proofops/storage/audit.py:8` | New authentication auditing appends a durable row for every admitted peer/account-throttled login. HTTP admission bounds the rate (default 600 requests per peer per 60 seconds), but each new window admits more rows throughout the 900-second login lock; no retention or aggregation bounds the total. The regression proves outer quota rejection stops writes for that window, then the next window adds rows while throttle state remains two rows. Public-demo login is disabled and full hosting requires the Basic gateway; no authentication bypass or return of SR-04's throttle-map growth was found. Add bounded retention and aggregate repeated denials without losing security-relevant transitions. Test: `tests/integration/test_audit_attribution.py::test_http_throttled_login_audit_growth_is_per_admitted_request_across_windows`. |
+| SR-17 | **Medium — open; SR-08 retention** | `backend/proofops/auth.py:356`, `:369`; `backend/proofops/storage/audit.py:8` | New authentication auditing appends a durable row for every admitted peer/account-throttled login. HTTP admission bounds the rate (default 600 requests per peer per 60 seconds), but each new window admits more rows throughout the 900-second login lock; no retention or aggregation bounds the total. The regression proves outer quota rejection stops writes for that window, then the next window adds rows while throttle state remains two rows. Public-demo login is disabled; full-host application login is publicly reachable, exposing this growth to admitted anonymous attempts. No authentication bypass or return of SR-04's throttle-map growth was found. Add bounded retention and aggregate repeated denials without losing security-relevant transitions. Test: `tests/integration/test_audit_attribution.py::test_http_throttled_login_audit_growth_is_per_admitted_request_across_windows`. |
 | SR-18 | **Low — open** | `backend/proofops/tools/research.py:169` | The new research key includes query, result limit, provider and credential/engine configuration digest, but no project/account/user scope. The same query/configuration under two operator AWS-account settings reuses one result in the same database. Current research is public, CLI-only and inside the documented shared workspace; this does not demonstrate anonymous access or a cross-tenant breach. It does not satisfy a stricter principal/project-isolated cache contract. Add an explicit scope before supporting private, personalized or multi-workspace research; separate databases remain the current workspace boundary. Test: `tests/integration/test_research_cache.py::test_open_research_cache_is_shared_across_operator_account_contexts`. |
 
 Requested controls checked in this delta:
@@ -106,11 +127,11 @@ Final local verification for this delta:
   separate attempt with build-step networking disabled lacked the uv install
   cache; hosted validation reused the current image already built and verified
   by the migration tests. No test assertion was changed to accommodate setup.
-- **22 Chromium regressions passed** in 26.7 seconds through the authenticated
-  full gateway, including all 20 original browser tests and both gateway tests.
+- **22 Chromium regressions passed** in 26.7 seconds through the full
+  hostname, including all 20 original browser tests and both hostname tests.
   **3 seeded screenshot checks passed** in 2.1 seconds against that disposable
   full workspace with its original credentials and assertions. The temporary
-  configuration reused the gateway settings; original documentation PNG bytes
+  configuration reused the hosted settings; original documentation PNG bytes
   were preserved. Browser traces/videos remained disabled and output used the
   existing credential redactor.
 - Ruff lint/format, mypy, frontend production build and whitespace checks passed.
@@ -290,28 +311,28 @@ SR-10 remains partially remediated. Repeat both scan forms after base/package/ad
 
 ## Hosted full mode attack surface
 
-Reviewed locally on 2026-10-07. The [adjacent full-mode runbook](operations.md#hosted-full-mode-beside-the-public-demo) adds a standalone `proofops-hosted-full` project beside the unchanged read-only public workspace. This is a gated, writable demo for trusted users, not production-grade team hosting. No public deployment, cloud/model call or live ACME request was made.
+Initially reviewed locally on 2026-10-07; the access boundary below is updated for 2026-10-10. The [adjacent full-mode runbook](operations.md#hosted-full-mode-beside-the-public-demo) adds a standalone `proofops-hosted-full` project beside the unchanged read-only public workspace. This is a writable demo for trusted application users, protected only by application authentication, and is not production-grade team hosting. No public deployment, cloud/model call or live ACME request was made.
 
 | Surface | Added exposure and boundary |
 |---|---|
 | Shared Caddy | The public project's Caddy owns both hostnames and the only published ports. It joins each internal application network, with explicit `public-api`/`public-web` and `full-api`/`full-web` aliases to avoid cross-project DNS collisions. It cannot directly reach either database network. Its host/TLS administration is trusted by both stacks; compromise or resource exhaustion can affect both. Separate databases do not remove that shared trust/availability risk. |
-| Full-host gateway | Every HTTPS path and method, including assets, health, login and docs, requires `basic_auth` before proxying. HTTP redirects to HTTPS. Setup generates a random credential and bcrypt cost-14 hash using stdin and a network-disabled cached Caddy container. The credential pair stays in mode-0600 `.env.hosted-full`; Caddy receives only the username/hash and removes Authorization upstream. Basic Auth is a shared password, not MFA, SSO or an individual audit identity. Guessing can consume Caddy CPU before application admission; no distributed edge limiter is supplied. |
-| Application login | After the gateway, full mode still requires separate application accounts, host-only Secure/HttpOnly/SameSite sessions, exact HTTPS origins, CSRF and admin authorization for writes. Public HTTP login and every public write remain disabled. Full keys, database passwords, users and sessions are separate from public credentials; public flags and read-only artifact mounts are preserved. |
+| Full-host ingress | Caddy routes full-host requests directly to the web/API services. The anonymous homepage returns HTTP 200 and displays the ProofOps login page; protected API calls return HTTP 401 with `Authentication required.`. Assets, health and application login are publicly reachable. HTTP redirects to HTTPS; security headers and HSTS remain enabled. No distributed edge limiter is supplied, and all traffic can consume shared Caddy/host capacity. |
+| Application login | Full mode is protected only by application authentication: separate accounts, host-only Secure/HttpOnly/SameSite sessions, exact HTTPS origins, CSRF and admin authorization for writes. Public HTTP login and every public write remain disabled. Full keys, database passwords, users and sessions are separate from public credentials; public flags and read-only artifact mounts are preserved. |
 | Writable data and worker | The full API/worker get only restricted runtime database credentials. Their root filesystems remain read-only, but their own artifact volume is writable and their worker starts by default. Imports, queued reviews, exports, guard validation, billing/disposition writes and the existing admin reset surface are reachable to admitted application users. Runtime networking and AI/provider configuration remain offline. Existing request/body/resource bounds do not provide durable queue/storage quotas, retention or disaster recovery. |
 | Operator and storage | The full database is a distinct PostgreSQL 18 cluster/volume, with independent bootstrap/owner/runtime secrets and owner-only migration access. An owner or host operator can still alter data/audit history. Encrypted backup commands are documented, but key custody, off-host retention, restore rehearsal, monitoring and an external append-only audit sink remain operator work. Never restore writable data into the public database. |
-| Workspace access | Full admin and viewer accounts share all reviews in that full workspace. There is no per-team, tenant or per-review isolation, no separate approval role, no MFA and no self-service recovery. The outer gateway does not change application roles or create a production security certification. |
+| Workspace access | Full admin and viewer accounts share all reviews in that full workspace. There is no per-team, tenant or per-review isolation, no separate approval role, no MFA and no self-service recovery. Application authentication does not provide those boundaries or create a production security certification. |
 
-**SR-05 remains open and directly relevant to full mode.** The gateway narrows who can reach login; a gate holder can still cause the five-failure account lockout or exhaust the 60-attempt shared proxy peer bucket in a 900-second window. Correct passwords are then rejected, including from other apparent client addresses. Existing sessions remain usable. Database persistence, generic failures, CSRF, login concurrency bounds and `--no-proxy-headers` are retained; no login limit is disabled or increased.
+**SR-05 remains open and directly exposed in full mode.** Anyone who can reach application login can cause the five-failure account lockout for a known username or exhaust the 60-attempt shared proxy peer bucket in a 900-second window. Correct passwords are then rejected, including from other apparent client addresses. Existing sessions remain usable. Database persistence, generic failures, CSRF, login concurrency bounds and `--no-proxy-headers` are retained; no login limit is disabled or increased.
 
-SR-06's public-demo remediation still depends on disabled public writes and worker claims. Full mode retains the HTTP admission controls but exposes writable queue/storage demand, so that operational portion remains open. SR-08 external audit retention, SR-10 residual image findings and the other previously open findings are not closed by adding a Basic gate. All full traffic also shares Caddy/host capacity with the public demo.
+SR-06's public-demo remediation still depends on disabled public writes and worker claims. Full mode retains the HTTP admission controls but exposes writable queue/storage demand, so that operational portion remains open. SR-08 external audit storage/retention, SR-10 residual image findings and recurring scans, SR-12 remaining container hardening, and SR-17 admitted-login audit growth remain exposure. The optional-feature findings SR-13 advisory-prose semantics, SR-14 IAM scope, SR-15 research URL credentials, SR-16 AWS permission-cache staleness and SR-18 shared research-cache scope also remain open; AI, AWS and research access stay disabled in the supplied hosted stacks. All full traffic shares Caddy/host capacity with the public demo.
 
-The test configuration uses two isolated projects, synthetic accounts and fixtures, internal TLS certificates, loopback-only publications and cached images. Tests cover public write/login rejection even with a copied full admin cookie, full-host 401 challenges, successful gated login, Secure session attributes, viewer/CSRF denial, an actual default-worker review, preserved login lockout, and live container network/volume/role separation. The complete existing public proxy suite and browser suite remain in use. [Reproduction commands](testing.md#two-stack-hosted-checks) include safe test account creation and cleanup.
+The test configuration uses two isolated projects, synthetic accounts and fixtures, internal TLS certificates, loopback-only publications and cached images. Tests cover public write/login rejection even with a copied full admin cookie, the anonymous full-host login page with HTTP 200, protected API calls with HTTP 401 and `Authentication required.`, successful application login, Secure session attributes, viewer/CSRF denial, an actual default-worker review, preserved login lockout, and live container network/volume/role separation. The complete existing public proxy suite and browser suite remain in use. [Reproduction commands](testing.md#two-stack-hosted-checks) include safe test account creation and cleanup.
 
-Final local verification for this change:
+Historical local verification for the initial 2026-10-07 deployment:
 
 - **445 backend tests passed**, including all unit, policy and real-PostgreSQL integration tests, in 107.67 seconds; no failures, errors or skips. The upstream TestClient deprecation warning remains.
 - **37 container/HTTPS tests passed** in 12.91 seconds, including all 19 existing image/public-proxy checks and 18 full-mode checks. The original standalone public-only Caddy configuration was then restored on the disposable project and **all 16 public HTTPS tests passed again** in 2.76 seconds.
-- **22 Chromium tests passed** in 16.7 seconds through the documented credential-redacting runner: the original 20 tests plus two hostname/gateway checks. Frontend production build, full Ruff lint/format checks and mypy passed. No browser assertion was weakened or skipped.
+- **22 Chromium tests passed** in 16.7 seconds through the documented credential-redacting runner: the original 20 tests plus two hostname checks. Frontend production build, full Ruff lint/format checks and mypy passed. No browser assertion was weakened or skipped.
 - Both PostgreSQL custom-format dumps, both artifact archives and Caddy's certificate archive were produced and inspected only in memory. The operations/testing shell snippets parsed with Bash and Zsh. The `age` encryption/decryption and restore rehearsal were not run on this host.
 - Markdown file links and whitespace checks passed. A private-value comparison found no generated deployment/account credential in tracked or proposed files. Machine evidence is under ignored `artifacts/hosted-full/`; its `private/` directory must not be shared. Both disposable projects, networks and data volumes were removed; existing local workspace services/data were retained.
 
@@ -365,8 +386,8 @@ This follow-up passed 517 backend tests, the 37 existing container/two-host HTTP
 checks, 16 standalone public checks, 22 hosted and 20 local Chromium regressions
 and three seeded screenshot checks. Migrations were tested in both directions;
 the two populated hosted test databases retained existing records during upgrade.
-Public writes still return 403, full requests without Basic Auth return 401,
-gated application login works, and hosted API/database ports remain private.
+Public-write rejection, full-host application authentication and private
+hosted API/database ports were verified.
 No admission/login limit or existing test was weakened. Detailed commands and
 measurement limits are recorded in [CHANGES.md](../CHANGES.md).
 
@@ -380,6 +401,6 @@ search API call, external security test or disaster-recovery rehearsal was made.
 
 ## Deployment and remaining open work
 
-Deploy with the standalone [Hosted public demo runbook](operations.md#hosted-public-demo), optionally adding the separate [gated full workspace](operations.md#hosted-full-mode-beside-the-public-demo). Never combine either with local Compose or change the public flag to offer writes. Run the owner migration through `2a0c9f4b7e61`, create strong accounts through the operator CLI, seed the appropriate synthetic workspace, and verify only the shared Caddy publishes 80/443. The isolated tests do not constitute a public deployment; the existing local stack was preserved. Rotate the historical credential independently in every other deployment that reused it.
+Deploy with the standalone [Hosted public demo runbook](operations.md#hosted-public-demo), optionally adding the separate [full workspace](operations.md#hosted-full-mode-beside-the-public-demo) protected only by application authentication. Never combine either with local Compose or change the public flag to offer writes. Run the owner migration through `2a0c9f4b7e61`, create strong accounts through the operator CLI, seed the appropriate synthetic workspace, and verify only the shared Caddy publishes 80/443. The isolated tests do not constitute a public deployment; the existing local stack was preserved. Rotate the historical credential independently in every other deployment that reused it.
 
-Open work includes SR-05 writable-login availability/recovery, SR-08 external audit storage/retention, SR-10 residual findings and recurring advisory checks, remaining SR-12 hardening, SR-13 advisory-prose semantics and SR-14 optional IAM scope. The demo's disabled writes/login, internal runtime networks, read-only mounts and restricted roles narrow its exposure; they do not erase the remaining image vulnerabilities or provide tenant isolation and production operations.
+Open work includes SR-05 writable-login availability/recovery, SR-06 writable queue/storage bounds, SR-08 external audit storage/retention, SR-10 residual findings and recurring advisory checks, remaining SR-12 hardening, SR-13 advisory-prose semantics, SR-14 optional IAM scope, SR-15 research URL credentials, SR-16 AWS permission-cache staleness, SR-17 admitted-login audit growth and SR-18 shared research-cache scope. The public demo's disabled writes/login, internal runtime networks, read-only mounts and restricted roles narrow its exposure; they do not erase the remaining image vulnerabilities or provide tenant isolation and production operations. Full hosting makes application login publicly reachable and remains **not production-grade**.

@@ -26,7 +26,7 @@ Existing features retained as the foundation:
 - Argon2 admin/viewer login, expiring server sessions, CSRF, exact hosts/origins,
   persistent login limits, request admission/body bounds and actor-bound audits.
 - Loopback local Compose; separate public/full hosted databases, volumes and
-  credentials; one Caddy gateway; read-only public demo; gated full hostname;
+  credentials; one Caddy gateway; read-only public demo; full application login;
   restricted hosted database roles, Secure cookies, AI off and private API/DB ports.
 
 The API inventory is unchanged by these optimizations:
@@ -189,7 +189,7 @@ capture; new inspection images remain under ignored artifacts.
 Deterministic outcomes remain authoritative; the domain engine, contracts,
 policies, source fixtures and evaluator data are unchanged. No live AWS, model or
 research API call was made. Secrets remain in private server configuration and
-were never printed. Public-demo restrictions, full-host Basic Auth, login rate
+were never printed. Public-demo restrictions, full-host application login, login rate
 limits, CSRF, restricted database roles and container/network hardening passed
 the rebuilt-container checks. The full deployment added before this optimization
 baseline remains a separate project/database/volume/credential set behind the
