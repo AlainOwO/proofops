@@ -10,10 +10,6 @@ https://{$FULL_DOMAIN} {
 	import security_headers
 	header Strict-Transport-Security "max-age=31536000"
 	route {
-		# Every full-host path and method passes this gate before reaching an upstream.
-		basic_auth {
-			{$FULL_BASIC_AUTH_USER} {$FULL_BASIC_AUTH_HASH}
-		}
 		@api path /api/* /healthz /readyz /docs /docs/* /redoc /openapi.json
 		handle @api {
 			reverse_proxy full-api:8000 {

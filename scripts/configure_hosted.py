@@ -4,7 +4,6 @@ import argparse
 import os
 import re
 import secrets
-import subprocess
 import tempfile
 from pathlib import Path
 
@@ -20,9 +19,7 @@ FULL_SECRET_NAMES = (
     "FULL_OWNER_PASSWORD",
     "FULL_RUNTIME_PASSWORD",
     "FULL_SECRET_KEY",
-    "FULL_BASIC_AUTH_PASSWORD",
 )
-BCRYPT_PATTERN = r"\$2[aby]\$14\$[./A-Za-z0-9]{53}"
 
 
 def validate_address(domain: str, email: str) -> None:
@@ -45,9 +42,6 @@ def read_private(target: Path) -> dict[str, str]:
             key, separator, value = line.partition("=")
             if not separator or key in values or not re.fullmatch(r"[A-Z_]+", key):
                 raise ValueError("Existing hosted configuration is ambiguous; repair it privately.")
-            # Compose single quotes keep the dollar signs in bcrypt hashes literal.
-            if key == "FULL_BASIC_AUTH_HASH" and value.startswith("'") and value.endswith("'"):
-                value = value[1:-1]
             values[key] = value
     return values
 
@@ -68,8 +62,7 @@ def write_private(target: Path, values: dict[str, str]) -> None:
             os.fchmod(output.fileno(), 0o600)
             output.write("# Private hosted deployment configuration. Never commit or print.\n")
             for key, value in values.items():
-                rendered = f"'{value}'" if key == "FULL_BASIC_AUTH_HASH" else value
-                output.write(f"{key}={rendered}\n")
+                output.write(f"{key}={value}\n")
             output.flush()
             os.fsync(output.fileno())
         os.replace(temporary, target)
@@ -87,49 +80,6 @@ def configure(domain: str, email: str) -> None:
     print("Private .env.hosted configured. Existing credentials preserved; no values printed.")
 
 
-def bcrypt_hash(password: str) -> str:
-    # Never pass plaintext in argv, an environment variable or a mounted file.
-    # Caddy's binary has a NET_BIND_SERVICE file capability even for this command.
-    result = subprocess.run(
-        [
-            "docker",
-            "run",
-            "--rm",
-            "--interactive",
-            "--pull",
-            "never",
-            "--network",
-            "none",
-            "--read-only",
-            "--cap-drop",
-            "ALL",
-            "--cap-add",
-            "NET_BIND_SERVICE",
-            "--security-opt",
-            "no-new-privileges:true",
-            "--entrypoint",
-            "caddy",
-            "proofops-caddy",
-            "hash-password",
-            "--algorithm",
-            "bcrypt",
-            "--bcrypt-cost",
-            "14",
-        ],
-        input=password + "\n",
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=60,
-    )
-    hashed = result.stdout.strip()
-    if result.returncode or not re.fullmatch(BCRYPT_PATTERN, hashed):
-        raise ValueError(
-            "Offline bcrypt hashing failed; first build deploy/caddy as proofops-caddy."
-        )
-    return hashed
-
-
 def configure_full(public_domain: str, full_domain: str, email: str) -> None:
     validate_address(public_domain, email)
     validate_address(full_domain, email)
@@ -140,27 +90,16 @@ def configure_full(public_domain: str, full_domain: str, email: str) -> None:
     # Refuse namespace collisions before combining these two env files in Compose.
     if any(key.startswith("FULL_") for key in public) or any(key in full for key in SECRET_NAMES):
         raise ValueError("Public and full credentials must use separate environment names.")
-    if "FULL_BASIC_AUTH_HASH" in full and "FULL_BASIC_AUTH_PASSWORD" not in full:
-        raise ValueError("Existing gateway credentials are incomplete; repair them privately.")
     fill_secrets(public, SECRET_NAMES)
     fill_secrets(full, FULL_SECRET_NAMES)
     all_secrets = [public[name] for name in SECRET_NAMES] + [
         full[name] for name in FULL_SECRET_NAMES
     ]
     if len(set(all_secrets)) != len(all_secrets):
-        raise ValueError("Public, full and gateway credentials must be independent.")
-    if len(full["FULL_BASIC_AUTH_PASSWORD"]) > 72:
-        raise ValueError("Bcrypt passwords must fit within 72 bytes.")
-    username = full.setdefault("FULL_BASIC_AUTH_USER", "full-" + secrets.token_hex(8))
-    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", username):
-        raise ValueError("The gateway username must be a single safe token.")
-    if "FULL_BASIC_AUTH_HASH" not in full:
-        full["FULL_BASIC_AUTH_HASH"] = bcrypt_hash(full["FULL_BASIC_AUTH_PASSWORD"])
-    if not re.fullmatch(BCRYPT_PATTERN, full["FULL_BASIC_AUTH_HASH"]):
-        raise ValueError("The gateway requires a private bcrypt hash with cost 14.")
+        raise ValueError("Public and full credentials must be independent.")
     public.update(HOSTED_DOMAIN=public_domain, ACME_EMAIL=email)
     full.update(FULL_DOMAIN=full_domain)
-    # Validate everything and finish hashing before changing either configuration.
+    # Validate active credentials before changing either configuration; retain unused entries.
     write_private(public_target, public)
     write_private(full_target, full)
     print("Private .env.hosted and .env.hosted-full configured; existing credentials preserved.")
@@ -181,10 +120,8 @@ def main() -> None:
             configure_full(args.public_domain, args.full_domain, args.email)
         else:
             configure(args.domain, args.email)
-    except (ValueError, OSError, subprocess.SubprocessError):
-        raise SystemExit(
-            "Hosted setup failed; check hostnames, email, private files and the built proofops-caddy image."
-        ) from None
+    except (ValueError, OSError):
+        raise SystemExit("Hosted setup failed; check hostnames, email and private files.") from None
 
 
 if __name__ == "__main__":

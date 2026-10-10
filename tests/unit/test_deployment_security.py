@@ -209,8 +209,6 @@ def test_shared_gateway_preserves_public_controls_and_is_the_only_ingress():
         "HOSTED_DOMAIN",
         "ACME_EMAIL",
         "FULL_DOMAIN",
-        "FULL_BASIC_AUTH_USER",
-        "FULL_BASIC_AUTH_HASH",
     }
     mounts = {volume["target"]: volume for volume in caddy["volumes"]}
     assert mounts["/etc/caddy/Caddyfile"]["source"].endswith("deploy/Caddyfile.full")
@@ -223,17 +221,16 @@ def test_shared_gateway_preserves_public_controls_and_is_the_only_ingress():
     assert shared["services"]["web"]["networks"]["application"]["aliases"] == ["public-web"]
 
 
-def test_full_proxy_gates_every_path_before_proxying_and_strips_basic_credentials():
+def test_full_proxy_uses_application_authentication_and_preserves_proxy_controls():
     public = (APP_ROOT / "deploy/Caddyfile").read_text()
     full = (APP_ROOT / "deploy/Caddyfile.full").read_text()
     assert "import /etc/caddy/Caddyfile.public" in full
     assert "https://{$FULL_DOMAIN}" in full and "http://{$FULL_DOMAIN}" in full
-    assert "basic_auth {" in full and "{$FULL_BASIC_AUTH_USER} {$FULL_BASIC_AUTH_HASH}" in full
-    assert full.index("route {") < full.index("basic_auth {") < full.index("handle @api {")
+    assert not any(value in full for value in ("basic_auth", "basicauth", "FULL_BASIC_AUTH"))
+    assert full.index("route {") < full.index("handle @api {")
     assert "reverse_proxy full-api:8000" in full and "reverse_proxy full-web:8080" in full
     assert "reverse_proxy public-api:8000" in public and "reverse_proxy public-web:8080" in public
     assert full.count("header_up -Authorization") == full.count("reverse_proxy") == 2
-    assert "FULL_BASIC_AUTH_PASSWORD" not in full
     assert 'Strict-Transport-Security "max-age=31536000"' in full
     assert "handle_errors" in full and "import security_headers" in full
 

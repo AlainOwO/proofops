@@ -1,7 +1,7 @@
 """Prepare two isolated hosted projects and private synthetic test identities.
 
-Run as a module from the repository root. This uses only the cached, networkless
-Caddy hasher. --create-users provisions the test projects after their migrations.
+Run as a module from the repository root. --create-users provisions the test
+projects after their migrations.
 """
 
 import argparse

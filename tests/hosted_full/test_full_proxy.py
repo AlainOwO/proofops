@@ -30,18 +30,11 @@ def require_private(condition, message):
 
 class PrivateConfiguration:
     def __init__(self):
-        self.full = read_private(PRIVATE / ".env.hosted-full")
         self.users = read_private(PRIVATE / ".env.users")
 
-    def client(self, *, gateway=True, public=False):
-        auth = None
-        if gateway and not public:
-            auth = httpx.BasicAuth(
-                self.full["FULL_BASIC_AUTH_USER"], self.full["FULL_BASIC_AUTH_PASSWORD"]
-            )
+    def client(self, *, public=False):
         return httpx.Client(
             base_url=PUBLIC_URL if public else FULL_URL,
-            auth=auth,
             verify=ssl.create_default_context(cafile=str(PRIVATE / "root.crt")),
             trust_env=False,
             timeout=15,
@@ -109,42 +102,50 @@ def docker(*args, input=None):
 
 
 @pytest.mark.parametrize(
-    "method,path",
+    "method,path,status",
     [
-        ("GET", "/"),
-        ("HEAD", "/"),
-        ("GET", "/assets/missing.js"),
-        ("GET", "/api/v1/auth/login"),
-        ("POST", "/api/v1/auth/login"),
-        ("GET", "/healthz"),
-        ("GET", "/readyz"),
-        ("GET", "/openapi.json"),
-        ("POST", "/api/v1/bundles"),
-        ("PUT", "/api/v1/future"),
-        ("PATCH", "/api/v1/future"),
-        ("DELETE", "/api/v1/future"),
-        ("OPTIONS", "/api/v1/reviews"),
+        ("GET", "/", 200),
+        ("HEAD", "/", 200),
+        ("GET", "/assets/missing.js", 200),
+        ("GET", "/api/v1/auth/login", 200),
+        ("POST", "/api/v1/auth/login", 403),
+        ("GET", "/healthz", 200),
+        ("GET", "/readyz", 401),
+        ("GET", "/openapi.json", 401),
+        ("GET", "/api/v1/auth/session", 401),
+        ("GET", "/api/v1/reviews", 401),
+        ("HEAD", "/api/v1/reviews", 401),
+        ("POST", "/api/v1/reviews", 401),
+        ("POST", "/api/v1/bundles", 401),
+        ("PUT", "/api/v1/future", 401),
+        ("PATCH", "/api/v1/future", 401),
+        ("DELETE", "/api/v1/future", 401),
+        ("OPTIONS", "/api/v1/reviews", 401),
     ],
 )
-def test_full_host_requires_basic_auth_on_every_path_and_method(private, method, path):
-    with private.client(gateway=False) as client:
+def test_full_host_anonymous_requests_follow_application_authentication(
+    private, method, path, status
+):
+    with private.client() as client:
         response = client.request(method, path)
-        assert response.status_code == 401
-        assert response.headers["www-authenticate"].startswith("Basic ")
+        assert response.status_code == status
+        assert "www-authenticate" not in response.headers
+        if status == 401 and method != "HEAD":
+            assert response.json() == {"detail": "Authentication required."}
+        if (method, path) == ("POST", "/api/v1/auth/login"):
+            assert response.json() == {"detail": "Invalid CSRF token."}
         security_headers(response)
 
 
-def test_gateway_and_application_login_are_independent(private):
+def test_full_host_exposes_login_page_and_accepts_only_application_sessions(private):
     with private.client() as client:
-        wrong = client.get(
-            "/", auth=(private.full["FULL_BASIC_AUTH_USER"], secrets.token_urlsafe(48))
-        )
-        assert wrong.status_code == 401
-        security_headers(wrong)
         page = client.get("/")
         assert page.status_code == 200 and "text/html" in page.headers["content-type"]
+        assert "ProofOps" in page.text and "www-authenticate" not in page.headers
         security_headers(page)
-        assert client.get("/api/v1/reviews").status_code == 401
+        denied = client.get("/api/v1/reviews")
+        assert denied.status_code == 401
+        assert denied.json() == {"detail": "Authentication required."}
         assert client.get("/api/v1/auth/login").status_code == 200
         login(client, private)
         assert client.get("/readyz").status_code == 200
@@ -159,10 +160,10 @@ def test_gateway_and_application_login_are_independent(private):
             and session.get_nonstandard_attr("SameSite").lower() == "lax",
             "Hosted sessions must retain HttpOnly/SameSite",
         )
-        with private.client(gateway=False) as outside:
+        with private.client() as outside:
             outside.cookies.update(client.cookies)
             response = outside.get("/api/v1/reviews")
-            assert response.status_code == 401 and "www-authenticate" in response.headers
+            assert response.status_code == 200 and "www-authenticate" not in response.headers
 
 
 def test_full_worker_completes_admin_write_without_promoting_public_demo(private):
@@ -217,13 +218,15 @@ def test_full_worker_completes_admin_write_without_promoting_public_demo(private
         assert identity["public_demo"] and identity["role"] == "viewer"
 
 
-def test_forwarded_headers_cannot_bypass_hostname_gate_and_origins_remain_exact(private):
-    with private.client(gateway=False) as outside, private.client() as client:
+def test_forwarded_headers_cannot_bypass_application_auth_and_origins_remain_exact(private):
+    with private.client() as outside, private.client() as client:
         response = outside.get(
-            "/api/v1/auth/login",
+            "/api/v1/reviews",
             headers={"X-Forwarded-Host": "demo.localhost", "X-Forwarded-For": "198.51.100.9"},
         )
-        assert response.status_code == 401 and "www-authenticate" in response.headers
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Authentication required."}
+        assert "www-authenticate" not in response.headers
         assert client.get("/api/v1/auth/login", headers={"Origin": PUBLIC_URL}).status_code == 403
         assert client.get("/", headers={"Host": "unknown.invalid"}).status_code == 400
         redirect = client.get("http://full.localhost:15080/")
@@ -275,9 +278,7 @@ def test_full_login_lockout_remains_on_despite_forged_client_ips(private):
         assert blocked.status_code == 429 and int(blocked.headers["retry-after"]) > 0
 
 
-def test_running_stacks_publish_only_caddy_and_keep_storage_networks_and_credentials_separate(
-    private,
-):
+def test_running_stacks_publish_only_caddy_and_keep_storage_networks_and_credentials_separate():
     containers = []
     for project in (PUBLIC_PROJECT, FULL_PROJECT):
         identifiers = docker(
@@ -314,14 +315,10 @@ def test_running_stacks_publish_only_caddy_and_keep_storage_networks_and_credent
         )
         env = dict(value.split("=", 1) for value in container["Config"]["Env"])
         require_private(
-            "FULL_BASIC_AUTH_PASSWORD" not in env,
-            "No container may receive plaintext gateway credentials",
+            not any(key.startswith("FULL_BASIC_AUTH_") for key in env),
+            "No container may receive obsolete proxy authentication credentials",
         )
         if service == "caddy":
-            require_private(
-                env["FULL_BASIC_AUTH_HASH"] == private.full["FULL_BASIC_AUTH_HASH"],
-                "Caddy must receive the exact generated bcrypt hash",
-            )
             require_private(
                 not any("PASSWORD" in key or "DATABASE_URL" == key for key in env),
                 "Caddy must not receive database passwords",

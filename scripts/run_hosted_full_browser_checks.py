@@ -1,6 +1,5 @@
 """Run the isolated full-host browser suite with credential-safe output."""
 
-import base64
 import os
 import shutil
 import subprocess
@@ -13,10 +12,7 @@ def redact_output(output: str) -> str:
     values = {}
     for filename in (".env.hosted", ".env.hosted-full", ".env.users"):
         values.update(read_private(PRIVATE / filename))
-    basic = base64.b64encode(
-        (values["FULL_BASIC_AUTH_USER"] + ":" + values["FULL_BASIC_AUTH_PASSWORD"]).encode()
-    ).decode()
-    for value in [basic, *sorted(filter(None, values.values()), key=len, reverse=True)]:
+    for value in sorted(filter(None, values.values()), key=len, reverse=True):
         output = output.replace(value, "<private>")
     return output
 
